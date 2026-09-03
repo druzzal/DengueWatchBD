@@ -50,6 +50,20 @@ enum Layout {
     static let readableWidth: CGFloat = 820
 }
 
+extension View {
+    /// Constrain content to a comfortable reading column and centre it.
+    ///
+    /// Applied to every scrolling screen. Without it the iPhone layout simply
+    /// expands on iPad: hospital rows a thousand points wide with the name at
+    /// one edge and its button at the other, symptom rows trailing into empty
+    /// space, single figures adrift in half-metre cards.
+    ///
+    /// iPhone is unaffected — it never reaches the cap.
+    func readableColumn(_ width: CGFloat = Layout.readableWidth) -> some View {
+        frame(maxWidth: width).frame(maxWidth: .infinity)
+    }
+}
+
 // MARK: - Surfaces
 
 extension View {

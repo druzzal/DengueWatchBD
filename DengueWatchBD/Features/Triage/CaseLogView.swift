@@ -72,6 +72,7 @@ struct CaseLogView: View {
                     }
                 }
             }
+            .readableColumn()
             .navigationTitle(loc.t("log.title"))
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) { LanguageToggle() }

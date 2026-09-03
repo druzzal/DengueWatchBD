@@ -19,6 +19,7 @@ struct CareView: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
+                .readableColumn()
             }
             .background(Palette.plane)
             .navigationTitle(loc.t("care.title"))

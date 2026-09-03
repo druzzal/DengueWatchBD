@@ -94,6 +94,7 @@ struct SymptomCheckerView: View {
                     }
                 }
             }
+            .readableColumn()
             .navigationTitle(loc.t("check.title"))
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) { LanguageToggle() }
@@ -212,6 +213,7 @@ struct TriageResultView: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
+            .readableColumn()
         }
         .background(Palette.plane)
         .navigationTitle(loc.t("result.title"))

@@ -360,6 +360,7 @@ struct DistrictMapView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .readableColumn()
         .searchable(text: $searchText, prompt: loc.t("map.search"))
     }
 }

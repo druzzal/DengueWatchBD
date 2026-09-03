@@ -69,11 +69,7 @@ struct DashboardView: View {
                 }
                 .padding(.horizontal, Space.screen)
                 .padding(.bottom, Space.card)
-                // Beyond this the cards become mostly-empty rectangles and body
-                // text runs to a tiring measure, so extra iPad width becomes
-                // margin rather than stretch.
-                .frame(maxWidth: Layout.readableWidth)
-                .frame(maxWidth: .infinity)
+                .readableColumn()
                 .padding(.bottom, Space.section)
             }
             .background(Palette.plane)
