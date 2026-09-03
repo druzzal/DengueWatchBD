@@ -25,6 +25,9 @@ USER_AGENT = "DengueWatchBD/1.0 (+public health data sync; contact: ops@example.
 
 # Be a considerate client of a government server: one request at a time, paced.
 REQUEST_DELAY_SECONDS = 1.0
+# Days this recent are re-checked even if they 404'd before, because the
+# release may not have been published yet at the time.
+RETRY_RECENT_DAYS = 3
 TIMEOUT_SECONDS = 45
 MAX_ATTEMPTS = 3
 
@@ -40,9 +43,16 @@ def fetch_pdf(day: date, cache_dir: Path, session: requests.Session | None = Non
     if cached.exists() and cached.stat().st_size > 0:
         return cached
 
+    # A "missing" marker stops us re-requesting a day DGHS never published.
+    # But recent days may simply not be out yet — the release for a date lands
+    # that afternoon or the next morning — so a marker on a recent day must
+    # expire, or asking for today before publication would lose that day
+    # permanently.
     missing_marker = cache_dir / f"{day:%Y%m%d}.missing"
     if missing_marker.exists():
-        return None
+        if (date.today() - day).days > RETRY_RECENT_DAYS:
+            return None
+        missing_marker.unlink(missing_ok=True)
 
     owns_session = session is None
     session = session or requests.Session()
@@ -60,7 +70,10 @@ def fetch_pdf(day: date, cache_dir: Path, session: requests.Session | None = Non
 
             if response.status_code == 404:
                 LOG.info("%s: no press release published", day)
-                missing_marker.touch()
+                # Only remember the absence once the day is old enough that
+                # DGHS is not simply running late.
+                if (date.today() - day).days > RETRY_RECENT_DAYS:
+                    missing_marker.touch()
                 return None
             if response.status_code != 200:
                 LOG.warning("%s: HTTP %d (attempt %d/%d)",

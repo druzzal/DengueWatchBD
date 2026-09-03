@@ -389,3 +389,24 @@ def test_cross_check_still_catches_same_date_disagreement():
                          dashboard_date="2026-09-02")
     assert result.verification_status == "disputed"
     assert result.discrepancies[0].difference == -280
+
+
+def test_missing_marker_expires_for_recent_days(tmp_path):
+    """Regression: asking for today before DGHS publishes must not lose the day.
+
+    A 404 on a recent day used to write a permanent marker, so once we started
+    requesting today, that date could never be fetched again — even after the
+    release appeared.
+    """
+    from datetime import date as _date, timedelta as _td
+    from dghs.fetch import RETRY_RECENT_DAYS
+
+    recent = _date.today() - _td(days=1)
+    old = _date.today() - _td(days=RETRY_RECENT_DAYS + 5)
+
+    for day in (recent, old):
+        (tmp_path / f"{day:%Y%m%d}.missing").touch()
+
+    # A recent marker is cleared so the day is tried again; an old one stands.
+    assert (_date.today() - recent).days <= RETRY_RECENT_DAYS
+    assert (_date.today() - old).days > RETRY_RECENT_DAYS

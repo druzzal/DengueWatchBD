@@ -87,8 +87,10 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--start", type=_parse_date,
                         help="first day to include (default: 1 January of --year)")
-    parser.add_argument("--end", type=_parse_date, default=date.today() - timedelta(days=1),
-                        help="last day to include (default: yesterday)")
+    parser.add_argument("--end", type=_parse_date, default=date.today(),
+                        help="last day to include (default: today). DGHS often "
+                             "publishes the same day; a day that is not out yet "
+                             "simply 404s and is retried on the next run.")
     parser.add_argument("--year", type=int, help="season year (default: year of --end)")
     parser.add_argument("--out", type=Path, default=Path("surveillance.json"))
     parser.add_argument("--cache", type=Path, default=Path(".cache"))
