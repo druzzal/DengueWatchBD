@@ -3,6 +3,7 @@ import SwiftUI
 struct PreventionView: View {
     @Environment(Preferences.self) private var preferences
     @Environment(LocalizationManager.self) private var loc
+    @Environment(\.horizontalSizeClass) private var sizeClass
 
     @State private var expanded: Set<String> = ["breeding"]
 
@@ -12,6 +13,9 @@ struct PreventionView: View {
         NavigationStack {
             ScrollView {
                 LazyVStack(spacing: 14) {
+                    if sizeClass == .regular {
+                        ScreenTitle(text: loc.t("prevent.title"))
+                    }
                     seasonalCard
 
                     ForEach(PreventionContent.topics) { topic in
@@ -25,7 +29,7 @@ struct PreventionView: View {
                 .readableColumn()
             }
             .background(Palette.plane)
-            .navigationTitle(loc.t("prevent.title"))
+            .columnAlignedTitle(loc.t("prevent.title"), isWide: sizeClass == .regular)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) { LanguageToggle() }
             }

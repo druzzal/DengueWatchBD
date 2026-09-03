@@ -4,6 +4,7 @@ import CoreLocation
 
 struct CareView: View {
     @Environment(LocalizationManager.self) private var loc
+    @Environment(\.horizontalSizeClass) private var sizeClass
     @Environment(LocationManager.self) private var location
 
     @State private var search = NearbyHospitalSearch()
@@ -13,6 +14,9 @@ struct CareView: View {
         NavigationStack {
             ScrollView {
                 LazyVStack(spacing: 14) {
+                    if sizeClass == .regular {
+                        ScreenTitle(text: loc.t("care.title"))
+                    }
                     emergencyCard
                     nearbyCard
                     directoryCard
@@ -22,7 +26,7 @@ struct CareView: View {
                 .readableColumn()
             }
             .background(Palette.plane)
-            .navigationTitle(loc.t("care.title"))
+            .columnAlignedTitle(loc.t("care.title"), isWide: sizeClass == .regular)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) { LanguageToggle() }
             }

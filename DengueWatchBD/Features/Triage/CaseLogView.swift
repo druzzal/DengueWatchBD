@@ -4,6 +4,7 @@ import Charts
 struct CaseLogView: View {
     @Environment(CaseLogStore.self) private var log
     @Environment(LocalizationManager.self) private var loc
+    @Environment(\.horizontalSizeClass) private var sizeClass
 
     @State private var showingClearConfirmation = false
 
@@ -74,6 +75,7 @@ struct CaseLogView: View {
             }
             .readableColumn()
             .navigationTitle(loc.t("log.title"))
+            .navigationBarTitleDisplayMode(sizeClass == .regular ? .inline : .large)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) { LanguageToggle() }
             }

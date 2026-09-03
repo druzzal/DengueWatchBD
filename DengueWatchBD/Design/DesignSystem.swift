@@ -50,7 +50,34 @@ enum Layout {
     static let readableWidth: CGFloat = 820
 }
 
+/// A screen heading drawn inside the content column.
+///
+/// `.navigationTitle` is rendered by the navigation bar, which always spans the
+/// full width. Once the content sits in a centred column that leaves the title
+/// stranded against the screen edge, out of line with everything beneath it.
+/// On regular width the bar title is dropped and the screen draws this instead,
+/// so heading and content share one left edge.
+struct ScreenTitle: View {
+    let text: String
+
+    var body: some View {
+        Text(text)
+            .typo(.hero)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityAddTraits(.isHeader)
+    }
+}
+
 extension View {
+    /// Keep the heading aligned with the column on wide screens.
+    ///
+    /// On compact width nothing changes: the system large title spans the same
+    /// width as the content and already lines up.
+    func columnAlignedTitle(_ title: String, isWide: Bool) -> some View {
+        navigationTitle(isWide ? "" : title)
+            .navigationBarTitleDisplayMode(isWide ? .inline : .large)
+    }
+
     /// Constrain content to a comfortable reading column and centre it.
     ///
     /// Applied to every scrolling screen. Without it the iPhone layout simply

@@ -43,6 +43,9 @@ struct DashboardView: View {
         NavigationStack {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: Space.section) {
+                    if sizeClass == .regular {
+                        ScreenTitle(text: loc.t("dash.title"))
+                    }
                     switch store.state {
                     case .idle, .loading:
                         loadingContent
@@ -73,7 +76,7 @@ struct DashboardView: View {
                 .padding(.bottom, Space.section)
             }
             .background(Palette.plane)
-            .navigationTitle(loc.t("dash.title"))
+            .columnAlignedTitle(loc.t("dash.title"), isWide: sizeClass == .regular)
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) { LanguageToggle() }

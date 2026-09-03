@@ -5,6 +5,7 @@ struct SymptomCheckerView: View {
     @Environment(CaseLogStore.self) private var log
     @Environment(Preferences.self) private var preferences
     @Environment(LocalizationManager.self) private var loc
+    @Environment(\.horizontalSizeClass) private var sizeClass
 
     @State private var selected: Set<String> = []
     @State private var context = TriageEngine.Context()
@@ -96,6 +97,7 @@ struct SymptomCheckerView: View {
             }
             .readableColumn()
             .navigationTitle(loc.t("check.title"))
+            .navigationBarTitleDisplayMode(sizeClass == .regular ? .inline : .large)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) { LanguageToggle() }
             }
