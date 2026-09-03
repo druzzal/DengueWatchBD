@@ -1,0 +1,18 @@
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcworkspace/xcuserdata/
+
+# Python / backend
+server/venv/
+server/.cache/
+server/.pytest_cache/
+server/__pycache__/
+server/**/__pycache__/
+*.pyc
+.env
+
+# macOS
+.DS_Store
