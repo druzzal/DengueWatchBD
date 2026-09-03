@@ -109,6 +109,7 @@ struct DistrictMapView: View {
                 }
             }
             .pickerStyle(.segmented)
+            .readableColumn()
             .padding(.horizontal, 16)
             .padding(.top, 8)
             .padding(.bottom, 8)
@@ -149,7 +150,10 @@ struct DistrictMapView: View {
             // An inset rather than an overlay: MapKit then frames the country in
             // the space the legend leaves, and keeps its attribution clear of it.
             .safeAreaInset(edge: .bottom, spacing: 0) {
-                legend.padding(.horizontal, 16).padding(.bottom, 8)
+                legend
+                    .readableColumn()
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 8)
             }
         }
     }
