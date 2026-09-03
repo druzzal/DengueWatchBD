@@ -11,6 +11,9 @@ on:
         description: "First day to include (YYYY-MM-DD). Defaults to 1 January."
         required: false
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
