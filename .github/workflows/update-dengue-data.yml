@@ -27,9 +27,10 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: server/requirements.txt
+          cache-dependency-path: server/requirements-dev.txt
 
-      - run: pip install -r requirements.txt
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
 
       # Downloaded PDFs are immutable once published, so caching them means a
       # daily run fetches one file rather than a season's worth.
@@ -44,9 +45,11 @@ jobs:
         run: python -m pytest tests/ -q
 
       - name: Build dataset
+        env:
+          START: ${{ github.event.inputs.start }}
         run: |
           python -m dghs.cli \
-            --start "${{ github.event.inputs.start || format('{0}-01-01', '2026') }}" \
+            --start "${START:-$(date -u +%Y)-01-01}" \
             --out ../public/surveillance.json
 
       # The CLI exits non-zero and writes nothing if any check fails, so

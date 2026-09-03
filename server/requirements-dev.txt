@@ -1,0 +1,5 @@
+# Test-only dependencies. Kept out of requirements.txt so a production install
+# does not pull the test runner — but CI must install both, which is exactly
+# what the first workflow run got wrong.
+-r requirements.txt
+pytest==8.4.2
