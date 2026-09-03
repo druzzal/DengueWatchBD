@@ -3,19 +3,23 @@ import Foundation
 enum AppConfig {
     /// Where daily surveillance data is fetched from.
     ///
-    /// Still `nil`, because this needs a host rather than more code. DGHS
-    /// publishes its daily dengue figures only as PDF press releases, so
-    /// `server/` in this repository parses them into the `SurveillancePayload`
-    /// shape and writes `surveillance.json`. Publish that file anywhere the app
-    /// can GET it, set this to its URL, and automatic updates start working —
-    /// conditional GET, on-disk caching and refresh-on-reconnect are already
-    /// built around it.
+    /// Served straight from the repository the daily job commits to. No API
+    /// server, no database and no credential: the workflow writes
+    /// `public/surveillance.json`, GitHub serves it, and the app fetches it
+    /// with a conditional GET so an unchanged file costs a 304 rather than a
+    /// download.
     ///
-    ///     static let surveillanceEndpoint = URL(string: "https://your-host/surveillance.json")
-    ///
-    /// A URL that quietly 404s would be worse than an honest gap, so this stays
-    /// nil until a real one exists.
-    static let surveillanceEndpoint: URL? = nil
+    /// Requires the repository to be public — raw.githubusercontent.com will
+    /// not serve a private repo without a token, and shipping a token inside
+    /// the app is exactly what we are avoiding.
+    static let surveillanceEndpoint = URL(
+        string: "https://raw.githubusercontent.com/druzzal/DengueWatchBD/main/public/surveillance.json"
+    )
+
+    /// Pipeline health, published beside the dataset.
+    static let statusEndpoint = URL(
+        string: "https://raw.githubusercontent.com/druzzal/DengueWatchBD/main/public/status.json"
+    )
 
     /// Don't re-fetch more often than this when the app comes back to the front.
     static let minimumSyncInterval: TimeInterval = 6 * 60 * 60
