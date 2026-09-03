@@ -16,14 +16,12 @@ enum AppConfig {
         string: "https://raw.githubusercontent.com/druzzal/DengueWatchBD/main/public/surveillance.json"
     )
 
-    /// Pipeline health, published beside the dataset.
-    static let statusEndpoint = URL(
-        string: "https://raw.githubusercontent.com/druzzal/DengueWatchBD/main/public/status.json"
-    )
-
     /// Don't re-fetch more often than this when the app comes back to the front.
     static let minimumSyncInterval: TimeInterval = 6 * 60 * 60
 
-    /// Treat data older than this as stale enough to warn about.
-    static let stalenessThreshold: TimeInterval = 48 * 60 * 60
+    /// Past this age the dashboard says so explicitly rather than presenting
+    /// old figures as current. DGHS publishes daily, so three days without a
+    /// newer report means something is wrong upstream or in the pipeline —
+    /// not simply a quiet day.
+    static let stalenessThreshold: TimeInterval = 3 * 24 * 60 * 60
 }

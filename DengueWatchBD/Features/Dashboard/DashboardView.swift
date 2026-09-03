@@ -161,7 +161,23 @@ struct DashboardView: View {
                 .buttonStyle(.plain)
             }
 
-            if let alert = activeAlert {
+            if store.isStale, let days = store.dataAgeInDays {
+            AlertCard(risk: .moderate,
+                      title: loc.t("stale.title"),
+                      message: loc.t("stale.message", loc.num(days)),
+                      actionTitle: loc.t("common.tryAgain"),
+                      action: {
+                          Task {
+                              await sync.sync(force: true)
+                              await store.reload()
+                          }
+                      })
+        }
+
+        // Only one advisory at a time, and staleness wins: a "cases are rising"
+        // claim derived from figures the app has just called out as days old
+        // would be asserting a trend it cannot stand behind.
+        if !store.isStale, let alert = activeAlert {
                 AlertCard(risk: alert.risk,
                           title: alert.title,
                           message: alert.message,

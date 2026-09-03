@@ -98,6 +98,19 @@ final class SurveillanceStore {
     // MARK: - National roll-ups
 
     var lastUpdated: Date? { dates.last }
+
+    /// How old the newest report is, in days.
+    var dataAgeInDays: Int? {
+        guard let lastUpdated else { return nil }
+        return Calendar.current.dateComponents([.day], from: lastUpdated, to: Date()).day
+    }
+
+    /// True when the figures are old enough that showing them without comment
+    /// would misrepresent them as current.
+    var isStale: Bool {
+        guard let lastUpdated else { return false }
+        return Date().timeIntervalSince(lastUpdated) > AppConfig.stalenessThreshold
+    }
     var latest: DailyPoint? { national.last }
 
     var seasonCases: Int { Series.sum(national.map(\.cases)) }
