@@ -367,3 +367,25 @@ def test_rejection_does_not_cascade():
     good = validate_daily(today, cases=120, deaths=1,
                           previous_cumulative=51_000, cumulative=51_120, today=today)
     assert good.ok
+
+
+def test_cross_check_skips_when_dates_differ():
+    """Regression from the first CI run.
+
+    The dashboard is as-of today; a day's press release lands the next morning.
+    Comparing their totals across different dates reported a 1,252-case
+    "dispute" that was just one extra day of dengue.
+    """
+    from dghs.crosscheck import cross_check
+    result = cross_check("2026-09-02", 39_532, 111, 38_280, 107,
+                         dashboard_date="2026-09-03")
+    assert result.verification_status == "not_comparable"
+    assert result.discrepancies == []
+
+
+def test_cross_check_still_catches_same_date_disagreement():
+    from dghs.crosscheck import cross_check
+    result = cross_check("2026-09-02", 38_000, 107, 38_280, 107,
+                         dashboard_date="2026-09-02")
+    assert result.verification_status == "disputed"
+    assert result.discrepancies[0].difference == -280

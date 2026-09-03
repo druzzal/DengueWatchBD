@@ -31,9 +31,14 @@ class CrossCheckResult:
     verified: bool
     checked: list[str] = field(default_factory=list)
     discrepancies: list[Discrepancy] = field(default_factory=list)
+    #: False when the two surfaces describe different dates, so no comparison
+    #: was possible. Distinct from a genuine disagreement.
+    comparable: bool = True
 
     @property
     def verification_status(self) -> str:
+        if not self.comparable:
+            return "not_comparable"
         if not self.checked:
             return "unverified"
         return "cross_checked" if self.verified else "disputed"
@@ -46,10 +51,28 @@ def cross_check(report_date: str,
                 dashboard_cases: int | None,
                 dashboard_deaths: int | None,
                 press_cases: int | None,
-                press_deaths: int | None) -> CrossCheckResult:
-    """Compare season totals from both surfaces."""
+                press_deaths: int | None,
+                dashboard_date: str | None = None) -> CrossCheckResult:
+    """Compare season totals from both surfaces, *for the same date*.
+
+    The two surfaces are almost never as-of the same day: the dashboard shows
+    today, while a day's press release is published the following morning, so a
+    build ending yesterday is compared against a dashboard already carrying
+    today. Comparing those totals is meaningless — the difference is elapsed
+    time, not disagreement.
+
+    The first CI run did exactly that and reported `disputed` for a 1,252-case
+    gap that was simply one extra day of dengue. When the dates differ the
+    result is `not_comparable`, which is honest, rather than a false alarm that
+    would fire almost daily and drown out a real discrepancy.
+    """
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
     result = CrossCheckResult(verified=True)
+
+    if dashboard_date is not None and dashboard_date != report_date:
+        result.verified = False
+        result.comparable = False
+        return result
 
     for metric, left, right in (("total_cases", dashboard_cases, press_cases),
                                 ("total_deaths", dashboard_deaths, press_deaths)):

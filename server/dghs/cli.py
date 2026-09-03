@@ -181,6 +181,8 @@ def main(argv: list[str] | None = None) -> int:
             dashboard_deaths=snapshot.national.total_deaths,
             press_cases=latest_report.national_cases,
             press_deaths=latest_report.national_deaths,
+            dashboard_date=(snapshot.national.report_date.isoformat()
+                            if snapshot.national.report_date else None),
         )
         run.verification_status = check.verification_status
         if check.discrepancies:
@@ -196,6 +198,10 @@ def main(argv: list[str] | None = None) -> int:
             for d in check.discrepancies:
                 LOG.warning("source disagreement on %s: dashboard %s vs press release %s",
                             d.metric, d.dashboard_value, d.press_release_value)
+        elif check.verification_status == "not_comparable":
+            LOG.info("cross-check: skipped — dashboard is as of %s, press "
+                     "releases run to %s",
+                     snapshot.national.report_date, latest_report.report_date)
         else:
             LOG.info("cross-check: both DGHS surfaces agree (%s)", check.verification_status)
     else:
