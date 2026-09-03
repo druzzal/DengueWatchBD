@@ -43,6 +43,13 @@ enum Hit {
     static let minimum: CGFloat = 44
 }
 
+enum Layout {
+    /// Cap on the content column. Beyond roughly this width a line of body text
+    /// becomes tiring to read and cards turn into mostly-empty rectangles, so
+    /// the extra space on iPad becomes margin rather than stretch.
+    static let readableWidth: CGFloat = 820
+}
+
 // MARK: - Surfaces
 
 extension View {

@@ -12,6 +12,7 @@ struct DashboardView: View {
     @Environment(LocationManager.self) private var location
     @Environment(AppRouter.self) private var router
     @Environment(\.dynamicTypeSize) private var typeSize
+    @Environment(\.horizontalSizeClass) private var sizeClass
 
     @State private var trendRange: TrendRange = .fortnight
     @State private var showingAbout = false
@@ -67,6 +68,12 @@ struct DashboardView: View {
                     }
                 }
                 .padding(.horizontal, Space.screen)
+                .padding(.bottom, Space.card)
+                // Beyond this the cards become mostly-empty rectangles and body
+                // text runs to a tiring measure, so extra iPad width becomes
+                // margin rather than stretch.
+                .frame(maxWidth: Layout.readableWidth)
+                .frame(maxWidth: .infinity)
                 .padding(.bottom, Space.section)
             }
             .background(Palette.plane)
@@ -249,11 +256,15 @@ struct DashboardView: View {
         }
     }
 
-    /// One column once text is large enough that two would crush the figures.
+    /// One column once text is large enough that two would crush the figures;
+    /// four across on a regular-width screen, where two leaves each card mostly
+    /// empty.
     private var statColumns: [GridItem] {
-        typeSize.isAccessibilitySize
-            ? [GridItem(.flexible(), spacing: Space.row)]
-            : [GridItem(.flexible(), spacing: Space.row), GridItem(.flexible(), spacing: Space.row)]
+        if typeSize.isAccessibilitySize {
+            return [GridItem(.flexible(), spacing: Space.row)]
+        }
+        let count = sizeClass == .regular ? 4 : 2
+        return Array(repeating: GridItem(.flexible(), spacing: Space.row), count: count)
     }
 
     // MARK: - Derived
