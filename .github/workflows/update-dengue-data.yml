@@ -1,10 +1,23 @@
 name: Update dengue data
 
-# DGHS publishes the previous day's press release each morning Dhaka time.
-# 03:00 UTC is 09:00 in Dhaka.
+# DGHS publishes the previous day's figures during the working day in Dhaka,
+# not first thing. A single 09:00 Dhaka run scraped a source that had not
+# updated yet, so the published payload sat a day behind more or less
+# permanently — the 5 Sep run found nothing newer than 3 Sep, while the same
+# parser against the same URL returned 4 Sep by midday.
+#
+# Two passes rather than one moved later, because the early figure is not
+# final: DGHS revises its numbers after publishing (the ingestion log counts
+# 15 downward revisions), and the day 4 Sep first appeared it read 512 against
+# a neighbouring average near 1,200. The afternoon pass catches the day; the
+# next morning's pass re-reads it, and RETRY_RECENT_DAYS = 3 lets a corrected
+# figure overwrite the provisional one.
+#
+# 03:00 UTC = 09:00 Dhaka. 12:00 UTC = 18:00 Dhaka.
 on:
   schedule:
     - cron: "0 3 * * *"
+    - cron: "0 12 * * *"
   workflow_dispatch:
     inputs:
       start:
