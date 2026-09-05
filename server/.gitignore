@@ -1,9 +1,0 @@
-.cache/
-venv/
-__pycache__/
-*.pyc
-surveillance.json
-.env
-.cache/
-venv/
-.pytest_cache/

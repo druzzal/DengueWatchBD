@@ -196,3 +196,21 @@ func dateAxis(_ style: NumberStyle, desiredCount: Int = 4) -> some AxisContent {
         }
     }
 }
+
+/// X axis for the weekly area charts.
+///
+/// A season runs to 52 categories, so every label would collide. Showing every
+/// fourth keeps roughly monthly gridposts, which is what a reader scans for.
+func weekAxis(every stride: Int = 4) -> some AxisContent {
+    AxisMarks { value in
+        if let week = value.as(String.self),
+           let number = Int(week.dropFirst()),
+           number % stride == 0 {
+            AxisValueLabel {
+                Text(week)
+                    .typoStatic(.micro)
+                    .foregroundStyle(Palette.mutedInk)
+            }
+        }
+    }
+}

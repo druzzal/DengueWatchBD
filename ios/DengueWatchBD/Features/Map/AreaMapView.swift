@@ -7,16 +7,16 @@ enum MapMetric: String, CaseIterable, Identifiable {
     var labelKey: String { "map.metric.\(rawValue)" }
     var explanationKey: String { "map.explain.\(rawValue)" }
 
-    func value(for district: District) -> Double {
+    func value(for area: Area) -> Double {
         switch self {
-        case .total: Double(district.seasonCases)
-        case .rate: district.incidencePer100k
+        case .total: Double(area.seasonCases)
+        case .rate: area.incidencePer100k
         }
     }
 }
 
-struct DistrictMapView: View {
-    @Environment(SurveillanceStore.self) private var store
+struct AreaMapView: View {
+    @Environment(DengueStore.self) private var store
     @Environment(LocalizationManager.self) private var loc
     @Environment(LocationManager.self) private var location
     @Environment(Preferences.self) private var preferences
@@ -25,16 +25,16 @@ struct DistrictMapView: View {
     @State private var searchText = ""
     @State private var showingLocationExplainer = false
     @State private var camera: MapCameraPosition = .region(.bangladesh)
-    @State private var selectedDistrict: District?
-    @State private var pushedDistrict: District?
+    @State private var selectedArea: Area?
+    @State private var pushedArea: Area?
 
     private var maxValue: Double {
-        max(store.districts.map { metric.value(for: $0) }.max() ?? 1, 1)
+        max(store.areas.map { metric.value(for: $0) }.max() ?? 1, 1)
     }
 
-    private var filtered: [District] {
-        guard !searchText.isEmpty else { return store.districtsByCases }
-        return store.districtsByCases.filter {
+    private var filtered: [Area] {
+        guard !searchText.isEmpty else { return store.areasByCases }
+        return store.areasByCases.filter {
             $0.name.localizedCaseInsensitiveContains(searchText)
                 || $0.displayName(loc.language).localizedCaseInsensitiveContains(searchText)
                 || $0.division.rawValue.localizedCaseInsensitiveContains(searchText)
@@ -51,12 +51,12 @@ struct DistrictMapView: View {
                     ErrorStateView(title: loc.t("dash.error.title"),
                                    message: loc.t("dash.error.message"),
                                    retry: { Task { await store.reload() } })
-                case .loaded where store.districts.isEmpty:
+                case .loaded where store.areas.isEmpty:
                     EmptyStateView(symbol: "map",
                                    title: loc.t("map.state.emptyTitle"),
                                    message: loc.t("map.state.emptyMessage"))
                 case .loaded:
-                    if showsList { districtList } else { officialMap }
+                    if showsList { areaList } else { officialMap }
                 }
             }
             .background(Palette.plane)
@@ -71,21 +71,21 @@ struct DistrictMapView: View {
                     .accessibilityLabel(loc.t(showsList ? "map.showMap" : "map.showList"))
                 }
             }
-            .navigationDestination(for: District.self) { DistrictDetailView(district: $0) }
+            .navigationDestination(for: Area.self) { AreaDetailView(area: $0) }
             .sheet(isPresented: $showingLocationExplainer) {
                 LocationPermissionSheet {
                     location.requestWhenInUse()
                     location.startUpdatingCoarse()
                 }
             }
-            .sheet(item: $selectedDistrict) { district in
-                AreaRiskSheet(district: district, lastUpdated: store.lastUpdated) { chosen in
-                    pushedDistrict = chosen
+            .sheet(item: $selectedArea) { area in
+                AreaRiskSheet(area: area, lastUpdated: store.lastUpdated) { chosen in
+                    pushedArea = chosen
                 }
                 .environment(loc)
                 .environment(preferences)
             }
-            .navigationDestination(item: $pushedDistrict) { DistrictDetailView(district: $0) }
+            .navigationDestination(item: $pushedArea) { AreaDetailView(area: $0) }
         }
     }
 
@@ -115,16 +115,16 @@ struct DistrictMapView: View {
             .padding(.bottom, 8)
 
             Map(position: $camera, interactionModes: [.pan, .zoom]) {
-                ForEach(store.districts) { district in
-                    Annotation(district.displayName(loc.language),
-                               coordinate: CLLocationCoordinate2D(latitude: district.latitude,
-                                                                  longitude: district.longitude),
+                ForEach(store.areas) { area in
+                    Annotation(area.displayName(loc.language),
+                               coordinate: CLLocationCoordinate2D(latitude: area.latitude,
+                                                                  longitude: area.longitude),
                                anchor: .center) {
                         Button {
                             Haptic.selection()
-                            selectedDistrict = district
+                            selectedArea = area
                         } label: {
-                            bubble(for: district)
+                            bubble(for: area)
                         }
                         .buttonStyle(.plain)
                     }
@@ -152,7 +152,7 @@ struct DistrictMapView: View {
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 VStack(spacing: 0) {
                     legend
-                    // Under the map, not over it, so it never covers a district.
+                    // Under the map, not over it, so it never covers a area.
                     MapAsOfFooter()
                 }
                 .readableColumn()
@@ -163,30 +163,30 @@ struct DistrictMapView: View {
     }
 
     /// Area-proportional, so a circle twice as wide means four times the value.
-    private func radius(for district: District) -> CGFloat {
-        5 + 22 * sqrt(max(metric.value(for: district) / maxValue, 0))
+    private func radius(for area: Area) -> CGFloat {
+        5 + 22 * sqrt(max(metric.value(for: area) / maxValue, 0))
     }
 
-    private func bubble(for district: District) -> some View {
-        let size = radius(for: district) * 2
+    private func bubble(for area: Area) -> some View {
+        let size = radius(for: area) * 2
         // The mark stays proportional to the data, but the tap area never
-        // drops below Apple's 44pt minimum — a low-case district was a 10pt
+        // drops below Apple's 44pt minimum — a low-case area was a 10pt
         // target before, effectively unreachable.
         return Circle()
-            .fill(district.risk.tint.opacity(0.75))
+            .fill(area.risk.tint.opacity(0.75))
             .overlay(Circle().strokeBorder(Palette.card, lineWidth: 2))
             .shadow(color: .black.opacity(0.12), radius: 2, y: 1)
             .frame(width: size, height: size)
             .frame(width: max(size, Hit.minimum), height: max(size, Hit.minimum))
             .contentShape(Circle())
-            .accessibilityLabel(loc.t("map.bubble.a11y", district.displayName(loc.language),
-                                      loc.num(district.seasonCases),
-                                      loc.t(district.risk.labelKey)))
+            .accessibilityLabel(loc.t("map.bubble.a11y", area.displayName(loc.language),
+                                      loc.num(area.seasonCases),
+                                      loc.t(area.risk.labelKey)))
     }
 
-    /// Which district the user is standing in, if a fix has come through.
-    private var currentDistrict: District? {
-        location.lastKnownLocation.flatMap { store.nearestDistrict(to: $0) }
+    /// Which area the user is standing in, if a fix has come through.
+    private var currentArea: Area? {
+        location.lastKnownLocation.flatMap { store.nearestArea(to: $0) }
     }
 
     /// Zoom to roughly a city around the user.
@@ -201,13 +201,13 @@ struct DistrictMapView: View {
 
     @ViewBuilder
     private var youAreHereRow: some View {
-        if let currentDistrict {
+        if let currentArea {
             HStack(spacing: 8) {
                 Button(action: zoomToUser) {
                     HStack(spacing: 7) {
                         Image(systemName: "location.fill")
                             .font(.system(size: 10, weight: .semibold))
-                        Text(loc.t("map.you.inDistrict", currentDistrict.displayName(loc.language)))
+                        Text(loc.t("map.you.inArea", currentArea.displayName(loc.language)))
                             .typo(.caption)
                             .fontWeight(.medium)
                             .lineLimit(1)
@@ -234,7 +234,7 @@ struct DistrictMapView: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel(loc.t("map.you.wholeCountry"))
 
-                RiskBadge(risk: currentDistrict.risk, compact: true)
+                RiskBadge(risk: currentArea.risk, compact: true)
             }
             Divider().overlay(Palette.hairline)
         } else if location.lastKnownLocation != nil {
@@ -274,11 +274,11 @@ struct DistrictMapView: View {
         }
     }
 
-    /// Shown when the user is in a high-risk district and has not yet enabled
+    /// Shown when the user is in a high-risk area and has not yet enabled
     /// the crossing-into-a-high-risk-area warning.
     @ViewBuilder
     private var geofencePrompt: some View {
-        if let district = currentDistrict, district.risk >= .high {
+        if let area = currentArea, area.risk >= .high {
             if preferences.geofenceAlertsEnabled {
                 HStack(spacing: Space.hair + 2) {
                     Image(systemName: "bell.badge.fill")
@@ -321,7 +321,7 @@ struct DistrictMapView: View {
         Task {
             await NotificationManager.shared.requestAuthorization()
             location.requestAlways()
-            location.monitorHighRiskDistricts(store.hotspots)
+            location.monitorHighRiskAreas(store.hotspots)
         }
     }
 
@@ -342,7 +342,7 @@ struct DistrictMapView: View {
 
     // MARK: - List (also the accessible and offline path)
 
-    private var districtList: some View {
+    private var areaList: some View {
         List {
             Section(loc.t("map.list.divisions")) {
                 ForEach(store.divisionSummaries) { summary in
@@ -356,13 +356,13 @@ struct DistrictMapView: View {
             }
 
             Section {
-                ForEach(filtered) { district in
-                    NavigationLink(value: district) {
-                        DistrictRow(district: district, peak: store.peakDistrictCases)
+                ForEach(filtered) { area in
+                    NavigationLink(value: area) {
+                        AreaRow(area: area, peak: store.peakAreaCases)
                     }
                 }
             } header: {
-                Text(loc.t("map.list.districts"))
+                Text(loc.t("map.list.areas"))
             } footer: {
                 Text(loc.t("map.list.footer"))
             }
@@ -373,20 +373,20 @@ struct DistrictMapView: View {
     }
 }
 
-struct DistrictRow: View {
+struct AreaRow: View {
     @Environment(LocalizationManager.self) private var loc
-    let district: District
+    let area: Area
     let peak: Int
 
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
             HStack(spacing: 8) {
-                Text(district.displayName(loc.language)).typo(.subheadline)
-                Text(district.division.displayName(loc.language))
+                Text(area.displayName(loc.language)).typo(.subheadline)
+                Text(area.division.displayName(loc.language))
                     .typo(.micro).foregroundStyle(.secondary)
                 Spacer(minLength: 6)
-                Text(loc.num(district.seasonCases)).typo(.subheadline).monospacedDigit()
-                RiskBadge(risk: district.risk, compact: true)
+                Text(loc.num(area.seasonCases)).typo(.subheadline).monospacedDigit()
+                RiskBadge(risk: area.risk, compact: true)
             }
             // One measure, one hue: bar length is the season total for every row.
             GeometryReader { geometry in
@@ -394,7 +394,7 @@ struct DistrictRow: View {
                     Capsule().fill(Palette.grid).frame(height: 4)
                     Capsule()
                         .fill(Palette.cases)
-                        .frame(width: max(2, geometry.size.width * CGFloat(district.seasonCases) / CGFloat(max(peak, 1))),
+                        .frame(width: max(2, geometry.size.width * CGFloat(area.seasonCases) / CGFloat(max(peak, 1))),
                                height: 4)
                 }
             }

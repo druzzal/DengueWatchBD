@@ -5,7 +5,7 @@ import Observation
 /// The single owner of CoreLocation in the app.
 ///
 /// Two jobs, deliberately kept apart:
-///   1. region monitoring for high-risk districts,
+///   1. region monitoring for high-risk areas,
 ///   2. a coarse "where am I" for the nearby-hospital search.
 ///
 /// Nothing here uploads a coordinate. Everything is evaluated on the device.
@@ -14,9 +14,9 @@ import Observation
 final class LocationManager: NSObject {
     private(set) var authorization: CLAuthorizationStatus
     private(set) var lastKnownLocation: CLLocation?
-    private(set) var monitoredDistrictCodes: Set<String> = []
+    private(set) var monitoredAreaCodes: Set<String> = []
 
-    /// Called when the device enters a monitored high-risk district.
+    /// Called when the device enters a monitored high-risk area.
     var onRegionEntry: ((String) -> Void)?
 
     private let manager = CLLocationManager()
@@ -55,29 +55,29 @@ final class LocationManager: NSObject {
         manager.stopUpdatingLocation()
     }
 
-    // MARK: - High-risk district geofences
+    // MARK: - High-risk area geofences
 
-    /// iOS allows 20 monitored regions per app, so only the worst districts are
-    /// watched — sorted by incidence, which is what `districts` should already be.
-    func monitorHighRiskDistricts(_ districts: [District]) {
+    /// iOS allows 20 monitored regions per app, so only the worst areas are
+    /// watched — sorted by incidence, which is what `areas` should already be.
+    func monitorHighRiskAreas(_ areas: [Area]) {
         stopMonitoringAll()
         guard hasBackgroundAuthorization else { return }
         guard CLLocationManager.isMonitoringAvailable(for: CLCircularRegion.self) else { return }
 
-        for district in districts.prefix(20) {
+        for area in areas.prefix(20) {
             let region = CLCircularRegion(
-                center: CLLocationCoordinate2D(latitude: district.latitude,
-                                               longitude: district.longitude),
-                // Districts are not circles; this is a deliberate approximation
-                // around the district centre, wide enough to catch arrival in
+                center: CLLocationCoordinate2D(latitude: area.latitude,
+                                               longitude: area.longitude),
+                // Areas are not circles; this is a deliberate approximation
+                // around the area centre, wide enough to catch arrival in
                 // the populated core without covering neighbours entirely.
                 radius: 18_000,
-                identifier: district.code
+                identifier: area.code
             )
             region.notifyOnEntry = true
             region.notifyOnExit = false
             manager.startMonitoring(for: region)
-            monitoredDistrictCodes.insert(district.code)
+            monitoredAreaCodes.insert(area.code)
         }
     }
 
@@ -85,7 +85,7 @@ final class LocationManager: NSObject {
         for region in manager.monitoredRegions {
             manager.stopMonitoring(for: region)
         }
-        monitoredDistrictCodes.removeAll()
+        monitoredAreaCodes.removeAll()
     }
 }
 

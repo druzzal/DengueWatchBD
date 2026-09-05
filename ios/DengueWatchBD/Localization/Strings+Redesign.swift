@@ -19,12 +19,12 @@ extension Strings {
         "risk.detail.band.3": "Above 60 per 100,000",
 
         "area.nationwide": "Bangladesh",
-        "area.chooseHint": "Choose your district for a local reading",
+        "area.chooseHint": "Choose your area for a local reading",
 
         "activity.title": "Dengue activity",
         "activity.subtitle": "Nationwide, this season",
         "activity.thisWeek": "Cases this week",
-        "activity.hotspots": "High-risk districts",
+        "activity.hotspots": "High-risk areas",
         "activity.hotspotsCaption": "of 64",
         "activity.since": "since %@",
         "risk.a11y.rate": "%@ cases per 100,000 over 14 days",
@@ -33,20 +33,18 @@ extension Strings {
         "stale.title": "These figures may be out of date",
         "stale.message": "The newest DGHS report we have is %@ days old. DGHS publishes daily, so an update is probably not reaching the app.",
         "outdated.title": "These figures are too old to rely on",
-        "breakdown.trails": "District figures are as of %@. The national totals above are newer, from the DGHS dashboard.",
-        "split.headline.note": "Newer national figure, from the %@.",
         "map.asOf": "Map data current as of %@.",
         "outdated.message": "The newest DGHS report we have is %@ days old. Treat these numbers as history, not as the current situation.",
         "stale.checkFailed": "Today's check of the DGHS source did not succeed, so this is the last data we were able to get.",
         "locperm.title": "Show dengue risk around you",
         "locperm.body": "DengueWatch uses your location to show the risk where you actually are.",
-        "locperm.reason1": "See which district you are in and its current risk band.",
+        "locperm.reason1": "See which area you are in and its current risk band.",
         "locperm.reason2": "Find the nearest hospitals when you need care.",
         "locperm.reason3": "Your location is checked on this phone and never uploaded.",
         "locperm.allow": "Use my location",
         "locperm.notNow": "Not now",
         "geo.prompt.title": "Warn me when I enter a high-risk area",
-        "geo.prompt.body": "Get a notification if you travel into a district with high dengue transmission.",
+        "geo.prompt.body": "Get a notification if you travel into an area with high dengue transmission.",
         "geo.prompt.enable": "Turn on",
         "geo.prompt.enabled": "Alerts on for high-risk areas",
 
@@ -58,7 +56,7 @@ extension Strings {
         "trend.range.month": "30D",
 
         "map.section": "Where it is spreading",
-        "map.preview.a11y": "Map preview showing the highest-risk districts. Opens the full risk map.",
+        "map.preview.a11y": "Map preview showing the highest-risk areas. Opens the full risk map.",
 
         "guidance.title": "What you can do",
         "guidance.check": "Check symptoms",
@@ -78,20 +76,20 @@ extension Strings {
         "common.viewAll": "View all",
 
         "map.state.loading": "Loading the risk map…",
-        "map.state.emptyTitle": "No district data yet",
+        "map.state.emptyTitle": "No area data yet",
         "map.state.emptyMessage": "Dengue figures for this season have not been published yet. They appear here as soon as they are.",
         "map.area.recentCases": "Cases in the last 7 days",
         "map.area.seasonCases": "Cases this season",
         "map.area.rate": "14-day rate",
-        "map.area.viewDetail": "See full district page",
-        "map.area.setHome": "Use as my district",
+        "map.area.viewDetail": "See full area page",
+        "map.area.setHome": "Use as my area",
 
         "location.why.title": "Show risk where you are",
         "location.why.message": "DengueWatch uses your location to show the dengue risk around you and to find hospitals nearby. Your location stays on this phone.",
         "location.why.allow": "Allow location",
-        "location.why.manual": "Choose a district instead",
+        "location.why.manual": "Choose an area instead",
         "location.denied.title": "Location is off",
-        "location.denied.message": "You can still use DengueWatch by choosing your district manually.",
+        "location.denied.message": "You can still use DengueWatch by choosing your area manually.",
     ]
 
     static let bnRedesign: [String: String] = [
@@ -112,12 +110,12 @@ extension Strings {
         "risk.detail.band.3": "প্রতি লাখে ৬০-এর বেশি",
 
         "area.nationwide": "বাংলাদেশ",
-        "area.chooseHint": "নিজের এলাকার তথ্য পেতে জেলা বাছুন",
+        "area.chooseHint": "নিজের এলাকার তথ্য পেতে এলাকা বাছুন",
 
         "activity.title": "ডেঙ্গু পরিস্থিতি",
         "activity.subtitle": "সারা দেশে, এ মৌসুমে",
         "activity.thisWeek": "এ সপ্তাহে রোগী",
-        "activity.hotspots": "উচ্চঝুঁকির জেলা",
+        "activity.hotspots": "উচ্চঝুঁকির এলাকা",
         "activity.hotspotsCaption": "৬৪টির মধ্যে",
         "activity.since": "%@ থেকে",
         "risk.a11y.rate": "১৪ দিনে প্রতি লাখে %@ জন",
@@ -126,20 +124,18 @@ extension Strings {
         "stale.title": "এই সংখ্যা পুরনো হতে পারে",
         "stale.message": "আমাদের কাছে থাকা সর্বশেষ স্বাস্থ্য অধিদপ্তরের প্রতিবেদন %@ দিনের পুরনো। প্রতিদিন প্রতিবেদন প্রকাশিত হয়, তাই সম্ভবত হালনাগাদ অ্যাপে পৌঁছাচ্ছে না।",
         "outdated.title": "এই সংখ্যা এতটাই পুরনো যে ভরসা করা যায় না",
-        "breakdown.trails": "জেলাভিত্তিক তথ্য %@ পর্যন্ত। উপরের জাতীয় সংখ্যা এর চেয়ে নতুন, স্বাস্থ্য অধিদপ্তরের ড্যাশবোর্ড থেকে নেওয়া।",
-        "split.headline.note": "নতুন জাতীয় সংখ্যা, %@ থেকে।",
         "map.asOf": "মানচিত্রের তথ্য %@ পর্যন্ত হালনাগাদ।",
         "outdated.message": "আমাদের কাছে থাকা সর্বশেষ স্বাস্থ্য অধিদপ্তরের প্রতিবেদন %@ দিনের পুরনো। এগুলোকে বর্তমান পরিস্থিতি নয়, অতীতের তথ্য হিসেবে দেখুন।",
         "stale.checkFailed": "আজ স্বাস্থ্য অধিদপ্তরের উৎস যাচাই করা যায়নি, তাই এটাই আমাদের পাওয়া সর্বশেষ তথ্য।",
         "locperm.title": "আপনার আশপাশের ডেঙ্গু ঝুঁকি দেখুন",
         "locperm.body": "আপনি আসলে যেখানে আছেন সেখানকার ঝুঁকি দেখাতে ডেঙ্গুওয়াচ আপনার অবস্থান ব্যবহার করে।",
-        "locperm.reason1": "আপনি কোন জেলায় আছেন এবং সেখানকার ঝুঁকি কত তা দেখুন।",
+        "locperm.reason1": "আপনি কোন এলাকায় আছেন এবং সেখানকার ঝুঁকি কত তা দেখুন।",
         "locperm.reason2": "প্রয়োজনের সময় নিকটতম হাসপাতাল খুঁজুন।",
         "locperm.reason3": "আপনার অবস্থান এই ফোনেই যাচাই হয়, কোথাও পাঠানো হয় না।",
         "locperm.allow": "আমার অবস্থান ব্যবহার করুন",
         "locperm.notNow": "এখন নয়",
         "geo.prompt.title": "উচ্চঝুঁকির এলাকায় ঢুকলে সতর্ক করুন",
-        "geo.prompt.body": "উচ্চ ডেঙ্গু সংক্রমণের জেলায় গেলে নোটিফিকেশন পাবেন।",
+        "geo.prompt.body": "উচ্চ ডেঙ্গু সংক্রমণের এলাকায় গেলে নোটিফিকেশন পাবেন।",
         "geo.prompt.enable": "চালু করুন",
         "geo.prompt.enabled": "উচ্চঝুঁকির এলাকার সতর্কবার্তা চালু আছে",
 
@@ -151,7 +147,7 @@ extension Strings {
         "trend.range.month": "৩০ দিন",
 
         "map.section": "কোথায় ছড়াচ্ছে",
-        "map.preview.a11y": "সর্বোচ্চ ঝুঁকির জেলাগুলোর মানচিত্রের সংক্ষিপ্ত রূপ। পূর্ণ ঝুঁকির মানচিত্র খোলে।",
+        "map.preview.a11y": "সর্বোচ্চ ঝুঁকির এলাকাগুলোর মানচিত্রের সংক্ষিপ্ত রূপ। পূর্ণ ঝুঁকির মানচিত্র খোলে।",
 
         "guidance.title": "আপনি যা করতে পারেন",
         "guidance.check": "উপসর্গ দেখুন",
@@ -160,7 +156,7 @@ extension Strings {
 
         "alert.viewMap": "ঝুঁকির মানচিত্র দেখুন",
         "alert.highArea.title": "উচ্চঝুঁকির এলাকা",
-        "alert.highArea.message": "%@ জেলায় ডেঙ্গুর প্রকোপ বেশি। মশা প্রতিরোধক ব্যবহার করুন, দিনের বেলা শরীর ঢেকে রাখুন এবং যেকোনো জ্বরকে ডেঙ্গু ধরে নিন।",
+        "alert.highArea.message": "%@ এলাকায় ডেঙ্গুর প্রকোপ বেশি। মশা প্রতিরোধক ব্যবহার করুন, দিনের বেলা শরীর ঢেকে রাখুন এবং যেকোনো জ্বরকে ডেঙ্গু ধরে নিন।",
         "alert.rising.title": "রোগীর সংখ্যা বাড়ছে",
         "alert.rising.message": "সারা দেশে গত সপ্তাহের তুলনায় শনাক্ত রোগী %@ বেড়েছে।",
 
@@ -171,19 +167,19 @@ extension Strings {
         "common.viewAll": "সব দেখুন",
 
         "map.state.loading": "ঝুঁকির মানচিত্র লোড হচ্ছে…",
-        "map.state.emptyTitle": "এখনো জেলাভিত্তিক তথ্য নেই",
+        "map.state.emptyTitle": "এখনো এলাকাভিত্তিক তথ্য নেই",
         "map.state.emptyMessage": "এ মৌসুমের ডেঙ্গুর হিসাব এখনো প্রকাশিত হয়নি। প্রকাশিত হলেই এখানে দেখা যাবে।",
         "map.area.recentCases": "গত ৭ দিনে রোগী",
         "map.area.seasonCases": "এ মৌসুমে রোগী",
         "map.area.rate": "১৪ দিনের হার",
-        "map.area.viewDetail": "জেলার পূর্ণ তথ্য দেখুন",
-        "map.area.setHome": "আমার জেলা হিসেবে নিন",
+        "map.area.viewDetail": "এলাকার পূর্ণ তথ্য দেখুন",
+        "map.area.setHome": "আমার এলাকা হিসেবে নিন",
 
         "location.why.title": "আপনি যেখানে আছেন সেখানকার ঝুঁকি দেখুন",
         "location.why.message": "আপনার আশপাশের ডেঙ্গু ঝুঁকি দেখাতে এবং কাছাকাছি হাসপাতাল খুঁজতে ডেঙ্গুওয়াচ আপনার অবস্থান ব্যবহার করে। আপনার অবস্থান এই ফোনেই থাকে।",
         "location.why.allow": "অবস্থানের অনুমতি দিন",
-        "location.why.manual": "বরং জেলা বাছাই করুন",
+        "location.why.manual": "বরং এলাকা বাছাই করুন",
         "location.denied.title": "অবস্থান বন্ধ আছে",
-        "location.denied.message": "জেলা নিজে বাছাই করেও আপনি ডেঙ্গুওয়াচ ব্যবহার করতে পারবেন।",
+        "location.denied.message": "এলাকা নিজে বাছাই করেও আপনি ডেঙ্গুওয়াচ ব্যবহার করতে পারবেন।",
     ]
 }

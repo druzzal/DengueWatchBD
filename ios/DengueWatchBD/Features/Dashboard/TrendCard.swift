@@ -3,7 +3,7 @@ import Charts
 
 /// The windows offered on the home trend chart. Short by design — the home
 /// screen answers "what is happening now", and the long season view lives on
-/// the district detail screen.
+/// the area detail screen.
 enum TrendRange: String, CaseIterable, Identifiable {
     case week, fortnight, month
 

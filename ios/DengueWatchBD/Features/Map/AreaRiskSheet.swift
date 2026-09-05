@@ -1,17 +1,17 @@
 import SwiftUI
 
-/// What a tapped district shows before the user commits to the full page:
+/// What a tapped area shows before the user commits to the full page:
 /// where, how bad, which way it is moving, how fresh, and from whom.
 struct AreaRiskSheet: View {
     @Environment(LocalizationManager.self) private var loc
     @Environment(Preferences.self) private var preferences
     @Environment(\.dismiss) private var dismiss
 
-    let district: District
+    let area: Area
     let lastUpdated: Date?
-    var onOpenDetail: (District) -> Void
+    var onOpenDetail: (Area) -> Void
 
-    private var isHome: Bool { preferences.homeDistrictCode == district.code }
+    private var isHome: Bool { preferences.homeAreaCode == area.code }
 
     var body: some View {
         NavigationStack {
@@ -20,20 +20,20 @@ struct AreaRiskSheet: View {
                     header
 
                     HStack(spacing: Space.row) {
-                        MiniStat(value: loc.num(district.last7Cases),
+                        MiniStat(value: loc.num(area.lastWeekCases),
                                  label: loc.t("map.area.recentCases"),
                                  accent: Palette.cases)
-                        MiniStat(value: loc.decimal(district.incidencePer100k),
+                        MiniStat(value: loc.decimal(area.incidencePer100k),
                                  label: loc.t("map.area.rate"),
-                                 accent: district.risk.tint)
-                        MiniStat(value: loc.compact(district.seasonCases),
+                                 accent: area.risk.tint)
+                        MiniStat(value: loc.compact(area.seasonCases),
                                  label: loc.t("map.area.seasonCases"),
                                  accent: Palette.cases)
                     }
 
                     Card {
                         VStack(alignment: .leading, spacing: Space.row) {
-                            Text(loc.t(district.risk.guidanceKey))
+                            Text(loc.t(area.risk.guidanceKey))
                                 .typo(.callout)
                                 .fixedSize(horizontal: false, vertical: true)
                             Divider().overlay(Palette.hairline)
@@ -53,14 +53,14 @@ struct AreaRiskSheet: View {
                         PrimaryActionButton(title: loc.t("map.area.viewDetail"),
                                             systemImage: "chart.xyaxis.line") {
                             dismiss()
-                            onOpenDetail(district)
+                            onOpenDetail(area)
                         }
                         SecondaryActionButton(
-                            title: loc.t(isHome ? "district.isHome" : "map.area.setHome"),
+                            title: loc.t(isHome ? "area.isHome" : "map.area.setHome"),
                             systemImage: isHome ? "checkmark.circle.fill" : "mappin.and.ellipse",
                             tint: isHome ? Palette.downIsGood : Palette.accent
                         ) {
-                            preferences.homeDistrictCode = isHome ? nil : district.code
+                            preferences.homeAreaCode = isHome ? nil : area.code
                             Haptic.success()
                         }
                     }
@@ -82,20 +82,20 @@ struct AreaRiskSheet: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: Space.tight) {
-            Text(district.displayName(loc.language))
+            Text(area.displayName(loc.language))
                 .typo(.title)
-            Text(loc.t("district.division", district.division.displayName(loc.language)))
+            Text(loc.t("area.division", area.division.displayName(loc.language)))
                 .typo(.subheadline)
                 .foregroundStyle(.secondary)
 
             HStack(spacing: Space.tight) {
-                RiskBadge(risk: district.risk)
-                TrendIndicator(change: district.weeklyChange)
+                RiskBadge(risk: area.risk)
+                TrendIndicator(change: area.weeklyChange)
                 Spacer(minLength: 0)
             }
             .padding(.top, Space.hair)
 
-            RiskMeter(risk: district.risk)
+            RiskMeter(risk: area.risk)
                 .padding(.top, Space.hair)
         }
     }

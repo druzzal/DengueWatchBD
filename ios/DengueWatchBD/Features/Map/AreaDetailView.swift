@@ -1,27 +1,30 @@
 import SwiftUI
 import Charts
 
-struct DistrictDetailView: View {
-    let district: District
+struct AreaDetailView: View {
+    let area: Area
 
-    @Environment(SurveillanceStore.self) private var store
+    @Environment(DengueStore.self) private var store
     @Environment(Preferences.self) private var preferences
     @Environment(LocalizationManager.self) private var loc
-    @State private var range: TimeRange = .quarter
+    private var isHome: Bool { preferences.homeAreaCode == area.code }
 
-    private var isHome: Bool { preferences.homeDistrictCode == district.code }
-    private var series: [DailyPoint] { Array(district.daily.suffix(range.days)) }
+    /// DGHS publishes area figures by epidemiological week, not by day, so this
+    /// chart is weekly where the national one is daily.
+    private var weekly: [EpiWeekPoint] {
+        zip(store.epiWeeks, area.weeklyCases).map(EpiWeekPoint.init)
+    }
 
-    private var average: [(date: Date, value: Double)] {
-        let smoothed = Series.movingAverage(district.daily.map(\.cases), window: 7)
-        return Array(zip(series.map(\.date), smoothed.suffix(series.count)))
+    /// Three-week trailing mean, to steady the week-to-week reporting jitter.
+    private var average: [(week: String, value: Double)] {
+        Array(zip(store.epiWeeks, Series.movingAverage(area.weeklyCases, window: 3)))
     }
 
     private var shareOfNational: Double {
-        store.seasonCases > 0 ? Double(district.seasonCases) / Double(store.seasonCases) * 100 : 0
+        store.seasonCases > 0 ? Double(area.seasonCases) / Double(store.seasonCases) * 100 : 0
     }
 
-    private var rank: Int? { store.districtsByCases.firstIndex(of: district).map { $0 + 1 } }
+    private var rank: Int? { store.areasByCases.firstIndex(of: area).map { $0 + 1 } }
 
     var body: some View {
         ScrollView {
@@ -30,45 +33,43 @@ struct DistrictDetailView: View {
 
                 LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)],
                           spacing: 12) {
-                    StatCard(label: loc.t("district.stat.season"),
-                             value: loc.compact(district.seasonCases),
-                             change: district.weeklyChange,
+                    StatCard(label: loc.t("area.stat.season"),
+                             value: loc.compact(area.seasonCases),
+                             change: area.weeklyChange,
                              caption: loc.t("dash.stat.vsLastWeek"),
                              accent: Palette.cases,
-                             series: district.recent(30).map { Double($0.cases) })
-                    StatCard(label: loc.t("district.stat.last7"),
-                             value: loc.num(district.last7Cases),
-                             caption: rank.map { loc.t("district.rank", loc.num($0)) },
+                             series: area.recentWeeks(12).map(Double.init))
+                    StatCard(label: loc.t("area.stat.last7"),
+                             value: loc.num(area.lastWeekCases),
+                             caption: rank.map { loc.t("area.rank", loc.num($0)) },
                              accent: Palette.cases)
-                    StatCard(label: loc.t("district.stat.rate"),
-                             value: loc.decimal(district.incidencePer100k),
+                    StatCard(label: loc.t("area.stat.rate"),
+                             value: loc.decimal(area.incidencePer100k),
                              unit: loc.t("common.per100k"),
-                             caption: loc.t("district.riskBand", loc.t(district.risk.labelKey)),
+                             caption: loc.t("area.riskBand", loc.t(area.risk.labelKey)),
                              accent: Palette.deaths)
-                    StatCard(label: loc.t("district.stat.deaths"),
-                             value: loc.num(district.seasonDeaths),
-                             caption: loc.t("district.share", loc.decimal(shareOfNational)),
+                    StatCard(label: loc.t("area.stat.deaths"),
+                             value: loc.num(area.seasonDeaths),
+                             caption: loc.t("area.share", loc.decimal(shareOfNational)),
                              accent: Palette.deaths)
                 }
 
-                CardSection(loc.t("district.chart.title", district.displayName(loc.language)),
-                            subtitle: loc.t("district.chart.subtitle"),
-                            accessory: AnyView(RangePicker(range: $range))) {
+                CardSection(loc.t("area.chart.title", area.displayName(loc.language)),
+                            subtitle: loc.t("area.chart.subtitle")) {
                     ChartLegend(items: [
                         .init(label: loc.t("dash.legend.daily"), color: Palette.casesMuted),
                         .init(label: loc.t("dash.legend.average"), color: Palette.cases, isLine: true)
                     ])
 
                     Chart {
-                        ForEach(series) { point in
-                            BarMark(x: .value("Date", point.date, unit: .day),
-                                    y: .value("Cases", point.cases),
-                                    width: .inset(1))
+                        ForEach(weekly) { point in
+                            BarMark(x: .value("Week", point.week),
+                                    y: .value("Cases", point.cases))
                                 .foregroundStyle(Palette.casesMuted)
                                 .cornerRadius(2)
                         }
-                        ForEach(average, id: \.date) { item in
-                            LineMark(x: .value("Date", item.date),
+                        ForEach(average, id: \.week) { item in
+                            LineMark(x: .value("Week", item.week),
                                      y: .value("Average", item.value),
                                      series: .value("s", "avg"))
                                 .foregroundStyle(Palette.cases)
@@ -77,19 +78,19 @@ struct DistrictDetailView: View {
                         }
                     }
                     .chartYAxis { countAxis(loc.style) }
-                    .chartXAxis { dateAxis(loc.style) }
+                    .chartXAxis { weekAxis() }
                     .frame(height: 170)
                     .padding(.trailing, 22)
                 }
 
-                CardSection(loc.t("district.peers.title", district.division.displayName(loc.language)),
-                            subtitle: loc.t("district.peers.subtitle")) {
-                    let peers = store.districts(in: district.division)
+                CardSection(loc.t("area.peers.title", area.division.displayName(loc.language)),
+                            subtitle: loc.t("area.peers.subtitle")) {
+                    let peers = store.areas(in: area.division)
                     let peak = peers.map(\.seasonCases).max() ?? 1
                     VStack(spacing: 0) {
                         ForEach(Array(peers.enumerated()), id: \.element.id) { index, peer in
                             NavigationLink(value: peer) {
-                                DistrictRow(district: peer, peak: peak)
+                                AreaRow(area: peer, peak: peak)
                                     .padding(.vertical, 6)
                             }
                             .buttonStyle(.plain)
@@ -98,15 +99,16 @@ struct DistrictDetailView: View {
                     }
                 }
 
-                if let meta = store.meta, meta.isSampleData {
-                    InlineNote(symbol: "flask.fill", detail: meta.disclaimer)
+                if area.weeklyIsApportioned {
+                    InlineNote(symbol: "chart.bar.doc.horizontal",
+                               detail: loc.t("area.apportioned.note"))
                 }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
         }
         .background(Palette.plane)
-        .navigationTitle(district.displayName(loc.language))
+        .navigationTitle(area.displayName(loc.language))
         .navigationBarTitleDisplayMode(.large)
     }
 
@@ -115,24 +117,24 @@ struct DistrictDetailView: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 10) {
                     VStack(alignment: .leading, spacing: 3) {
-                        Text(loc.t("district.division", district.division.displayName(loc.language)))
+                        Text(loc.t("area.division", area.division.displayName(loc.language)))
                             .typo(.subheadline).fontWeight(.semibold)
-                        Text(loc.t("district.population",
-                                   loc.compact(district.populationThousands * 1000)))
+                        Text(loc.t("area.population",
+                                   loc.compact(area.populationThousands * 1000)))
                             .typo(.caption).foregroundStyle(.secondary)
                     }
                     Spacer(minLength: 8)
-                    RiskBadge(risk: district.risk)
+                    RiskBadge(risk: area.risk)
                 }
 
-                Text(loc.t(district.risk.guidanceKey))
+                Text(loc.t(area.risk.guidanceKey))
                     .typo(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Button {
-                    preferences.homeDistrictCode = isHome ? nil : district.code
+                    preferences.homeAreaCode = isHome ? nil : area.code
                 } label: {
-                    Label(loc.t(isHome ? "district.isHome" : "district.setHome"),
+                    Label(loc.t(isHome ? "area.isHome" : "area.setHome"),
                           systemImage: isHome ? "checkmark.circle.fill" : "mappin.and.ellipse")
                         .typo(.subheadline)
                         .frame(maxWidth: .infinity)

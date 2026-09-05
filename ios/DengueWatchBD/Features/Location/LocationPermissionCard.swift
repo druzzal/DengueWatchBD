@@ -5,7 +5,7 @@ import SwiftUI
 ///
 /// A permission dialog with no context is the most common reason people deny
 /// location to a health app, and DengueWatch stays useful either way — the
-/// district picker covers everything except "risk exactly where I'm standing".
+/// area picker covers everything except "risk exactly where I'm standing".
 struct LocationPermissionCard: View {
     @Environment(LocalizationManager.self) private var loc
     @Environment(LocationManager.self) private var location

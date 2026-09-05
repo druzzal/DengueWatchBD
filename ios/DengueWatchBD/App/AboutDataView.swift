@@ -1,9 +1,9 @@
 import SwiftUI
 
 struct AboutDataView: View {
-    @Environment(SurveillanceStore.self) private var store
+    @Environment(DengueStore.self) private var store
     @Environment(LocalizationManager.self) private var loc
-    @Environment(SurveillanceSync.self) private var sync
+    @Environment(FeedSync.self) private var sync
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -20,27 +20,38 @@ struct AboutDataView: View {
 
                 if let meta = store.meta {
                     Section(loc.t("about.build")) {
-                        LabeledContent(loc.t("about.dataset"), value: meta.datasetName)
-                        LabeledContent(loc.t("about.lastUpdated"), value: meta.lastUpdated)
-                        LabeledContent(loc.t("about.seasonStart"), value: meta.seasonStart)
-                        LabeledContent(loc.t("about.districts"), value: loc.num(store.districts.count))
+                        LabeledContent(loc.t("about.dataset"),
+                                       value: meta.sourceName ?? loc.t("about.sourceFallback"))
+                        LabeledContent(loc.t("about.lastUpdated"),
+                                       value: meta.lastUpdatedLabel ?? meta.lastUpdated ?? "—")
+                        if let year = meta.year {
+                            LabeledContent(loc.t("about.season"),
+                                           value: loc.num(year).replacingOccurrences(of: ",", with: ""))
+                        }
+                        LabeledContent(loc.t("about.areas"), value: loc.num(store.areas.count))
                     }
 
                     Section {
-                        Text(meta.disclaimer).typo(.callout)
+                        Text(loc.t("about.disclaimerText")).typo(.callout)
                     } header: {
                         Label(loc.t("about.readFirst"), systemImage: "exclamationmark.triangle.fill")
                     }
 
                     Section(loc.t("about.attribution")) {
-                        Text(meta.attribution).typo(.callout)
-                        // The source is linkable so a reader can check the
-                        // figures against DGHS themselves, and the independence
-                        // note keeps the app from being mistaken for an
-                        // official DGHS product.
-                        if let url = URL(string: AppConfig.sourceURL) {
+                        Text(loc.t("about.attributionText")).typo(.callout)
+                        // Both links matter and they are not the same thing: the
+                        // first is DGHS's own page, so a reader can check any
+                        // figure at the source; the second is the open pipeline
+                        // that copies it, so they can check the copying too.
+                        if let url = URL(string: FeedConfig.sourceURL) {
                             Link(destination: url) {
                                 Label(loc.t("about.openSource"), systemImage: "arrow.up.right.square")
+                                    .typo(.callout)
+                            }
+                        }
+                        if let url = URL(string: FeedConfig.feedHomeURL) {
+                            Link(destination: url) {
+                                Label(loc.t("about.openFeed"), systemImage: "arrow.up.right.square")
                                     .typo(.callout)
                             }
                         }

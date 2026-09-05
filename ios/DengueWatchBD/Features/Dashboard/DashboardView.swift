@@ -5,10 +5,10 @@ import MapKit
 /// current risk, then local activity, then the trend, then where it is
 /// spreading, then what to do about it.
 struct DashboardView: View {
-    @Environment(SurveillanceStore.self) private var store
+    @Environment(DengueStore.self) private var store
     @Environment(Preferences.self) private var preferences
     @Environment(LocalizationManager.self) private var loc
-    @Environment(SurveillanceSync.self) private var sync
+    @Environment(FeedSync.self) private var sync
     @Environment(LocationManager.self) private var location
     @Environment(AppRouter.self) private var router
     @Environment(\.dynamicTypeSize) private var typeSize
@@ -18,23 +18,23 @@ struct DashboardView: View {
     @State private var showingAbout = false
     @State private var showingRiskDetail = false
 
-    /// The area the user is being told about: their chosen district, else the
-    /// district they are standing in, else the country.
-    private var focusDistrict: District? {
-        if let code = preferences.homeDistrictCode, let district = store.district(code: code) {
-            return district
+    /// The area the user is being told about: their chosen area, else the
+    /// area they are standing in, else the country.
+    private var focusArea: Area? {
+        if let code = preferences.homeAreaCode, let area = store.area(code: code) {
+            return area
         }
         if let here = location.lastKnownLocation {
-            return store.nearestDistrict(to: here)
+            return store.nearestArea(to: here)
         }
         return nil
     }
 
-    private var focusRisk: RiskLevel { focusDistrict?.risk ?? store.nationalRisk }
+    private var focusRisk: RiskLevel { focusArea?.risk ?? store.nationalRisk }
 
     private var focusAreaName: String {
-        if let focusDistrict {
-            return focusDistrict.displayName(loc.language)
+        if let focusArea {
+            return focusArea.displayName(loc.language)
         }
         return loc.t("area.nationwide")
     }
@@ -49,7 +49,7 @@ struct DashboardView: View {
                     switch store.state {
                     case .idle, .loading:
                         loadingContent
-                    case .failed where !store.districts.isEmpty:
+                    case .failed where !store.areas.isEmpty:
                         // Keep showing what we have. On a surveillance app a
                         // refresh failure is no reason to blank the screen —
                         // yesterday's figures still answer the question.
@@ -90,14 +90,14 @@ struct DashboardView: View {
                 await sync.sync(force: true)
                 await store.refresh()
             }
-            .navigationDestination(for: District.self) { DistrictDetailView(district: $0) }
+            .navigationDestination(for: Area.self) { AreaDetailView(area: $0) }
             .sheet(isPresented: $showingAbout) { AboutDataView() }
             .sheet(isPresented: $showingRiskDetail) {
                 RiskDetailSheet(
                     risk: focusRisk,
                     areaName: focusAreaName,
-                    incidence: focusDistrict?.incidencePer100k ?? nationalIncidence,
-                    last14Cases: focusDistrict?.last14Cases ?? nationalLast14,
+                    incidence: focusArea?.incidencePer100k ?? nationalIncidence,
+                    last14Cases: focusArea?.recentCases ?? store.nationalRecentCases,
                     lastUpdated: store.lastUpdated
                 )
             }
@@ -146,18 +146,18 @@ struct DashboardView: View {
             DengueRiskCard(
                 risk: focusRisk,
                 areaName: focusAreaName,
-                change: focusDistrict?.weeklyChange ?? store.weeklyCaseChange,
+                change: focusArea?.weeklyChange ?? store.weeklyCaseChange,
                 lastUpdated: store.lastUpdated,
-                incidence: focusDistrict?.incidencePer100k ?? nationalIncidence,
-                isNationwide: focusDistrict == nil,
+                incidence: focusArea?.incidencePer100k ?? nationalIncidence,
+                isNationwide: focusArea == nil,
                 onTap: {
                     Haptic.selection()
                     showingRiskDetail = true
                 }
             )
 
-            if focusDistrict == nil {
-                // Without a district the reading is national, which is much
+            if focusArea == nil {
+                // Without a area the reading is national, which is much
                 // less useful than a local one. Offer the fix rather than
                 // silently showing a country-wide number.
                 Button {
@@ -218,7 +218,7 @@ struct DashboardView: View {
             LazyVGrid(columns: statColumns, spacing: Space.row) {
                 StatCard(label: loc.t("dash.stat.cases"),
                          value: loc.num(store.seasonCases),
-                         caption: store.dates.first.map { loc.t("activity.since", loc.dayMonth($0)) },
+                         caption: store.national.first.map { loc.t("activity.since", loc.dayMonth($0.date)) },
                          accent: Palette.cases,
                          series: store.nationalRecent(30).map { Double($0.cases) })
                 StatCard(label: loc.t("activity.thisWeek"),
@@ -227,12 +227,14 @@ struct DashboardView: View {
                          caption: loc.t("dash.stat.vsLastWeek"),
                          accent: Palette.cases,
                          series: store.nationalRecent(14).map { Double($0.cases) })
-                StatCard(label: loc.t("dash.stat.admitted"),
-                         value: loc.num(store.currentlyAdmitted),
-                         change: store.admittedChange,
-                         caption: loc.t("dash.stat.vs7days"),
+                // Replaces the old hospital-census card. This feed carries no
+                // bed occupancy, and the 24-hour count is what DGHS leads its
+                // daily release with anyway — the freshest figure on the screen.
+                StatCard(label: loc.t("dash.stat.last24"),
+                         value: loc.num(store.cases24h),
+                         caption: loc.t("dash.stat.last24Deaths", loc.num(store.deaths24h)),
                          accent: Palette.admitted,
-                         series: store.nationalRecent(30).map { Double($0.admitted) })
+                         series: store.nationalRecent(14).map { Double($0.cases) })
                 StatCard(label: loc.t("activity.hotspots"),
                          value: loc.num(store.hotspots.count),
                          caption: loc.t("activity.hotspotsCaption"),
@@ -245,6 +247,9 @@ struct DashboardView: View {
         VStack(alignment: .leading, spacing: Space.row) {
             SectionHeader(loc.t("trend.section"))
             TrendCard(points: store.national, range: $trendRange)
+            if !store.ageBandsCases.isEmpty {
+                WhoIsAffectedCard(bands: store.ageBandsCases, split: store.sexSplitCases)
+            }
         }
     }
 
@@ -255,7 +260,7 @@ struct DashboardView: View {
                     .typo(.caption)
                     .foregroundStyle(Palette.accent)
             }
-            MapPreviewCard(districts: store.districtsByRisk) { router.show(.map) }
+            MapPreviewCard(areas: store.areasByRisk) { router.show(.map) }
         }
     }
 
@@ -264,9 +269,6 @@ struct DashboardView: View {
             HStack {
                 SyncStatusRow()
                 Spacer(minLength: 0)
-            }
-            if let meta = store.meta, meta.isSampleData {
-                InlineNote(symbol: "flask.fill", detail: meta.disclaimer)
             }
         }
     }
@@ -284,24 +286,16 @@ struct DashboardView: View {
 
     // MARK: - Derived
 
-    private var nationalIncidence: Double {
-        let population = store.districts.reduce(0) { $0 + $1.populationThousands }
-        guard population > 0 else { return 0 }
-        return Double(nationalLast14) / Double(population) * 100
-    }
-
-    private var nationalLast14: Int {
-        store.districts.reduce(0) { $0 + $1.last14Cases }
-    }
+    private var nationalIncidence: Double { store.nationalIncidencePer100k }
 
     /// One advisory at most, and only when it says something the hero card has
     /// not already said.
     ///
     /// A "high risk area" banner directly beneath a hero card already reading
-    /// SEVERE for that same district is duplication, and stacking two tinted
+    /// SEVERE for that same area is duplication, and stacking two tinted
     /// red cards is precisely the alarm fatigue this screen should avoid. So
     /// the banner is reserved for the national trend, which the hero card —
-    /// scoped to one district — does not cover.
+    /// scoped to one area — does not cover.
     private var activeAlert: (risk: RiskLevel, title: String, message: String)? {
         guard let change = store.weeklyCaseChange, change >= 0.15 else { return nil }
         return (.moderate,
@@ -310,23 +304,23 @@ struct DashboardView: View {
     }
 }
 
-/// A still map with the worst districts marked, standing in for the full map.
+/// A still map with the worst areas marked, standing in for the full map.
 struct MapPreviewCard: View {
     @Environment(LocalizationManager.self) private var loc
-    let districts: [District]
+    let areas: [Area]
     let onTap: () -> Void
 
-    private var marked: [District] { Array(districts.prefix(12)) }
+    private var marked: [Area] { Array(areas.prefix(12)) }
 
     var body: some View {
         Button(action: onTap) {
             VStack(spacing: 0) {
                 Map(initialPosition: .region(.bangladesh), interactionModes: []) {
-                    ForEach(marked) { district in
+                    ForEach(marked) { area in
                         Annotation("", coordinate: CLLocationCoordinate2D(
-                            latitude: district.latitude, longitude: district.longitude)) {
+                            latitude: area.latitude, longitude: area.longitude)) {
                             Circle()
-                                .fill(district.risk.tint.opacity(0.85))
+                                .fill(area.risk.tint.opacity(0.85))
                                 .overlay(Circle().strokeBorder(.white.opacity(0.9), lineWidth: 1.5))
                                 .frame(width: 14, height: 14)
                         }
@@ -357,7 +351,7 @@ struct MapPreviewCard: View {
 /// One line telling the user how fresh the data is and why.
 struct SyncStatusRow: View {
     @Environment(LocalizationManager.self) private var loc
-    @Environment(SurveillanceSync.self) private var sync
+    @Environment(FeedSync.self) private var sync
 
     private var text: String {
         switch sync.status {

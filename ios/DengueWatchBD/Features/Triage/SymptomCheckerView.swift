@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SymptomCheckerView: View {
-    @Environment(SurveillanceStore.self) private var store
+    @Environment(DengueStore.self) private var store
     @Environment(CaseLogStore.self) private var log
     @Environment(Preferences.self) private var preferences
     @Environment(LocalizationManager.self) private var loc
@@ -111,7 +111,7 @@ struct SymptomCheckerView: View {
                         log.add(CaseLogEntry(temperature: temperature,
                                              symptomIDs: Array(selected),
                                              outcomeRawValue: outcome.rawValue,
-                                             districtCode: preferences.homeDistrictCode,
+                                             areaCode: preferences.homeAreaCode,
                                              note: note))
                     }
                 )

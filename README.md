@@ -1,8 +1,8 @@
 # DengueWatch Bangladesh
 
-An iOS dengue surveillance app for Bangladesh: national and district-level case
+An iOS dengue surveillance app for Bangladesh: national and area-level case
 tracking, a WHO-criteria symptom check, a personal case log, prevention
-guidance, and local alerts when your own district gets worse.
+guidance, and local alerts when your own area gets worse.
 
 - **SwiftUI + Swift Charts + MapKit**, iOS 17.0 and up, iPhone and iPad.
 - **No backend, no account, no analytics, no location permission.** Everything
@@ -37,11 +37,11 @@ release builds.
 
 | Screen | What it does |
 |---|---|
-| **Overview** | National totals, epidemic curve with a scrubable 7-day average, hospital census, deaths, districts to watch, season history back to 2019. Language toggle lives here. |
-| **Map** | 64 districts as proportional symbols, by total cases or 14-day rate per 100k. Shows your live location and which district you are standing in, with that district's risk band. A searchable list view doubles as the offline and screen-reader path. |
+| **Overview** | National totals, epidemic curve with a scrubable 7-day average, who is affected by age and sex, deaths, areas to watch, season history back to 2018. Language toggle lives here. |
+| **Map** | Ten reporting areas as proportional symbols, by total cases or two-week rate per 100k. Shows your live location and which area you are in, with that area's risk band. A searchable list view doubles as the offline and screen-reader path. |
 | **Check** | WHO warning-sign triage with an original illustration per symptom, fever-phase awareness, higher-risk-group handling, and a personal log. |
 | **Care** | Emergency numbers, live nearby-hospital search through Maps, and a directory of major government dengue hospitals with directions. |
-| **Prevent** | Five prevention topics, the seasonal calendar, district risk alerts and the enter-a-high-risk-area warning. |
+| **Prevent** | Five prevention topics, the seasonal calendar, area risk alerts and the enter-a-high-risk-area warning. |
 
 ## Bilingual
 
@@ -51,7 +51,7 @@ screen. 352 string keys per language, checked for parity. Bengali also gets:
 - **Bengali numerals** everywhere — `১.৮ লাখ`, not `178k`.
 - **Bengali magnitude words** — হাজার / লাখ / কোটি rather than k / M, because
   "১০১k" is not how a number is read in Bengali.
-- **Bengali place names** for all 64 districts and 8 divisions.
+- **Bengali place names** for all ten reporting areas and eight divisions.
 - **More leading** on every text style, because Bengali carries the matra
   headline and deeper descenders than Latin at the same point size.
 - **Localised permission prompts** via `bn.lproj/InfoPlist.strings`, which iOS
@@ -62,34 +62,37 @@ release, so a gap degrades to readable text rather than a blank label.
 
 ## Automatic updates
 
-`SurveillanceSync` refreshes on launch, on foreground, and on the offline→online
-edge — only that edge, so a flapping connection doesn't hammer the server. It
-uses a conditional GET (`If-None-Match` / `If-Modified-Since`) against an on-disk
-cache, so a daily check costs almost nothing when nothing changed.
+The app updates itself. `FeedSync` refreshes on launch, on foreground, and on
+the offline→online edge — only that edge, so a flapping connection doesn't
+hammer the server.
 
-**`AppConfig.surveillanceEndpoint` is still `nil`, because this needs a host
-rather than more code.** DGHS publishes its daily dengue figures only as PDF
-press releases, so [`server/`](server/) parses them into the
-`SurveillancePayload` shape:
+Each refresh is two steps, and the first one usually ends it:
 
-```sh
-cd server
-python3 -m venv venv && ./venv/bin/pip install -r requirements.txt
-./venv/bin/python -m dghs.cli --start 2026-01-01 --out surveillance.json
-```
+1. GET [`summary.json`](https://druzzal.github.io/dengue-bd-dashboard/data/summary.json)
+   (~350 bytes) and compare its `last_updated` — the report date DGHS itself
+   stamps — against what is already on screen.
+2. Only if that date is newer, GET `latest.json` (~40 KB) for the full
+   breakdown, with a conditional GET against the on-disk cache.
 
-Publish that JSON anywhere the app can GET it and set `surveillanceEndpoint` to
-its URL. Nothing else changes. See [server/README.md](server/README.md) — in
-particular why the parser refuses to emit data that does not reconcile against
-the PDF's own national totals, and how it copes with DGHS using several legacy
-Bengali fonts that mangle district names differently on different days.
+DGHS publishes once a day, so most checks cost a few hundred bytes rather than
+forty kilobytes. That matters on the metered connections most readers are on.
+
+The feed itself lives in a separate repository,
+[dengue-bd-dashboard](https://github.com/druzzal/dengue-bd-dashboard): a GitHub
+Action scrapes the DGHS HEOC dashboard every three hours, converts it to JSON,
+and commits only when the published figures actually change. Nothing is typed in
+by hand, and the same URLs the app reads can be opened in a browser.
+
+There is no API key, no account and no server of our own. The feed is a static
+file on GitHub Pages, which is also why it needs no credential shipped inside
+the app.
 
 ## Location
 
 Three uses, all evaluated on the device, none uploaded:
 
 1. **Live location on the map** — the standard blue dot, plus a "You are in
-   *district*" row carrying that district's risk band. Tapping the row zooms to
+   *area*" row carrying that area's risk band. Tapping the row zooms to
    you; a second control returns to the whole country.
 
    `MapUserLocationButton` is deliberately *not* used: it flips the bound camera
@@ -97,15 +100,15 @@ Three uses, all evaluated on the device, none uploaded:
    surveillance map to street level uninvited. The controls are hand-rolled so
    the map opens on the country and only moves when asked.
 
-   Nearest-district lookup compares against district *centres*, so it is an
+   Nearest-area lookup compares against area *centres*, so it is an
    approximation, and it is bounded — beyond 120 km from any centre the app says
-   you are outside the covered area rather than naming the closest district.
+   you are outside the covered area rather than naming the closest area.
 
 2. **High-risk area warning** — `CLCircularRegion` monitoring of up to 20 of the
-   worst districts (iOS caps region monitoring at 20). Needs "Always"
+   worst areas (iOS caps region monitoring at 20). Needs "Always"
    authorization to fire with the app closed; without it the warning only works
    while the app is open, and the settings screen says which state you are in.
-   Rate-limited to one notification per district per day.
+   Rate-limited to one notification per area per day.
 3. **Nearby hospitals** — coarse location handed to `MKLocalSearch`.
 
 There is no community reporting feature. It was built and then removed: without
@@ -140,43 +143,49 @@ raise no licensing questions. Severity is carried by shape as well as tint.
 
 ## The data
 
-`ios/DengueWatchBD/Resources/surveillance.json` holds the whole dataset: a shared
-date axis, national daily series, 64 districts across 8 divisions with
-coordinates and population, and annual totals back to 2019.
+`ios/DengueWatchBD/Resources/dengue-feed.json` is the offline seed: a copy of the
+published feed, so the app shows real figures on first launch with no network at
+all. `FeedSync` replaces it with a download as soon as one succeeds.
 
-**The bundled dataset is real.** It is built by [`server/`](server/) from 198
-DGHS daily press releases covering the 2026 season to 2 September: 38,280 cases
-and 107 deaths nationally, broken down across all 64 districts. Annual totals
-from 2019 onward are the published DGHS figures.
+The feed carries, for the current season:
 
-The app ships with this as its offline fallback, so it shows real surveillance
-data with no network at all. It does **not** update by itself yet — see below.
+- **National daily series** — cases every day, deaths on the days they occurred.
+  The two are *not* parallel arrays and are joined by parsed date, not by index.
+- **Ten reporting areas** — eight divisions plus the two Dhaka city
+  corporations, with season cases and deaths that sum exactly to the national
+  headline.
+- **Weekly series per division**, by epidemiological week.
+- **Age and sex breakdown**, which the previous pipeline never carried.
+- **Annual totals** back to 2018.
 
-### Keeping it current
+### Geography is division-level, and that is the ceiling
 
-`SurveillanceService` is the only type that knows where bytes come from:
+DGHS publishes district-level dengue figures only in the daily PDF press
+releases at `old.dghs.gov.bd`. That host became unreachable, and the HEOC
+dashboard this feed reads has never carried a district breakdown — so there is
+no district feed to rebuild from this source. The app reports the ten areas DGHS
+does publish rather than inventing a finer grain.
 
-```swift
-protocol SurveillanceService: Sendable {
-    func fetch() async throws -> SurveillancePayload
-}
-```
+Dhaka's three feed rows (outside-city, DNCC, DSCC) share one weekly series. Each
+one's weekly numbers are apportioned by its share of the division's season
+cases, the three still sum to the division's reported weekly total, and the area
+page says so in a footnote. Season cases and deaths are reported per area
+directly and are never apportioned.
 
-`BundledSurveillanceService` reads the bundled JSON. `RemoteSurveillanceService`
-is written and ready — point it at a DGHS-shaped endpoint and pass it to
-`SurveillanceStore(service:)` in `RootView`. No view changes are needed.
+Populations are 2022 BBS census figures, used only as the denominator for
+incidence — an approximation there costs a band boundary at worst, never a
+headline number.
 
 ## Structure
 
-One repository, three pieces that share a single contract — the published
-`surveillance.json`. The backend serves both apps; neither app has a backend of
-its own.
+Two apps that read one published feed. Neither has a backend of its own; the
+ingestion pipeline lives in
+[dengue-bd-dashboard](https://github.com/druzzal/dengue-bd-dashboard).
 
 ```
 ios/            the SwiftUI app (below)
 android/        the Kotlin/Compose app, domain layer ported from ios/Models
-server/         DGHS ingestion: scrapers, parser, validation, cross-check
-public/         what the pipeline publishes, and what both apps fetch
+docs/           notes
 Tools/          helper scripts
 ```
 
@@ -184,13 +193,14 @@ Inside `ios/DengueWatchBD/`:
 
 ```
 App/            entry point, tab shell, about + first-run disclaimer
-Models/         wire format, District, RiskLevel, series maths
+Models/         FeedPayload (wire format), Domain (Area, Geography, RiskLevel)
 Localization/   AppLanguage, NumberStyle, the two string tables, place names
-Data/           store, service protocol, sync, case log, preferences, config
+Data/           DengueStore, DengueFeedService, FeedSync, FeedConfig,
+                case log, preferences
 Design/         Theme.swift (validated palette), Typography.swift (type scale)
 Features/
-  Dashboard/    stat tiles, epidemic curve, admissions, deaths, season history
-  Map/          proportional-symbol map, district list, district detail
+  Dashboard/    stat tiles, epidemic curve, age/sex breakdown, deaths, history
+  Map/          proportional-symbol map, area list, area detail
   Triage/       symptom check, triage engine, personal log
   Care/         emergency numbers, hospital directory, nearby search
   Prevention/   prevention topics, seasonal calendar

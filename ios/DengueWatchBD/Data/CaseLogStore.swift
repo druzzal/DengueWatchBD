@@ -7,7 +7,7 @@ struct CaseLogEntry: Identifiable, Codable, Hashable {
     var temperature: Double?
     var symptomIDs: [String] = []
     var outcomeRawValue: Int = TriageOutcome.selfCare.rawValue
-    var districtCode: String?
+    var areaCode: String?
     var note: String = ""
 
     var outcome: TriageOutcome { TriageOutcome(rawValue: outcomeRawValue) ?? .selfCare }

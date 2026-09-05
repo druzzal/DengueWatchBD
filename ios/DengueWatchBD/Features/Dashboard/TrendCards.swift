@@ -1,44 +1,6 @@
 import SwiftUI
 import Charts
 
-/// Hospital census — how many people are in a dengue bed right now.
-/// A stock, not a flow, so it gets an area rather than bars.
-struct AdmissionsCard: View {
-    @Environment(LocalizationManager.self) private var loc
-    let points: [DailyPoint]
-
-    var body: some View {
-        CardSection(loc.t("dash.admissions.title"), subtitle: loc.t("dash.admissions.subtitle")) {
-            Chart(points) { point in
-                AreaMark(x: .value("Date", point.date, unit: .day),
-                         y: .value("Inpatients", point.admitted))
-                    .foregroundStyle(LinearGradient(
-                        colors: [Palette.admitted.opacity(0.30), Palette.admitted.opacity(0.02)],
-                        startPoint: .top, endPoint: .bottom))
-                    .interpolationMethod(.monotone)
-
-                LineMark(x: .value("Date", point.date, unit: .day),
-                         y: .value("Inpatients", point.admitted))
-                    .foregroundStyle(Palette.admitted)
-                    .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round))
-                    .interpolationMethod(.monotone)
-            }
-            .chartYAxis { countAxis(loc.style) }
-            .chartXAxis { dateAxis(loc.style) }
-            .frame(height: 130)
-            .padding(.trailing, 22)
-
-            if let latest = points.last {
-                Text(loc.t("dash.admissions.footnote",
-                           loc.fullDate(latest.date), loc.num(latest.admitted)))
-                    .typo(.micro)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-    }
-}
-
 /// Deaths get their own card and their own axis. Plotting them against cases on
 /// a second y-scale would invent a relationship the data does not show.
 struct DeathsCard: View {
@@ -81,9 +43,8 @@ struct DeathsCard: View {
     }
 }
 
-/// Season-on-season totals. Years are an ordered category, so one hue is enough —
-/// the simulated years are set apart by a hatch and a footnote, not by a colour
-/// that would read as a second series.
+/// Season-on-season totals. Years are an ordered category, so one hue is enough:
+/// a second colour would read as a second series.
 struct SeasonComparisonCard: View {
     @Environment(LocalizationManager.self) private var loc
     let history: [YearSummary]
@@ -118,14 +79,8 @@ struct SeasonComparisonCard: View {
                 let width = max(3, geometry.size.width * CGFloat(year.cases) / CGFloat(maxCases))
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(Palette.cases.opacity(year.verified ? 1 : 0.28))
+                        .fill(Palette.cases)
                         .frame(width: width, height: 16)
-                    if !year.verified {
-                        HatchPattern()
-                            .stroke(Palette.cases, lineWidth: 1)
-                            .frame(width: width, height: 16)
-                            .clipShape(RoundedRectangle(cornerRadius: 4))
-                    }
                 }
                 .frame(height: geometry.size.height, alignment: .center)
             }
@@ -143,25 +98,10 @@ struct SeasonComparisonCard: View {
                 .frame(width: 46, alignment: .trailing)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(loc.t(year.verified ? "dash.history.a11y" : "dash.history.a11ySimulated",
+        .accessibilityLabel(loc.t("dash.history.a11y",
                                   loc.num(year.year).replacingOccurrences(of: ",", with: ""),
                                   loc.num(year.cases),
                                   loc.num(year.deaths)))
     }
 }
 
-/// The texture channel — 45° lines, used only to separate simulated bars.
-struct HatchPattern: Shape {
-    var spacing: CGFloat = 5
-
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        var x = -rect.height
-        while x < rect.width {
-            path.move(to: CGPoint(x: x, y: rect.maxY))
-            path.addLine(to: CGPoint(x: x + rect.height, y: rect.minY))
-            x += spacing
-        }
-        return path
-    }
-}

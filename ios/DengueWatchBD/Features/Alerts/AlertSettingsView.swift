@@ -2,15 +2,15 @@ import SwiftUI
 import CoreLocation
 
 struct AlertSettingsView: View {
-    @Environment(SurveillanceStore.self) private var store
+    @Environment(DengueStore.self) private var store
     @Environment(Preferences.self) private var preferences
     @Environment(LocalizationManager.self) private var loc
     @Environment(LocationManager.self) private var location
 
     @State private var permissionDenied = false
 
-    private var homeDistrict: District? {
-        preferences.homeDistrictCode.flatMap { store.district(code: $0) }
+    private var homeArea: Area? {
+        preferences.homeAreaCode.flatMap { store.area(code: $0) }
     }
 
     var body: some View {
@@ -18,20 +18,20 @@ struct AlertSettingsView: View {
 
         Form {
             Section {
-                if let homeDistrict {
+                if let homeArea {
                     HStack {
-                        Text(homeDistrict.displayName(loc.language))
+                        Text(homeArea.displayName(loc.language))
                         Spacer()
-                        RiskBadge(risk: homeDistrict.risk, compact: true)
+                        RiskBadge(risk: homeArea.risk, compact: true)
                     }
                 } else {
-                    Text(loc.t("alerts.noDistrict")).foregroundStyle(.secondary)
+                    Text(loc.t("alerts.noArea")).foregroundStyle(.secondary)
                 }
-                NavigationLink(loc.t("alerts.chooseDistrict")) { DistrictPickerView() }
+                NavigationLink(loc.t("alerts.chooseArea")) { AreaPickerView() }
             } header: {
-                Text(loc.t("alerts.myDistrict"))
+                Text(loc.t("alerts.myArea"))
             } footer: {
-                Text(loc.t("alerts.districtFooter"))
+                Text(loc.t("alerts.areaFooter"))
             }
 
             Section {
@@ -43,9 +43,9 @@ struct AlertSettingsView: View {
                             if !granted {
                                 preferences.alertsEnabled = false
                                 permissionDenied = true
-                            } else if let homeDistrict {
+                            } else if let homeArea {
                                 await NotificationManager.shared.raiseRiskAlertIfNeeded(
-                                    district: homeDistrict,
+                                    area: homeArea,
                                     threshold: preferences.alertThreshold,
                                     localization: loc)
                             }
@@ -76,16 +76,16 @@ struct AlertSettingsView: View {
 
             geofenceSection
 
-            if let homeDistrict {
+            if let homeArea {
                 Section(loc.t("alerts.preview")) {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text(homeDistrict.risk >= preferences.alertThreshold
-                             ? loc.t("alerts.preview.would", homeDistrict.displayName(loc.language),
-                                     loc.t(homeDistrict.risk.labelKey))
-                             : loc.t("alerts.preview.wouldNot", homeDistrict.displayName(loc.language),
-                                     loc.t(homeDistrict.risk.labelKey)))
+                        Text(homeArea.risk >= preferences.alertThreshold
+                             ? loc.t("alerts.preview.would", homeArea.displayName(loc.language),
+                                     loc.t(homeArea.risk.labelKey))
+                             : loc.t("alerts.preview.wouldNot", homeArea.displayName(loc.language),
+                                     loc.t(homeArea.risk.labelKey)))
                             .typo(.subheadline)
-                        Text(loc.t(homeDistrict.risk.guidanceKey))
+                        Text(loc.t(homeArea.risk.guidanceKey))
                             .typo(.caption).foregroundStyle(.secondary)
                     }
                     .padding(.vertical, 4)
@@ -101,7 +101,7 @@ struct AlertSettingsView: View {
         }
     }
 
-    /// Location-based warning when the user enters a high-risk district.
+    /// Location-based warning when the user enters a high-risk area.
     @ViewBuilder
     private var geofenceSection: some View {
         @Bindable var preferences = preferences
@@ -116,7 +116,7 @@ struct AlertSettingsView: View {
                         }
                         await NotificationManager.shared.requestAuthorization()
                         location.requestAlways()
-                        location.monitorHighRiskDistricts(store.hotspots)
+                        location.monitorHighRiskAreas(store.hotspots)
                     }
                 }
 
@@ -126,9 +126,9 @@ struct AlertSettingsView: View {
                         .typo(.caption)
                         .foregroundStyle(.secondary)
                     Spacer()
-                    if !location.monitoredDistrictCodes.isEmpty {
+                    if !location.monitoredAreaCodes.isEmpty {
                         Text(loc.t("geo.monitoring",
-                                   loc.num(location.monitoredDistrictCodes.count)))
+                                   loc.num(location.monitoredAreaCodes.count)))
                             .typo(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -159,17 +159,17 @@ struct AlertSettingsView: View {
     }
 }
 
-struct DistrictPickerView: View {
-    @Environment(SurveillanceStore.self) private var store
+struct AreaPickerView: View {
+    @Environment(DengueStore.self) private var store
     @Environment(Preferences.self) private var preferences
     @Environment(LocalizationManager.self) private var loc
     @Environment(\.dismiss) private var dismiss
 
     @State private var search = ""
 
-    private var grouped: [(division: Division, districts: [District])] {
+    private var grouped: [(division: Division, areas: [Area])] {
         Division.allCases.compactMap { division in
-            let members = store.districts(in: division)
+            let members = store.areas(in: division)
                 .filter { search.isEmpty || $0.name.localizedCaseInsensitiveContains(search)
                               || $0.displayName(loc.language).localizedCaseInsensitiveContains(search) }
                 .sorted { $0.name < $1.name }
@@ -181,15 +181,15 @@ struct DistrictPickerView: View {
         List {
             ForEach(grouped, id: \.division) { group in
                 Section(group.division.displayName(loc.language)) {
-                    ForEach(group.districts) { district in
+                    ForEach(group.areas) { area in
                         Button {
-                            preferences.homeDistrictCode = district.code
+                            preferences.homeAreaCode = area.code
                             dismiss()
                         } label: {
                             HStack {
-                                Text(district.displayName(loc.language)).foregroundStyle(.primary)
+                                Text(area.displayName(loc.language)).foregroundStyle(.primary)
                                 Spacer()
-                                if preferences.homeDistrictCode == district.code {
+                                if preferences.homeAreaCode == area.code {
                                     Image(systemName: "checkmark").foregroundStyle(Palette.accent)
                                 }
                             }
@@ -198,8 +198,8 @@ struct DistrictPickerView: View {
                 }
             }
         }
-        .searchable(text: $search, prompt: loc.t("district.picker.search"))
-        .navigationTitle(loc.t("district.picker.title"))
+        .searchable(text: $search, prompt: loc.t("area.picker.search"))
+        .navigationTitle(loc.t("area.picker.title"))
         .navigationBarTitleDisplayMode(.inline)
     }
 }

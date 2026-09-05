@@ -2,7 +2,7 @@ import Observation
 import SwiftUI
 
 /// Lets a card on one screen send the user to another tab — the map preview
-/// opening the full map, an alert opening the district list.
+/// opening the full map, an alert opening the area list.
 @MainActor
 @Observable
 final class AppRouter {

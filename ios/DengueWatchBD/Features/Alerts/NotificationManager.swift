@@ -23,14 +23,14 @@ final class NotificationManager {
         (try? await center.requestAuthorization(options: [.alert, .sound, .badge])) ?? false
     }
 
-    // MARK: - Home district risk
+    // MARK: - Home area risk
 
-    /// Fires at most once a day, and only when the home district has actually
+    /// Fires at most once a day, and only when the home area has actually
     /// reached the band the user asked to hear about.
-    func raiseRiskAlertIfNeeded(district: District,
+    func raiseRiskAlertIfNeeded(area: Area,
                                 threshold: RiskLevel,
                                 localization: LocalizationManager) async {
-        guard district.risk >= threshold else { return }
+        guard area.risk >= threshold else { return }
         guard await authorizationStatus() == .authorized else { return }
 
         let today = Calendar.current.startOfDay(for: Date()).timeIntervalSince1970
@@ -38,44 +38,44 @@ final class NotificationManager {
         UserDefaults.standard.set(today, forKey: lastRiskAlertKey)
 
         let content = UNMutableNotificationContent()
-        content.title = "\(district.name): \(localization.t(district.risk.headlineKey))"
+        content.title = "\(area.name): \(localization.t(area.risk.headlineKey))"
         content.body = localization.t("dash.home.detail",
-                                      localization.num(district.last7Cases),
-                                      localization.decimal(district.incidencePer100k))
-            + " " + localization.t(district.risk.guidanceKey)
+                                      localization.num(area.lastWeekCases),
+                                      localization.decimal(area.incidencePer100k))
+            + " " + localization.t(area.risk.guidanceKey)
         content.sound = .default
 
         try? await center.add(UNNotificationRequest(
-            identifier: "risk-\(district.code)-\(Int(today))",
+            identifier: "risk-\(area.code)-\(Int(today))",
             content: content,
             trigger: UNTimeIntervalNotificationTrigger(timeInterval: 3, repeats: false)
         ))
     }
 
-    // MARK: - Entering a high-risk district
+    // MARK: - Entering a high-risk area
 
-    /// Raised when the device crosses into a monitored high-risk district.
-    /// Rate-limited per district per day, so a commute across a boundary does
+    /// Raised when the device crosses into a monitored high-risk area.
+    /// Rate-limited per area per day, so a commute across a boundary does
     /// not produce a stream of notifications.
-    func raiseGeofenceAlert(district: District, localization: LocalizationManager) async {
+    func raiseGeofenceAlert(area: Area, localization: LocalizationManager) async {
         guard await authorizationStatus() == .authorized else { return }
 
-        let key = "\(lastGeofenceAlertKey).\(district.code)"
+        let key = "\(lastGeofenceAlertKey).\(area.code)"
         let today = Calendar.current.startOfDay(for: Date()).timeIntervalSince1970
         guard today > UserDefaults.standard.double(forKey: key) else { return }
         UserDefaults.standard.set(today, forKey: key)
 
         let content = UNMutableNotificationContent()
-        content.title = localization.t("geo.notification.title", district.name)
+        content.title = localization.t("geo.notification.title", area.name)
         content.body = localization.t("geo.notification.body",
-                                      district.name,
-                                      localization.t(district.risk.labelKey),
-                                      localization.num(district.last7Cases))
+                                      area.name,
+                                      localization.t(area.risk.labelKey),
+                                      localization.num(area.lastWeekCases))
         content.sound = .default
         content.interruptionLevel = .timeSensitive
 
         try? await center.add(UNNotificationRequest(
-            identifier: "geo-\(district.code)-\(Int(today))",
+            identifier: "geo-\(area.code)-\(Int(today))",
             content: content,
             trigger: UNTimeIntervalNotificationTrigger(timeInterval: 2, repeats: false)
         ))

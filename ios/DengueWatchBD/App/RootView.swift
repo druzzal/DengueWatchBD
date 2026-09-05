@@ -1,12 +1,12 @@
 import SwiftUI
 
 struct RootView: View {
-    @State private var store = SurveillanceStore()
+    @State private var store = DengueStore()
     @State private var caseLog = CaseLogStore()
     @State private var preferences = Preferences()
     @State private var localization = LocalizationManager()
     @State private var location = LocationManager()
-    @State private var sync = SurveillanceSync()
+    @State private var sync = FeedSync()
     @State private var router = AppRouter()
 
     @Environment(\.scenePhase) private var scenePhase
@@ -17,7 +17,7 @@ struct RootView: View {
                 .tabItem { Label(localization.t("tab.home"), systemImage: AppRouter.Tab.home.symbol) }
                 .tag(AppRouter.Tab.home)
 
-            DistrictMapView()
+            AreaMapView()
                 .tabItem { Label(localization.t("tab.map"), systemImage: AppRouter.Tab.map.symbol) }
                 .tag(AppRouter.Tab.map)
 
@@ -84,14 +84,14 @@ struct RootView: View {
     /// whatever the current hotspot list is.
     private func configureLocationHandling() {
         location.onRegionEntry = { code in
-            guard let district = store.district(code: code) else { return }
+            guard let area = store.area(code: code) else { return }
             Task {
-                await NotificationManager.shared.raiseGeofenceAlert(district: district,
+                await NotificationManager.shared.raiseGeofenceAlert(area: area,
                                                                     localization: localization)
             }
         }
         if preferences.geofenceAlertsEnabled {
-            location.monitorHighRiskDistricts(store.hotspots)
+            location.monitorHighRiskAreas(store.hotspots)
         }
         #if DEBUG
         // Screenshot and UI-test hook:
@@ -105,9 +105,9 @@ struct RootView: View {
 
     private func evaluateAlerts() async {
         guard preferences.alertsEnabled,
-              let code = preferences.homeDistrictCode,
-              let district = store.district(code: code) else { return }
-        await NotificationManager.shared.raiseRiskAlertIfNeeded(district: district,
+              let code = preferences.homeAreaCode,
+              let area = store.area(code: code) else { return }
+        await NotificationManager.shared.raiseRiskAlertIfNeeded(area: area,
                                                                 threshold: preferences.alertThreshold,
                                                                 localization: localization)
     }

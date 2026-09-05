@@ -7,7 +7,15 @@ import Observation
 @Observable
 final class Preferences {
     private enum Key {
-        static let homeDistrict = "homeDistrictCode"
+        /// Deliberately a new key, not the old "homeDistrictCode".
+        ///
+        /// Geography changed meaning in this version: the app used to store one
+        /// of 64 district codes and now stores one of 10 reporting areas. Seven
+        /// of the old codes ("KHULNA", "SYLHET", …) are also valid area codes,
+        /// so reusing the key would silently promote someone's home district to
+        /// the whole division without telling them. A new key drops the stale
+        /// value and asks them to choose again.
+        static let homeArea = "homeAreaCode"
         static let alertsEnabled = "alertsEnabled"
         static let alertThreshold = "alertThresholdRawValue"
         static let weeklyDigest = "weeklyDigestEnabled"
@@ -17,15 +25,15 @@ final class Preferences {
 
     private let defaults: UserDefaults
 
-    var homeDistrictCode: String? {
-        didSet { defaults.set(homeDistrictCode, forKey: Key.homeDistrict) }
+    var homeAreaCode: String? {
+        didSet { defaults.set(homeAreaCode, forKey: Key.homeArea) }
     }
 
     var alertsEnabled: Bool {
         didSet { defaults.set(alertsEnabled, forKey: Key.alertsEnabled) }
     }
 
-    /// Raise a local alert once the home district reaches this band.
+    /// Raise a local alert once the home area reaches this band.
     var alertThreshold: RiskLevel {
         didSet { defaults.set(alertThreshold.rawValue, forKey: Key.alertThreshold) }
     }
@@ -38,14 +46,14 @@ final class Preferences {
         didSet { defaults.set(hasSeenDisclaimer, forKey: Key.hasSeenDisclaimer) }
     }
 
-    /// Warn the user when they physically enter a high-risk district.
+    /// Warn the user when they physically enter a high-risk area.
     var geofenceAlertsEnabled: Bool {
         didSet { defaults.set(geofenceAlertsEnabled, forKey: Key.geofenceAlerts) }
     }
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        homeDistrictCode = defaults.string(forKey: Key.homeDistrict)
+        homeAreaCode = defaults.string(forKey: Key.homeArea)
         alertsEnabled = defaults.bool(forKey: Key.alertsEnabled)
         alertThreshold = defaults.object(forKey: Key.alertThreshold)
             .flatMap { RiskLevel(rawValue: $0 as? Int ?? -1) } ?? .high
