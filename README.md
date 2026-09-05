@@ -11,11 +11,11 @@ guidance, and local alerts when your own area gets worse.
 ## Building
 
 ```sh
-open ios/DengueWatchBD.xcodeproj
+open DengueWatchBD.xcodeproj
 ```
 
 The project uses an Xcode 16+ synchronized file group, so new files added under
-`ios/DengueWatchBD/` are picked up without editing the project file.
+`DengueWatchBD/` are picked up without editing the project file.
 
 Requires an installed iOS simulator runtime — `actool` refuses to compile the
 asset catalog without one, even for a device build. If a build fails with
@@ -143,7 +143,7 @@ raise no licensing questions. Severity is carried by shape as well as tint.
 
 ## The data
 
-`ios/DengueWatchBD/Resources/dengue-feed.json` is the offline seed: a copy of the
+`DengueWatchBD/Resources/dengue-feed.json` is the offline seed: a copy of the
 published feed, so the app shows real figures on first launch with no network at
 all. `FeedSync` replaces it with a download as soon as one succeeds.
 
@@ -178,18 +178,18 @@ headline number.
 
 ## Structure
 
-Two apps that read one published feed. Neither has a backend of its own; the
+One SwiftUI app reading one published feed. It has no backend of its own; the
 ingestion pipeline lives in
 [dengue-bd-dashboard](https://github.com/druzzal/dengue-bd-dashboard).
 
 ```
-ios/            the SwiftUI app (below)
-android/        the Kotlin/Compose app, domain layer ported from ios/Models
-docs/           notes
-Tools/          helper scripts
+DengueWatchBD.xcodeproj
+DengueWatchBD/          the app (below)
+DengueWatchBDTests/     decoding, mapping, geography and localisation tests
+Tools/                  helper scripts
 ```
 
-Inside `ios/DengueWatchBD/`:
+Inside `DengueWatchBD/`:
 
 ```
 App/            entry point, tab shell, about + first-run disclaimer
@@ -199,7 +199,8 @@ Data/           DengueStore, DengueFeedService, FeedSync, FeedConfig,
                 case log, preferences
 Design/         Theme.swift (validated palette), Typography.swift (type scale)
 Features/
-  Dashboard/    stat tiles, epidemic curve, age/sex breakdown, deaths, history
+  Dashboard/    stat tiles, case trend, deaths, age/sex breakdown, history,
+                shared chart axes
   Map/          proportional-symbol map, area list, area detail
   Triage/       symptom check, triage engine, personal log
   Care/         emergency numbers, hospital directory, nearby search
