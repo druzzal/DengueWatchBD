@@ -16,7 +16,7 @@ python3 -m venv venv && ./venv/bin/pip install -r requirements.txt
 ./venv/bin/python -m dghs.cli --start 2026-01-01 --out surveillance.json
 ```
 
-Then point the app at it, in `DengueWatchBD/Data/AppConfig.swift`:
+Then point the app at it, in `ios/DengueWatchBD/Data/AppConfig.swift`:
 
 ```swift
 static let surveillanceEndpoint = URL(string: "https://your-host/surveillance.json")

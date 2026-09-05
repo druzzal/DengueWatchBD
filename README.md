@@ -11,11 +11,11 @@ guidance, and local alerts when your own district gets worse.
 ## Building
 
 ```sh
-open DengueWatchBD.xcodeproj
+open ios/DengueWatchBD.xcodeproj
 ```
 
 The project uses an Xcode 16+ synchronized file group, so new files added under
-`DengueWatchBD/` are picked up without editing the project file.
+`ios/DengueWatchBD/` are picked up without editing the project file.
 
 Requires an installed iOS simulator runtime — `actool` refuses to compile the
 asset catalog without one, even for a device build. If a build fails with
@@ -140,7 +140,7 @@ raise no licensing questions. Severity is carried by shape as well as tint.
 
 ## The data
 
-`DengueWatchBD/Resources/surveillance.json` holds the whole dataset: a shared
+`ios/DengueWatchBD/Resources/surveillance.json` holds the whole dataset: a shared
 date axis, national daily series, 64 districts across 8 divisions with
 coordinates and population, and annual totals back to 2019.
 
@@ -167,6 +167,20 @@ is written and ready — point it at a DGHS-shaped endpoint and pass it to
 `SurveillanceStore(service:)` in `RootView`. No view changes are needed.
 
 ## Structure
+
+One repository, three pieces that share a single contract — the published
+`surveillance.json`. The backend serves both apps; neither app has a backend of
+its own.
+
+```
+ios/            the SwiftUI app (below)
+android/        the Kotlin/Compose app, domain layer ported from ios/Models
+server/         DGHS ingestion: scrapers, parser, validation, cross-check
+public/         what the pipeline publishes, and what both apps fetch
+Tools/          helper scripts
+```
+
+Inside `ios/DengueWatchBD/`:
 
 ```
 App/            entry point, tab shell, about + first-run disclaimer
