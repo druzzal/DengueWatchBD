@@ -143,6 +143,12 @@ struct FirstRunDisclaimerView: View {
                 .padding(.top, 4)
             }
             .padding(24)
+            // The five tabs and the map overlays are column-capped; this screen
+            // was missed because it only ever appears once. On an iPad that left
+            // the language picker and the button stretched the full width, with
+            // the disclosures running at about twice a comfortable measure — on
+            // the very first screen anyone sees.
+            .readableColumn()
         }
         .interactiveDismissDisabled()
     }
