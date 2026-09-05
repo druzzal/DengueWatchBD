@@ -94,21 +94,30 @@ extension View {
 // MARK: - Surfaces
 
 extension View {
-    /// The standard card surface: soft fill, hairline edge, no drop shadow.
-    /// Depth comes from the plane behind it rather than from shadows.
+    /// The standard card surface: soft fill, hairline edge, and a two-part
+    /// shadow that seats the card on the plane behind it.
     func cardSurface(radius: CGFloat = Radius.card,
                      fill: Color = Palette.card,
                      border: Color = Palette.hairline) -> some View {
-        background(fill, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .strokeBorder(border, lineWidth: 0.5)
-            )
+        background {
             // Two shadows rather than one: a tight contact shadow that seats the
             // card on the plane, and a wider, softer one that gives it height.
             // A single blur can do one job or the other, never both.
-            .shadow(color: Palette.cardShadow, radius: 1, y: 1)
-            .shadow(color: Palette.cardShadow, radius: 10, y: 4)
+            //
+            // Both hang off this background shape rather than off the composed
+            // card. Applied to the card, SwiftUI has to rasterise every card's
+            // text and charts offscreen to derive the blur mask — twice over,
+            // for every card on screen, on every scrolled frame. The fill is
+            // opaque, so the silhouette is identical either way.
+            RoundedRectangle(cornerRadius: radius, style: .continuous)
+                .fill(fill)
+                .shadow(color: Palette.cardShadow, radius: 1, y: 1)
+                .shadow(color: Palette.cardShadow, radius: 10, y: 4)
+        }
+        .overlay(
+            RoundedRectangle(cornerRadius: radius, style: .continuous)
+                .strokeBorder(border, lineWidth: 0.5)
+        )
     }
 
     /// Press feedback for a whole card acting as a button.
