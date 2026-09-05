@@ -127,12 +127,25 @@ final class SurveillanceStore {
         return Calendar.current.dateComponents([.day], from: lastUpdated, to: Date()).day
     }
 
+    /// How far behind DGHS's daily cadence the newest report has fallen.
+    /// Mirrors the tiers the pipeline publishes in status.json.
+    enum DataFreshness {
+        case fresh
+        case stale
+        case outdated
+    }
+
+    var freshness: DataFreshness {
+        guard let lastUpdated else { return .fresh }
+        let age = Date().timeIntervalSince(lastUpdated)
+        if age > AppConfig.outdatedThreshold { return .outdated }
+        if age > AppConfig.stalenessThreshold { return .stale }
+        return .fresh
+    }
+
     /// True when the figures are old enough that showing them without comment
     /// would misrepresent them as current.
-    var isStale: Bool {
-        guard let lastUpdated else { return false }
-        return Date().timeIntervalSince(lastUpdated) > AppConfig.stalenessThreshold
-    }
+    var isStale: Bool { freshness != .fresh }
     var latest: DailyPoint? { national.last }
 
     var seasonCases: Int { Series.sum(national.map(\.cases)) }

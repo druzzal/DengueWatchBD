@@ -106,6 +106,18 @@ struct DashboardView: View {
 
     // MARK: - Loading
 
+    /// The age of the data, plus — when the last check actually failed — the
+    /// fact that it did. "Days old" alone would imply DGHS simply published
+    /// nothing, which is a different situation from the app being unable to ask.
+    private func staleMessage(days: Int) -> String {
+        let age = loc.t(store.freshness == .outdated ? "outdated.message" : "stale.message",
+                        loc.num(days))
+        if case .failed = sync.status {
+            return age + " " + loc.t("stale.checkFailed")
+        }
+        return age
+    }
+
     private var loadingContent: some View {
         VStack(alignment: .leading, spacing: Space.section) {
             RiskCardSkeleton()
@@ -167,14 +179,19 @@ struct DashboardView: View {
             }
 
             if store.isStale, let days = store.dataAgeInDays {
-            AlertCard(risk: .moderate,
-                      title: loc.t("stale.title"),
-                      message: loc.t("stale.message", loc.num(days)),
+            // Outdated reads louder than stale, and a failed source check is
+            // named rather than left implicit — the app should never let a
+            // reader assume it simply has nothing new to say when in fact it
+            // could not reach the source at all.
+            AlertCard(risk: store.freshness == .outdated ? .high : .moderate,
+                      title: loc.t(store.freshness == .outdated
+                                   ? "outdated.title" : "stale.title"),
+                      message: staleMessage(days: days),
                       actionTitle: loc.t("common.tryAgain"),
                       action: {
                           Task {
                               await sync.sync(force: true)
-                              await store.reload()
+                              await store.refresh()
                           }
                       })
         }

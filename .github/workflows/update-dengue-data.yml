@@ -84,8 +84,19 @@ jobs:
       - name: Commit if changed
         run: |
           cd ..
-          if git diff --quiet -- public/; then
-            echo "DGHS published nothing new — leaving the dataset untouched."
+          # The dataset itself decides, not git. The run log gains an entry on
+          # every run, so asking git whether anything under public/ differs was
+          # always true and every run committed — including runs where DGHS had
+          # published nothing new. The pipeline compares a sha256 of the data
+          # (excluding ingestion timestamps) and skips the write entirely when
+          # it matches, so an unchanged surveillance.json here means no change.
+          if git diff --quiet -- public/surveillance.json; then
+            echo "DGHS published nothing new — recording the run, leaving the dataset untouched."
+            git config user.name "dengue-data-bot"
+            git config user.email "bot@users.noreply.github.com"
+            git add -A public/
+            git diff --cached --quiet || git commit -m "Record ingestion run $(date -u +%Y-%m-%d)"
+            git push || true
             exit 0
           fi
           git config user.name "dengue-data-bot"

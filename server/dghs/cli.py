@@ -20,6 +20,7 @@ from .build import build_payload, collect_reports
 from .dashboard import DGHSDashboardSource
 from .crosscheck import cross_check
 from .runlog import IngestionRun, append_run, status_document
+from .publish import decide, freshness, publish
 from .source import DGHSSourceError
 
 LOG = logging.getLogger("dghs")
@@ -27,6 +28,21 @@ LOG = logging.getLogger("dghs")
 
 def _parse_date(text: str) -> date:
     return datetime.strptime(text, "%Y-%m-%d").date()
+
+
+def write_status(out: Path, runs_path: Path, latest_report_date: str | None) -> Path:
+    """Write status.json beside the dataset.
+
+    Called on both the publish and the no-change paths: a run that found
+    nothing new still moves `lastSuccessfulIngestion` forward, and that is
+    exactly how a reader tells "the source has not updated" apart from "the
+    pipeline has stopped running".
+    """
+    status = status_document(runs_path, latest_report_date)
+    status["freshness"] = freshness(latest_report_date)
+    status_path = out.parent / "status.json"
+    status_path.write_text(json.dumps(status, indent=1), encoding="utf-8")
+    return status_path
 
 
 def validate_payload(payload: dict, revision_total: int = 0) -> list[str]:
@@ -167,11 +183,24 @@ def main(argv: list[str] | None = None) -> int:
             LOG.error("refusing to write %s", args.out)
             return 1
 
-    args.out.parent.mkdir(parents=True, exist_ok=True)
-    temporary = args.out.with_suffix(args.out.suffix + ".tmp")
-    temporary.write_text(json.dumps(result.payload, separators=(",", ":"), ensure_ascii=False),
-                         encoding="utf-8")
-    os.replace(temporary, args.out)
+    # Record which DGHS surface produced this dataset, so a reader can tell a
+    # dashboard-backed figure from a press-release-backed one without guessing.
+    result.payload["meta"]["primarySource"] = (
+        "DGHS daily report" if snapshot is None else "DGHS dashboard"
+    )
+    result.payload["meta"]["parserVersion"] = (
+        snapshot.parser_version if snapshot is not None else "dghs-pdf-v1"
+    )
+
+    decision = decide(result.payload, args.out)
+    if not decision.changed:
+        LOG.info("no change: %s (sha256 %s)", decision.reason, decision.new_digest[:12])
+        append_run(runs_path, run.finish("no_change"))
+        write_status(args.out, runs_path, latest_report_date=reports[-1].report_date.isoformat())
+        return 0
+
+    LOG.info("publishing: %s (sha256 %s)", decision.reason, decision.new_digest[:12])
+    publish(result.payload, args.out)
 
     # Cross-check the two DGHS surfaces. Disagreement is recorded, never
     # silently resolved in favour of one of them.
@@ -213,12 +242,7 @@ def main(argv: list[str] | None = None) -> int:
     run.downward_revisions = result.downward_revisions
     append_run(runs_path, run.finish("success"))
 
-    status_path = args.out.parent / "status.json"
-    status_path.write_text(
-        json.dumps(status_document(runs_path, result.payload["meta"]["lastUpdated"]),
-                   indent=1),
-        encoding="utf-8",
-    )
+    status_path = write_status(args.out, runs_path, result.payload["meta"]["lastUpdated"])
     LOG.info("wrote %s and %s", runs_path.name, status_path.name)
 
     meta = result.payload["meta"]

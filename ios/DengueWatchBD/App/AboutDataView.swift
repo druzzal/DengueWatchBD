@@ -34,6 +34,19 @@ struct AboutDataView: View {
 
                     Section(loc.t("about.attribution")) {
                         Text(meta.attribution).typo(.callout)
+                        // The source is linkable so a reader can check the
+                        // figures against DGHS themselves, and the independence
+                        // note keeps the app from being mistaken for an
+                        // official DGHS product.
+                        if let url = URL(string: AppConfig.sourceURL) {
+                            Link(destination: url) {
+                                Label(loc.t("about.openSource"), systemImage: "arrow.up.right.square")
+                                    .typo(.callout)
+                            }
+                        }
+                        Text(loc.t("about.independent"))
+                            .typo(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
 
