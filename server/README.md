@@ -212,3 +212,55 @@ dghs/
 tools_make_aliases.py      regenerate aliases positionally from PDFs
 tests/                     parser tests against a committed real release
 ```
+
+## JSON endpoint (`api/`)
+
+A read-only FastAPI service over the same DGHS figures, for clients that want
+a single HTTP call rather than the full published dataset.
+
+```sh
+cd server
+python3 -m venv venv
+./venv/bin/pip install -r requirements.txt
+./venv/bin/python -m uvicorn api.main:app --reload --port 8000
+```
+
+Then:
+
+```sh
+curl http://127.0.0.1:8000/api/dengue-stats
+```
+
+```json
+{
+  "source": { "name": "DGHS", "url": "https://dashboard.dghs.gov.bd/pages/heoc_dengue_v1.php" },
+  "retrievedAt": "2026-09-05T20:19:16+06:00",
+  "freshness": "live",
+  "data": {
+    "reportDate": "2026-09-05",
+    "cumulative": { "cases": 41032, "deaths": 113 },
+    "last24Hours": { "cases": 988, "deaths": 2 },
+    "currentlyHospitalised": null
+  }
+}
+```
+
+`freshness` is the field to read before trusting the numbers:
+
+| Value | Meaning |
+|---|---|
+| `live` | just parsed from DGHS |
+| `cached` | parsed within the last 30 minutes |
+| `stale` | DGHS unreachable; last good parse, with `error` set |
+| `published-fallback` | DGHS unreachable and no cache; the pipeline's last validated dataset |
+| `unavailable` | nothing to serve — HTTP 503 |
+
+The service holds no scraper of its own. It calls `dghs.dashboard`, the same
+parser the ingestion pipeline uses, so there is one place to fix when DGHS
+changes its page. It refreshes at most every 30 minutes rather than on every
+request, so client traffic never reaches DGHS directly.
+
+**The iOS app does not use this endpoint** and should not. It reads the
+published `surveillance.json`, which carries validation, cross-checking and
+last-known-good that a request-time parse cannot. See
+`docs/DGHS_DATA_PIPELINE.md`.
