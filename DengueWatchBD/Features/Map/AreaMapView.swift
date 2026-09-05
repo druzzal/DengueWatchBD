@@ -27,6 +27,14 @@ struct AreaMapView: View {
     @State private var camera: MapCameraPosition = .region(.bangladesh)
     @State private var selectedArea: Area?
     @State private var pushedArea: Area?
+    /// Auto-zoom happens once per visit to the tab, never again.
+    ///
+    /// `MapUserLocationButton` is still not used: it puts the camera into
+    /// follow mode, so the map keeps dragging itself back and a reader can no
+    /// longer pan away to look at another division. Moving once and then
+    /// leaving the camera alone gives the same first impression without taking
+    /// the map away from them.
+    @State private var hasAutoZoomed = false
 
     private var maxValue: Double {
         max(store.areas.map { metric.value(for: $0) }.max() ?? 1, 1)
@@ -139,11 +147,24 @@ struct AreaMapView: View {
                 // Only starts if permission is already granted; otherwise the
                 // legend offers the button that asks for it.
                 location.startUpdatingCoarse()
+                autoZoomIfReady()
+            }
+            .onChange(of: location.lastKnownLocation) { _, _ in
+                autoZoomIfReady()
             }
             .onChange(of: showsList) { _, isList in
-                if !isList { camera = .region(.bangladesh) }
+                // Coming back from the list re-frames the country, so the next
+                // fix is allowed to move the camera again.
+                if !isList {
+                    camera = .region(.bangladesh)
+                    hasAutoZoomed = false
+                    autoZoomIfReady()
+                }
             }
-            .onDisappear { location.stopUpdatingCoarse() }
+            .onDisappear {
+                location.stopUpdatingCoarse()
+                hasAutoZoomed = false
+            }
             .onChange(of: location.authorization) { _, _ in
                 location.startUpdatingCoarse()
             }
@@ -187,6 +208,18 @@ struct AreaMapView: View {
     /// Which area the user is standing in, if a fix has come through.
     private var currentArea: Area? {
         location.lastKnownLocation.flatMap { store.nearestArea(to: $0) }
+    }
+
+    /// Frame the user on first fix, then leave the camera to them.
+    ///
+    /// Gated on being able to name an area, which means being inside
+    /// Bangladesh. Without that, someone opening the app abroad would have a
+    /// national dengue map thrown to street level over a city it has no data
+    /// for — the country view is the more useful thing to show them.
+    private func autoZoomIfReady() {
+        guard !hasAutoZoomed, !showsList, currentArea != nil else { return }
+        hasAutoZoomed = true
+        zoomToUser()
     }
 
     /// Zoom to roughly a city around the user.
