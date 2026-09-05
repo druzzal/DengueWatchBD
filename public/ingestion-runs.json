@@ -1,5 +1,23 @@
 [
  {
+  "run_started_at": "2026-09-05T12:13:18+00:00",
+  "run_completed_at": "2026-09-05T12:26:40+00:00",
+  "status": "success",
+  "source": "DGHS",
+  "source_url": "https://dashboard.dghs.gov.bd/pages/heoc_dengue_v1.php",
+  "source_last_updated": "2026-09-05",
+  "days_fetched": 248,
+  "days_parsed": 199,
+  "days_skipped": 49,
+  "records_written": 199,
+  "downward_revisions": 15,
+  "validation_rejections": 0,
+  "validation_anomalies": 0,
+  "verification_status": "not_comparable",
+  "parser_version": "dghs-dashboard-v2",
+  "error_message": null
+ },
+ {
   "run_started_at": "2026-09-05T08:36:57+00:00",
   "run_completed_at": "2026-09-05T08:50:18+00:00",
   "status": "success",
