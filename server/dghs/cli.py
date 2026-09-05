@@ -17,11 +17,13 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from .build import build_payload, collect_reports
-from .dashboard import DGHSDashboardSource
+from .dashboard import DASHBOARD_URL, DGHSDashboardSource
 from .crosscheck import cross_check
 from .runlog import IngestionRun, append_run, status_document
 from .latest import build_latest
+from .fetch import BASE_URL as PRESS_RELEASE_BASE_URL
 from .publish import decide, freshness, publish
+from .source_health import check_sources
 from .source import DGHSSourceError
 
 LOG = logging.getLogger("dghs")
@@ -148,6 +150,19 @@ def main(argv: list[str] | None = None) -> int:
                  len(annual_history), run.source_last_updated or "unknown")
     except DGHSSourceError as exc:
         LOG.warning("dashboard unavailable (%s); using fallback history", exc)
+
+    # One probe instead of hundreds of retries. Every day the press-release
+    # host cannot serve otherwise costs three attempts at a 45-second timeout,
+    # so a run that can achieve nothing still took a quarter of an hour and
+    # buried the real message under identical warnings.
+    health = check_sources(PRESS_RELEASE_BASE_URL, DASHBOARD_URL)
+    run.source_health = {name: h.as_dict() for name, h in health.items()}
+    press_release_host_is_up = health["press_release"].is_up
+
+    if not press_release_host_is_up:
+        LOG.warning("skipping press-release fetches entirely this run: %s is %s",
+                    health["press_release"].host,
+                    health["press_release"].reachability.value)
 
     LOG.info("collecting DGHS reports %s to %s", start, args.end)
     outcome = collect_reports(start, args.end, args.cache)

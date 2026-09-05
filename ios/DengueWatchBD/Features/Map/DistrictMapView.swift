@@ -150,10 +150,14 @@ struct DistrictMapView: View {
             // An inset rather than an overlay: MapKit then frames the country in
             // the space the legend leaves, and keeps its attribution clear of it.
             .safeAreaInset(edge: .bottom, spacing: 0) {
-                legend
-                    .readableColumn()
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 8)
+                VStack(spacing: 0) {
+                    legend
+                    // Under the map, not over it, so it never covers a district.
+                    MapAsOfFooter()
+                }
+                .readableColumn()
+                .padding(.horizontal, 16)
+                .padding(.bottom, 8)
             }
         }
     }
@@ -323,13 +327,7 @@ struct DistrictMapView: View {
 
     private var legend: some View {
         MapLegend(
-            // When the dashboard has run ahead of the press releases, the
-            // national headline is newer than these district figures. Say so
-            // here rather than let the map read as current.
-            metricExplanation: store.breakdownTrailsHeadline
-                ? loc.t(metric.explanationKey) + " "
-                  + loc.t("breakdown.trails", store.seriesLastUpdated.map(loc.fullDate) ?? "—")
-                : loc.t(metric.explanationKey),
+            metricExplanation: loc.t(metric.explanationKey),
             sizeSamples: [0.08, 0.35, 1.0].map { fraction in
                 (label: metric == .total
                     ? loc.compact(Int(maxValue * fraction))

@@ -37,6 +37,10 @@ class IngestionRun:
     validation_rejections: int = 0
     validation_anomalies: int = 0
     verification_status: str = "unverified"
+    # Whether each DGHS host was reachable at the start of the run. Makes
+    # "nothing new was published" distinguishable from "the source was down"
+    # after the fact, from the run log alone.
+    source_health: dict = field(default_factory=dict)
     parser_version: str = "dghs-dashboard-v2"
     error_message: str | None = None
 
