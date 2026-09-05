@@ -307,46 +307,64 @@ struct AreaMapView: View {
         }
     }
 
-    /// Shown when the user is in a high-risk area and has not yet enabled
-    /// the crossing-into-a-high-risk-area warning.
+    /// The entry-alert control, on the map itself.
+    ///
+    /// Previously shown only while the reader was standing in a high-risk area,
+    /// which is backwards: the alert exists to warn you *before* you enter one,
+    /// so the one person who could never turn it on from here was the person it
+    /// was for. It now appears whenever there is a high-risk area to watch.
     @ViewBuilder
     private var geofencePrompt: some View {
-        if let area = currentArea, area.risk >= .high {
-            if preferences.geofenceAlertsEnabled {
+        if !store.hotspots.isEmpty {
+            if !preferences.geofenceAlertsEnabled {
+                promptButton(title: loc.t("geo.prompt.title"),
+                             action: loc.t("geo.prompt.enable"),
+                             symbol: "bell.badge") { enableHighRiskAlerts() }
+            } else if !location.hasBackgroundAuthorization {
+                // Turned on, but iOS only granted "While Using", so nothing is
+                // actually being watched. Saying "alerts on" here would be a lie.
+                promptButton(title: loc.t("geo.prompt.title"),
+                             action: loc.t("geo.permission"),
+                             symbol: "exclamationmark.triangle") { location.requestAlways() }
+            } else {
                 HStack(spacing: Space.hair + 2) {
                     Image(systemName: "bell.badge.fill")
                         .font(.system(size: 10, weight: .semibold))
-                    Text(loc.t("geo.prompt.enabled")).typo(.micro)
+                    Text(loc.t("geo.monitoring", loc.num(location.monitoredAreaCodes.count)))
+                        .typo(.micro)
                     Spacer(minLength: 0)
                 }
                 .foregroundStyle(.secondary)
-            } else {
-                Button {
-                    enableHighRiskAlerts()
-                } label: {
-                    HStack(alignment: .top, spacing: Space.tight) {
-                        Image(systemName: "bell.badge")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(Palette.accent)
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text(loc.t("geo.prompt.title"))
-                                .typo(.micro).fontWeight(.semibold)
-                                .foregroundStyle(.primary)
-                                .multilineTextAlignment(.leading)
-                            Text(loc.t("geo.prompt.enable"))
-                                .typo(.micro).fontWeight(.semibold)
-                                .foregroundStyle(Palette.accent)
-                        }
-                        Spacer(minLength: 0)
-                    }
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .frame(minHeight: Hit.minimum - 12)
+                .accessibilityElement(children: .combine)
             }
             Divider().overlay(Palette.hairline)
         }
     }
+
+    private func promptButton(title: String, action: String, symbol: String,
+                              perform: @escaping () -> Void) -> some View {
+        Button(action: perform) {
+            HStack(alignment: .top, spacing: Space.tight) {
+                Image(systemName: symbol)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Palette.accent)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(title)
+                        .typo(.micro).fontWeight(.semibold)
+                        .foregroundStyle(.primary)
+                        .multilineTextAlignment(.leading)
+                    Text(action)
+                        .typo(.micro).fontWeight(.semibold)
+                        .foregroundStyle(Palette.accent)
+                }
+                Spacer(minLength: 0)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .frame(minHeight: Hit.minimum - 12)
+    }
+
 
     private func enableHighRiskAlerts() {
         preferences.geofenceAlertsEnabled = true
