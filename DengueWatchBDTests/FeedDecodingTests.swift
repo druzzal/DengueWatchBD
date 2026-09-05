@@ -262,6 +262,48 @@ final class FeedDecodingTests: XCTestCase {
         XCTAssertEqual(Strings.missingBanglaKeys, [])
     }
 
+    // MARK: - Background refresh
+
+    /// The refresh has to be callable with nothing set up, because that is the
+    /// state it runs in: iOS wakes the process, and no view has been built.
+    @MainActor
+    func testBackgroundRefreshRunsHeadlessAndLeavesUsableData() async {
+        let suite = "background.refresh.test"
+        let defaults = UserDefaults(suiteName: suite)!
+        defaults.removePersistentDomain(forName: suite)
+
+        let store = DengueStore()
+        // Alerts off, so the run touches no notification centre and no
+        // CoreLocation state — this asserts the data path only.
+        let preferences = Preferences(defaults: defaults)
+        preferences.geofenceAlertsEnabled = false
+        preferences.alertsEnabled = false
+
+        _ = await BackgroundRefresh.run(store: store,
+                                        cache: FeedCache(),
+                                        preferences: preferences)
+
+        // Whether or not the network was reachable in CI, the store must have
+        // fallen back to the bundled seed rather than ending up empty.
+        XCTAssertEqual(store.state, .loaded)
+        XCTAssertEqual(store.areas.count, 10)
+        XCTAssertGreaterThan(store.seasonCases, 0)
+
+        defaults.removePersistentDomain(forName: suite)
+    }
+
+    func testBackgroundRefreshIdentifierMatchesTheInfoPlist() throws {
+        let permitted = try XCTUnwrap(
+            Bundle.main.object(forInfoDictionaryKey: "BGTaskSchedulerPermittedIdentifiers") as? [String],
+            "BGTaskSchedulerPermittedIdentifiers is missing from Info.plist")
+        XCTAssertTrue(permitted.contains(BackgroundRefresh.identifier),
+                      "BGTaskScheduler refuses an identifier the plist does not declare")
+
+        let modes = try XCTUnwrap(
+            Bundle.main.object(forInfoDictionaryKey: "UIBackgroundModes") as? [String])
+        XCTAssertTrue(modes.contains("fetch"))
+    }
+
     // MARK: - Entry alerts survive a background relaunch
 
     /// The alert has to be composable from disk alone.

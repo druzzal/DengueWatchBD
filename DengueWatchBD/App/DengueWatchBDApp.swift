@@ -14,6 +14,9 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
         _ = LocationManager.shared
+        // Must happen before launch finishes, or BGTaskScheduler refuses the
+        // identifier for the life of the process.
+        BackgroundRefresh.register()
         return true
     }
 }
@@ -21,10 +24,16 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
 @main
 struct DengueWatchBDApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {
         WindowGroup {
             RootView()
+                .onChange(of: scenePhase) { _, phase in
+                    // Queue the next refresh as the app leaves the foreground,
+                    // which is the moment iOS is deciding what to run later.
+                    if phase == .background { BackgroundRefresh.schedule() }
+                }
         }
     }
 }

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Everything else is generated from INFOPLIST_KEY_* build settings and
+	     merged into this file. Only the keys Xcode cannot generate live here:
+	     both of these are arrays, which the INFOPLIST_KEY_ mechanism does not
+	     produce. Kept outside DengueWatchBD/ so the file-system-synchronized
+	     group does not also copy it in as a resource. -->
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>bd.uzzal.denguewatch.refresh</string>
+	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+	</array>
+</dict>
+</plist>

@@ -255,10 +255,11 @@
 				DEVELOPMENT_TEAM = KC45FLCGH2;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = DengueWatch;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.medical";
-				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "DengueWatch checks in the background whether you have entered a district with high dengue transmission, so it can warn you. Your location is checked on this phone and is never uploaded.";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "DengueWatch uses your location to show the dengue risk for the district you are in, and to find hospitals near you. Your location stays on this phone.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "DengueWatch checks in the background whether you have entered an area with high dengue transmission, so it can warn you. Your location is checked on this phone and is never uploaded.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "DengueWatch uses your location to show the dengue risk for the area you are in, and to find hospitals near you. Your location stays on this phone.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -289,10 +290,11 @@
 				DEVELOPMENT_TEAM = KC45FLCGH2;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = DengueWatch;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.medical";
-				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "DengueWatch checks in the background whether you have entered a district with high dengue transmission, so it can warn you. Your location is checked on this phone and is never uploaded.";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "DengueWatch uses your location to show the dengue risk for the district you are in, and to find hospitals near you. Your location stays on this phone.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "DengueWatch checks in the background whether you have entered an area with high dengue transmission, so it can warn you. Your location is checked on this phone and is never uploaded.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "DengueWatch uses your location to show the dengue risk for the area you are in, and to find hospitals near you. Your location stays on this phone.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";

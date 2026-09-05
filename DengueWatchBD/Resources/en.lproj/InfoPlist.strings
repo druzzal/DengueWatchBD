@@ -1,3 +1,3 @@
-"NSLocationWhenInUseUsageDescription" = "DengueWatch uses your location to confirm a community dengue report is genuinely from where you are, and to find hospitals near you. Your location stays on this phone.";
-"NSLocationAlwaysAndWhenInUseUsageDescription" = "DengueWatch checks in the background whether you have entered a district with high dengue transmission, so it can warn you. Your location is checked on this phone and is never uploaded.";
+"NSLocationWhenInUseUsageDescription" = "DengueWatch uses your location to show the dengue risk for the area you are in, and to find hospitals near you. Your location stays on this phone.";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "DengueWatch checks in the background whether you have entered an area with high dengue transmission, so it can warn you. Your location is checked on this phone and is never uploaded.";
 "CFBundleDisplayName" = "DengueWatch";
