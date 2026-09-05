@@ -187,9 +187,11 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = KC45FLCGH2;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = DengueWatch;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "DengueWatch checks in the background whether you have entered a district with high dengue transmission, so it can warn you. Your location is checked on this phone and is never uploaded.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "DengueWatch uses your location to confirm a community dengue report is genuinely from where you are, and to find hospitals near you. Your location stays on this phone.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -202,7 +204,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = bd.denguewatch.app;
+				PRODUCT_BUNDLE_IDENTIFIER = bd.uzzal.denguewatch;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -219,9 +221,11 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = KC45FLCGH2;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = DengueWatch;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "DengueWatch checks in the background whether you have entered a district with high dengue transmission, so it can warn you. Your location is checked on this phone and is never uploaded.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "DengueWatch uses your location to confirm a community dengue report is genuinely from where you are, and to find hospitals near you. Your location stays on this phone.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -234,7 +238,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = bd.denguewatch.app;
+				PRODUCT_BUNDLE_IDENTIFIER = bd.uzzal.denguewatch;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_EMIT_LOC_STRINGS = YES;
