@@ -47,6 +47,28 @@ final class SurveillanceStore {
         await load()
     }
 
+    /// Refresh in place, for pull-to-refresh.
+    ///
+    /// Deliberately does not pass through `.loading` the way `reload()` does.
+    /// Dropping back to `.loading` swapped the whole dashboard for skeletons
+    /// mid-gesture, which blanked figures the reader was looking at and, because
+    /// the scroll content changed identity while the refresh control was live,
+    /// left the large title stranded instead of letting it animate back up.
+    /// Keeping the current figures on screen until new ones land fixes both.
+    func refresh() async {
+        do {
+            let payload = try await service.fetch()
+            apply(payload)
+            state = .loaded
+        } catch {
+            // A failed refresh is no reason to blank a screen that already has
+            // yesterday's figures — only surface it when there is nothing to show.
+            if districts.isEmpty {
+                state = .failed(error.localizedDescription)
+            }
+        }
+    }
+
     enum Source { case local, network }
 
     private(set) var source: Source = .local

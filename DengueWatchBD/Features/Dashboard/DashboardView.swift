@@ -77,7 +77,6 @@ struct DashboardView: View {
             }
             .background(Palette.plane)
             .columnAlignedTitle(loc.t("dash.title"), isWide: sizeClass == .regular)
-            .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) { LanguageToggle() }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -89,7 +88,7 @@ struct DashboardView: View {
             }
             .refreshable {
                 await sync.sync(force: true)
-                await store.reload()
+                await store.refresh()
             }
             .navigationDestination(for: District.self) { DistrictDetailView(district: $0) }
             .sheet(isPresented: $showingAbout) { AboutDataView() }
