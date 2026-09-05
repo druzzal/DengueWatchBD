@@ -31,7 +31,7 @@ final class FeedDecodingTests: XCTestCase {
            "div_city_cor_death_in_year":{"title":"deaths","categories":["Barishal","Dhaka (Out of CC)","DNCC","DSCC"],
              "series":[{"name":"Death","type":"column","data":[2,1,2,1]}]},
            "affected_in_division_by_week":{"title":"weekly","categories":["W01","W02"],
-             "series":[{"name":"Barisal","data":[40,60]},{"name":"Dhaka","data":[100,100]}]},
+             "series":[{"name":"Barisal","data":[40,60]},{"name":"Dhaka","data":[100,101]}]},
            "year_case":{"title":"years","categories":["2025","2026"],
              "series":[{"name":"Affected","type":"column","data":[102861,300]}]},
            "dengue_affected_by_gender":{"title":"sex","categories":[],
@@ -133,11 +133,30 @@ final class FeedDecodingTests: XCTestCase {
         XCTAssertEqual(dhaka.count, 3)
         XCTAssertTrue(dhaka.allSatisfy(\.weeklyIsApportioned))
 
-        // Season cases 60 / 80 / 60 of 200 against a division series of [100, 100].
-        for week in 0..<2 {
+        // Season cases 60 / 80 / 60 of 200 against a division series of [100, 101].
+        // The second week is the one that matters: 101 does not divide cleanly,
+        // so rounding each share on its own yields 30 + 40 + 30 = 100 and loses
+        // a case. Largest remainder has to place it.
+        for (week, divisionTotal) in [(0, 100), (1, 101)] {
             let shared = dhaka.reduce(0) { $0 + ($1.weeklyCases[safe: week] ?? 0) }
-            XCTAssertEqual(shared, 100, "week \(week) must still sum to the division's figure")
+            XCTAssertEqual(shared, divisionTotal,
+                           "week \(week) must sum to the division's own figure")
         }
+    }
+
+    /// The property the area page promises: the parts always add back up.
+    func testApportionmentIsExactAcrossAwkwardSplits() {
+        for value in [0, 1, 7, 99, 101, 1165, 7446] {
+            for weights in [[6017, 4895, 5400], [1, 1, 1], [1, 0, 0], [3, 5, 7, 11]] {
+                let parts = Series.apportion(value, across: weights)
+                XCTAssertEqual(parts.reduce(0, +), value,
+                               "\(value) across \(weights) must not drift")
+                XCTAssertTrue(parts.allSatisfy { $0 >= 0 })
+            }
+        }
+        // A weightless split cannot invent a distribution.
+        XCTAssertEqual(Series.apportion(10, across: [0, 0]), [0, 0])
+        XCTAssertEqual(Series.apportion(10, across: []), [])
     }
 
     /// DGHS's age tables carry rows where a date was typed into the age column
@@ -161,6 +180,29 @@ final class FeedDecodingTests: XCTestCase {
         XCTAssertEqual(store.cases24h, 988)
         XCTAssertEqual(store.headline?.epiWeek, "W35")
         XCTAssertEqual(store.sexSplitCases?.male, 180)
+    }
+
+    /// A feed whose area breakdown is missing or renamed must produce no areas,
+    /// so the map can say so. Ten places reporting zero beside a national total
+    /// of 300 would be worse than an empty state.
+    @MainActor
+    func testMissingAreaBreakdownYieldsNoAreas() async throws {
+        let stripped = Data("""
+        {"schema_version":1,"fetched_at":"2026-09-05T19:04:58Z",
+         "meta":{"last_updated":"2026-09-05","year":2026},
+         "summary":{"ytd_cases":300,"ytd_deaths":6},
+         "charts":{"div_city_cor_case_in_year":{"title":"renamed","categories":["Something Else"],
+                    "series":[{"name":"Admitted","data":[10]}]}},
+         "tables":[]}
+        """.utf8)
+
+        let store = DengueStore()
+        await store.apply(document: try FeedDecoder.document(from: stripped), source: .bundled)
+
+        XCTAssertTrue(store.areas.isEmpty, "unrecognised categories are not ten zeroes")
+        XCTAssertEqual(store.seasonCases, 300, "the national headline still stands")
+        XCTAssertEqual(store.nationalRisk, .low)
+        XCTAssertEqual(store.nationalIncidencePer100k, 0)
     }
 
     // MARK: - Risk
@@ -197,6 +239,22 @@ final class FeedDecodingTests: XCTestCase {
         XCTAssertEqual(areaTotal, store.seasonCases)
         let deathTotal = store.areas.reduce(0) { $0 + $1.seasonDeaths }
         XCTAssertEqual(deathTotal, store.seasonDeaths)
+
+        // Against the real feed, independent rounding missed the Dhaka
+        // division's weekly figure in 9 weeks out of 35. Check every week of
+        // the shipped data, not a fixture chosen to divide cleanly.
+        let divisionWeeks = try XCTUnwrap(
+            document.chart(.divisionCasesByWeek)?.series(named: "Dhaka")?.values)
+        let dhaka = store.areas.filter { $0.weeklyIsApportioned }
+        XCTAssertEqual(dhaka.count, 3)
+        for week in divisionWeeks.indices {
+            let shared = dhaka.reduce(0) { $0 + ($1.weeklyCases[safe: week] ?? 0) }
+            XCTAssertEqual(shared, divisionWeeks[week],
+                           "week \(week + 1) drifted from the division's own figure")
+        }
+        XCTAssertEqual(dhaka.reduce(0) { $0 + Series.sum($1.weeklyCases) },
+                       divisionWeeks.reduce(0, +),
+                       "the season must not drift either")
     }
 
     /// Every string the UI asks for must exist in both languages.

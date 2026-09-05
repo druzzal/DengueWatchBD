@@ -274,6 +274,37 @@ enum Series {
         return out
     }
 
+    /// Split `value` across `weights` so the parts always sum back to `value`.
+    ///
+    /// Rounding each share on its own drifts. On the real feed that missed the
+    /// Dhaka division's weekly figure in 9 weeks out of 35 and overstated the
+    /// season by 5 cases — which contradicted what the area page tells the
+    /// reader. Largest remainder keeps the total exact: floor every share, then
+    /// hand the leftover units to the largest fractional parts.
+    static func apportion(_ value: Int, across weights: [Int]) -> [Int] {
+        let total = weights.reduce(0, +)
+        guard total > 0, !weights.isEmpty else {
+            return Array(repeating: 0, count: weights.count)
+        }
+
+        let exact = weights.map { Double(value) * Double($0) / Double(total) }
+        var parts = exact.map { Int($0.rounded(.down)) }
+        var leftover = value - parts.reduce(0, +)
+
+        // Ties break towards the earlier index, which is stable across runs.
+        let order = exact.indices.sorted {
+            let a = exact[$0] - Double(parts[$0]), b = exact[$1] - Double(parts[$1])
+            return a == b ? $0 < $1 : a > b
+        }
+        var cursor = 0
+        while leftover > 0, !order.isEmpty {
+            parts[order[cursor % order.count]] += 1
+            leftover -= 1
+            cursor += 1
+        }
+        return parts
+    }
+
     static func change(from old: Int, to new: Int) -> Double? {
         guard old > 0 else { return nil }
         return (Double(new) - Double(old)) / Double(old)

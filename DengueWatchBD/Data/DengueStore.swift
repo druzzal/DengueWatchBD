@@ -129,24 +129,43 @@ final class DengueStore {
         let seasonDeaths = document.chart(.areaSeasonDeaths)
         let weekly = document.chart(.divisionCasesByWeek)
 
-        // Dhaka's three feed rows share one weekly series, so each one's weekly
-        // numbers are apportioned by its share of the division's season cases.
-        // The split is measured, not invented, and the three still sum to the
-        // division's reported weekly total.
-        let dhakaTotal = Geography.definitions
-            .filter { Geography.apportionedCodes.contains($0.code) }
-            .reduce(0) { $0 + (seasonCases?.value(for: $1.feedCategory) ?? 0) }
+        func cases(_ definition: Geography.Definition) -> Int {
+            seasonCases?.value(for: definition.feedCategory) ?? 0
+        }
+
+        // The area list is built from a fixed table of ten places, so without
+        // this it is never empty: a feed that dropped or renamed the breakdown
+        // would render ten areas reporting zero cases next to a national total
+        // in the tens of thousands, and the map's "no area data" state could
+        // never appear. Recognising none of our categories means no data, not
+        // a quiet season.
+        guard let seasonCases,
+              Geography.definitions.contains(where: {
+                  seasonCases.value(for: $0.feedCategory) != nil
+              }) else { return [] }
+
+        // Dhaka's three feed rows share one weekly series, so each week is split
+        // between them by their share of the division's season cases. Split once
+        // for all three, and exactly: apportioning them independently let
+        // rounding drift, so the parts no longer summed to the division's own
+        // weekly figure — which is precisely what the area page promises.
+        let dhaka = Geography.definitions.filter { Geography.apportionedCodes.contains($0.code) }
+        let dhakaWeights = dhaka.map(cases)
+        var dhakaSeries: [String: [Int]] = [:]
+        if let divisionWeeks = dhaka.first.flatMap({ weekly?.series(named: $0.weeklySeriesName)?.values }) {
+            for week in divisionWeeks {
+                let parts = Series.apportion(week, across: dhakaWeights)
+                for (index, definition) in dhaka.enumerated() {
+                    dhakaSeries[definition.code, default: []].append(parts[index])
+                }
+            }
+        }
 
         return Geography.definitions.map { definition in
-            let cases = seasonCases?.value(for: definition.feedCategory) ?? 0
-            let deaths = seasonDeaths?.value(for: definition.feedCategory) ?? 0
-            var series = weekly?.series(named: definition.weeklySeriesName)?.values ?? []
-
             let apportioned = Geography.apportionedCodes.contains(definition.code)
-            if apportioned, dhakaTotal > 0 {
-                let share = Double(cases) / Double(dhakaTotal)
-                series = series.map { Int((Double($0) * share).rounded()) }
-            }
+            var series = apportioned
+                ? (dhakaSeries[definition.code] ?? [])
+                : (weekly?.series(named: definition.weeklySeriesName)?.values ?? [])
             if weekCount > 0, series.count > weekCount {
                 series = Array(series.prefix(weekCount))
             }
@@ -158,8 +177,8 @@ final class DengueStore {
                 latitude: definition.latitude,
                 longitude: definition.longitude,
                 populationThousands: definition.populationThousands,
-                seasonCases: cases,
-                seasonDeaths: deaths,
+                seasonCases: cases(definition),
+                seasonDeaths: seasonDeaths?.value(for: definition.feedCategory) ?? 0,
                 weeklyCases: series,
                 weeklyIsApportioned: apportioned,
                 geofenceRadiusMeters: definition.geofenceRadiusMeters
@@ -265,8 +284,6 @@ final class DengueStore {
 
     var last7Cases: Int { Series.sum(national.suffix(7).map(\.cases)) }
     var previous7Cases: Int { Series.sum(national.dropLast(7).suffix(7).map(\.cases)) }
-    var last7Deaths: Int { Series.sum(national.suffix(7).map(\.deaths)) }
-    var previous7Deaths: Int { Series.sum(national.dropLast(7).suffix(7).map(\.deaths)) }
 
     var weeklyCaseChange: Double? { Series.change(from: previous7Cases, to: last7Cases) }
 
@@ -329,7 +346,7 @@ final class DengueStore {
         areas.filter { $0.division == division }.sorted { $0.seasonCases > $1.seasonCases }
     }
 
-    var peakAreaCases: Int { areas.map(\.seasonCases).max() ?? 1 }
+    var peakAreaCases: Int { max(areas.map(\.seasonCases).max() ?? 1, 1) }
 
     /// Division-level roll-up, folding the Dhaka city corporations back into
     /// their division.

@@ -50,7 +50,7 @@ struct SeasonComparisonCard: View {
     let history: [YearSummary]
     let currentYear: Int
 
-    private var maxCases: Int { history.map(\.cases).max() ?? 1 }
+    private var maxCases: Int { max(history.map(\.cases).max() ?? 1, 1) }
 
     var body: some View {
         CardSection(loc.t("dash.history.title"), subtitle: loc.t("dash.history.subtitle")) {

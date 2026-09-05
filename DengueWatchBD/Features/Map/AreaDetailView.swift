@@ -86,7 +86,7 @@ struct AreaDetailView: View {
                 CardSection(loc.t("area.peers.title", area.division.displayName(loc.language)),
                             subtitle: loc.t("area.peers.subtitle")) {
                     let peers = store.areas(in: area.division)
-                    let peak = peers.map(\.seasonCases).max() ?? 1
+                    let peak = max(peers.map(\.seasonCases).max() ?? 1, 1)
                     VStack(spacing: 0) {
                         ForEach(Array(peers.enumerated()), id: \.element.id) { index, peer in
                             NavigationLink(value: peer) {

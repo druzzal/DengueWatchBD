@@ -108,14 +108,6 @@ enum Palette {
         riskTint(level).opacity(0.14)
     }
 
-    /// Ink that stays readable when placed *on* a solid risk tint.
-    static func onRiskTint(_ level: RiskLevel) -> Color {
-        switch level {
-        // Amber is far too light to carry white text.
-        case .moderate: Color(light: "#3a2a00", dark: "#2a1e00")
-        case .low, .high, .severe: .white
-        }
-    }
 }
 
 extension RiskLevel {

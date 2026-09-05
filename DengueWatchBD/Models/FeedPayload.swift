@@ -13,6 +13,11 @@ import Foundation
 // `.convertFromSnakeCase`, so `ytd_cases` arrives as `ytdCases`.
 
 /// Headline figures. Present in both documents, identically shaped.
+///
+/// Kept whole rather than trimmed to what the UI currently draws: this type is
+/// the contract for `summary.json`, which carries exactly these nine fields and
+/// nothing else, and the decoding test asserts them. A partial mirror of a
+/// document this small would be harder to check against the feed, not easier.
 struct FeedHeadline: Decodable, Equatable {
     let epiWeek: String?
     let weekCases: Int?
