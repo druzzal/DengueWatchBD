@@ -71,11 +71,22 @@ final class LocationManager: NSObject {
 
     /// iOS allows 20 monitored regions per app, so only the worst areas are
     /// watched — sorted by incidence, which is what `areas` should already be.
+    /// Record what should be watched, then watch it if iOS currently allows.
+    ///
+    /// The order matters. This used to stop monitoring before checking
+    /// authorization, so a call made without "Always" tore down every region
+    /// and cleared the snapshot on its way to returning early. And the intent
+    /// is saved even when arming is not yet possible, because the usual path is
+    /// exactly that: the toggle asks for permission and calls this immediately,
+    /// long before the reader has answered the prompt.
     func monitorHighRiskAreas(_ areas: [Area]) {
-        stopMonitoringAll()
-        guard hasBackgroundAuthorization else { return }
-        guard CLLocationManager.isMonitoringAvailable(for: CLCircularRegion.self) else { return }
+        let watched = areas.prefix(20).map(WatchedArea.init)
+        WatchedAreaStore.save(watched)
 
+        guard hasBackgroundAuthorization,
+              CLLocationManager.isMonitoringAvailable(for: CLCircularRegion.self) else { return }
+
+        stopMonitoringRegions()
         for area in areas.prefix(20) {
             let region = CLCircularRegion(
                 center: CLLocationCoordinate2D(latitude: area.latitude,
@@ -93,17 +104,46 @@ final class LocationManager: NSObject {
             manager.startMonitoring(for: region)
             monitoredAreaCodes.insert(area.code)
         }
-
-        // Written so a background relaunch can compose the notification without
-        // the feed, the store or the UI being available.
-        WatchedAreaStore.save(areas.prefix(20).map(WatchedArea.init))
     }
 
-    func stopMonitoringAll() {
+    /// Arm from the saved intent, with no need for the feed or the store.
+    ///
+    /// Called when authorization becomes "Always": the reader has just answered
+    /// the prompt the toggle raised, and without this nothing would be watched
+    /// until they next opened the app.
+    func rearmFromSnapshot() {
+        let watched = WatchedAreaStore.load()
+        guard !watched.isEmpty,
+              hasBackgroundAuthorization,
+              CLLocationManager.isMonitoringAvailable(for: CLCircularRegion.self) else { return }
+
+        stopMonitoringRegions()
+        for area in watched {
+            let region = CLCircularRegion(
+                center: CLLocationCoordinate2D(latitude: area.latitude,
+                                               longitude: area.longitude),
+                radius: min(area.radiusMeters, manager.maximumRegionMonitoringDistance),
+                identifier: area.code
+            )
+            region.notifyOnEntry = true
+            region.notifyOnExit = false
+            manager.startMonitoring(for: region)
+            monitoredAreaCodes.insert(area.code)
+        }
+    }
+
+    /// Regions only. `stopMonitoringAll` also forgets the intent.
+    private func stopMonitoringRegions() {
         for region in manager.monitoredRegions {
             manager.stopMonitoring(for: region)
         }
         monitoredAreaCodes.removeAll()
+    }
+
+    /// Stop watching and forget what we meant to watch — the toggle being
+    /// switched off, not a temporary loss of permission.
+    func stopMonitoringAll() {
+        stopMonitoringRegions()
         WatchedAreaStore.clear()
     }
 }
@@ -112,7 +152,13 @@ extension LocationManager: CLLocationManagerDelegate {
     nonisolated func locationManager(_ manager: CLLocationManager,
                                      didChangeAuthorization status: CLAuthorizationStatus) {
         Task { @MainActor in
+            let wasBackground = self.hasBackgroundAuthorization
             self.authorization = status
+            // The moment "Always" is granted, arm what the toggle already asked
+            // for. Until this, enabling alerts armed nothing until relaunch.
+            if !wasBackground, self.hasBackgroundAuthorization {
+                self.rearmFromSnapshot()
+            }
         }
     }
 

@@ -351,6 +351,15 @@ final class DengueStore {
 
     var hotspots: [Area] { areasByRisk.filter { $0.risk >= .high } }
 
+    /// The hotspots to arm geofences against, or `nil` when there is no area
+    /// data at all.
+    ///
+    /// An empty hotspot list and a missing breakdown look identical from the
+    /// outside but mean opposite things: the first says disarm, nothing is high
+    /// right now; the second says we cannot tell, so leave the geofences alone
+    /// rather than silently switching off a working alert on a bad feed day.
+    var hotspotsToMonitor: [Area]? { areas.isEmpty ? nil : hotspots }
+
 
     func areas(in division: Division) -> [Area] {
         areas.filter { $0.division == division }.sorted { $0.seasonCases > $1.seasonCases }

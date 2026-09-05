@@ -101,7 +101,8 @@ enum BackgroundRefresh {
     @MainActor
     private static func rearm(store: DengueStore, preferences: Preferences) {
         guard preferences.geofenceAlertsEnabled else { return }
-        LocationManager.shared.monitorHighRiskAreas(store.hotspots)
+        guard let hotspots = store.hotspotsToMonitor else { return }
+        LocationManager.shared.monitorHighRiskAreas(hotspots)
     }
 
     @MainActor

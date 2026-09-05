@@ -13,6 +13,12 @@ struct WatchedArea: Codable, Hashable {
     let name: String
     let riskRawValue: Int
     let lastWeekCases: Int
+    /// Enough to rebuild the region without the feed, so monitoring can be
+    /// re-armed the moment "Always" is granted rather than waiting for the next
+    /// time someone opens the app.
+    let latitude: Double
+    let longitude: Double
+    let radiusMeters: Double
 
     var risk: RiskLevel { RiskLevel(rawValue: riskRawValue) ?? .high }
 
@@ -21,6 +27,9 @@ struct WatchedArea: Codable, Hashable {
         name = area.name
         riskRawValue = area.risk.rawValue
         lastWeekCases = area.lastWeekCases
+        latitude = area.latitude
+        longitude = area.longitude
+        radiusMeters = area.geofenceRadiusMeters
     }
 }
 

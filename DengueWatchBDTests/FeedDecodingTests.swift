@@ -262,6 +262,60 @@ final class FeedDecodingTests: XCTestCase {
         XCTAssertEqual(Strings.missingBanglaKeys, [])
     }
 
+    // MARK: - Arming the geofences
+
+    /// An empty hotspot list and a missing breakdown look the same from
+    /// outside, and mean opposite things: disarm, versus we cannot tell.
+    /// Conflating them would switch a working alert off on a bad feed day.
+    @MainActor
+    func testMissingBreakdownDoesNotLookLikeNoHotspots() async throws {
+        let store = DengueStore()
+        await store.apply(document: try FeedDecoder.document(
+            from: try Data(contentsOf: try XCTUnwrap(
+                Bundle.main.url(forResource: "dengue-feed", withExtension: "json")))),
+                          source: .bundled)
+        XCTAssertFalse(store.areas.isEmpty)
+        XCTAssertEqual(store.hotspotsToMonitor?.count, store.hotspots.count)
+        XCTAssertFalse(store.hotspots.isEmpty, "the shipped feed has high-band areas")
+
+        // Same feed with the breakdown renamed away.
+        let stripped = Data("""
+        {"schema_version":1,"meta":{"last_updated":"2026-09-05","year":2026},
+         "summary":{"ytd_cases":300,"ytd_deaths":6},
+         "charts":{},"tables":[]}
+        """.utf8)
+        let blind = DengueStore()
+        await blind.apply(document: try FeedDecoder.document(from: stripped), source: .bundled)
+        XCTAssertTrue(blind.areas.isEmpty)
+        XCTAssertNil(blind.hotspotsToMonitor, "no data must not read as no hotspots")
+    }
+
+    /// The snapshot has to rebuild a region by itself, because that is what
+    /// happens the moment "Always" is granted — the feed is not consulted.
+    @MainActor
+    func testSnapshotCarriesEnoughToRebuildARegion() async throws {
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: "rearm.test"))
+        defaults.removePersistentDomain(forName: "rearm.test")
+
+        let store = DengueStore()
+        await store.apply(document: try FeedDecoder.document(
+            from: try Data(contentsOf: try XCTUnwrap(
+                Bundle.main.url(forResource: "dengue-feed", withExtension: "json")))),
+                          source: .bundled)
+
+        let hotspots = try XCTUnwrap(store.hotspotsToMonitor)
+        WatchedAreaStore.save(hotspots.map(WatchedArea.init), to: defaults)
+
+        for area in hotspots {
+            let watched = try XCTUnwrap(WatchedAreaStore.area(code: area.code, in: defaults))
+            XCTAssertEqual(watched.latitude, area.latitude)
+            XCTAssertEqual(watched.longitude, area.longitude)
+            XCTAssertEqual(watched.radiusMeters, area.geofenceRadiusMeters)
+            XCTAssertGreaterThan(watched.radiusMeters, 0)
+        }
+        defaults.removePersistentDomain(forName: "rearm.test")
+    }
+
     // MARK: - Background refresh
 
     /// The refresh has to be callable with nothing set up, because that is the

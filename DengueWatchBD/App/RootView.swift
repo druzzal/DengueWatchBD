@@ -89,7 +89,9 @@ struct RootView: View {
         // the background with no view alive. All this does is keep the armed
         // set current with today's figures.
         if preferences.geofenceAlertsEnabled {
-            location.monitorHighRiskAreas(store.hotspots)
+            if let hotspots = store.hotspotsToMonitor {
+                location.monitorHighRiskAreas(hotspots)
+            }
         }
         #if DEBUG
         // Screenshot and UI-test hook:

@@ -120,7 +120,9 @@ struct AlertSettingsView: View {
                         }
                         await NotificationManager.shared.requestAuthorization()
                         location.requestAlways()
-                        location.monitorHighRiskAreas(store.hotspots)
+                        if let hotspots = store.hotspotsToMonitor {
+                            location.monitorHighRiskAreas(hotspots)
+                        }
                     }
                 }
 
