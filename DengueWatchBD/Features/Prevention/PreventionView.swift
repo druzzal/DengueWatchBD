@@ -137,6 +137,24 @@ struct PreventionView: View {
         }
     }
 
+    /// What the card says underneath its title.
+    ///
+    /// It used to report only the rise alert, so someone who had turned on the
+    /// high-risk entry warning — and nothing else — read "Off" on the one row
+    /// that was supposed to tell them their alerts were working.
+    private var alertsSummary: String {
+        switch (preferences.alertsEnabled, preferences.geofenceAlertsEnabled) {
+        case (true, true):
+            return loc.t("alerts.state.both")
+        case (true, false):
+            return loc.t("alerts.on", loc.t(preferences.alertThreshold.labelKey))
+        case (false, true):
+            return loc.t("alerts.state.entryOnly")
+        case (false, false):
+            return loc.t("alerts.off")
+        }
+    }
+
     private var alertsEntry: some View {
         NavigationLink {
             AlertSettingsView()
@@ -150,9 +168,7 @@ struct PreventionView: View {
                         Text(loc.t("alerts.entry"))
                             .typo(.subheadline).fontWeight(.semibold)
                             .foregroundStyle(.primary)
-                        Text(preferences.alertsEnabled
-                             ? loc.t("alerts.on", loc.t(preferences.alertThreshold.labelKey))
-                             : loc.t("alerts.off"))
+                        Text(alertsSummary)
                             .typo(.caption)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.leading)

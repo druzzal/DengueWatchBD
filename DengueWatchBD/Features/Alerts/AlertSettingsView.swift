@@ -17,6 +17,12 @@ struct AlertSettingsView: View {
         @Bindable var preferences = preferences
 
         Form {
+            // First, because it is the alert that works on its own: no home
+            // area to pick, nothing to keep current, and it fires wherever the
+            // reader happens to be. The rest of this screen depends on them
+            // choosing an area first.
+            geofenceSection
+
             Section {
                 if let homeArea {
                     HStack {
@@ -73,8 +79,6 @@ struct AlertSettingsView: View {
             } footer: {
                 Text(loc.t("alerts.footer"))
             }
-
-            geofenceSection
 
             if let homeArea {
                 Section(loc.t("alerts.preview")) {

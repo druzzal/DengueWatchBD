@@ -2,6 +2,8 @@ import Foundation
 
 extension Strings {
     static let enPrevent: [String: String] = [
+        "alerts.state.both": "On — when your area gets worse, and when you enter a high-risk one",
+        "alerts.state.entryOnly": "On — you will be warned when you enter a high-risk area",
         "prevent.title": "Prevention",
         "prevent.season.title": "The dengue year in Bangladesh",
         "prevent.season.subtitle": "When transmission usually rises and falls",
@@ -65,9 +67,9 @@ extension Strings {
         "prevent.testing.step4": "Go in the same day for any warning sign: bad stomach pain, repeated vomiting, bleeding, breathlessness, sudden weakness, or little urine.",
         "prevent.testing.step5": "Free or subsidised dengue testing is offered at government hospitals and many city corporation centres during outbreak season.",
 
-        "alerts.entry": "Alerts for my area",
+        "alerts.entry": "Alert me",
         "alerts.on": "On — you will be told when your area reaches %@ risk",
-        "alerts.off": "Off — turn on to hear when your area gets worse",
+        "alerts.off": "Off — turn on to be warned about high-risk areas",
         "alerts.title": "Alerts",
         "alerts.myArea": "My area",
         "alerts.noArea": "No area chosen yet",
@@ -99,6 +101,8 @@ extension Strings {
     ]
 
     static let bnPrevent: [String: String] = [
+        "alerts.state.both": "চালু — আপনার এলাকার অবস্থা খারাপ হলে, এবং উচ্চঝুঁকির এলাকায় ঢুকলে",
+        "alerts.state.entryOnly": "চালু — উচ্চঝুঁকির এলাকায় ঢুকলে আপনাকে সতর্ক করা হবে",
         "prevent.title": "প্রতিরোধ",
         "prevent.season.title": "বাংলাদেশে ডেঙ্গুর বছর",
         "prevent.season.subtitle": "সাধারণত কখন সংক্রমণ বাড়ে ও কমে",
@@ -162,9 +166,9 @@ extension Strings {
         "prevent.testing.step4": "যেকোনো বিপদচিহ্ন দেখা দিলে সেদিনই যান: তীব্র পেটব্যথা, বারবার বমি, রক্তক্ষরণ, শ্বাসকষ্ট, হঠাৎ দুর্বলতা বা প্রস্রাব কমে যাওয়া।",
         "prevent.testing.step5": "প্রাদুর্ভাবের মৌসুমে সরকারি হাসপাতাল ও অনেক সিটি করপোরেশন কেন্দ্রে বিনামূল্যে বা কম খরচে ডেঙ্গু পরীক্ষা করা হয়।",
 
-        "alerts.entry": "আমার এলাকার সতর্কবার্তা",
+        "alerts.entry": "আমাকে জানান",
         "alerts.on": "চালু — আপনার এলাকা %@ ঝুঁকিতে পৌঁছালে জানানো হবে",
-        "alerts.off": "বন্ধ — এলাকার অবস্থা খারাপ হলে জানতে চালু করুন",
+        "alerts.off": "বন্ধ — উচ্চঝুঁকির এলাকা সম্পর্কে সতর্কবার্তা পেতে চালু করুন",
         "alerts.title": "সতর্কবার্তা",
         "alerts.myArea": "আমার এলাকা",
         "alerts.noArea": "এখনো কোনো এলাকা বাছাই করা হয়নি",
