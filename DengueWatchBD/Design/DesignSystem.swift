@@ -104,6 +104,11 @@ extension View {
                 RoundedRectangle(cornerRadius: radius, style: .continuous)
                     .strokeBorder(border, lineWidth: 0.5)
             )
+            // Two shadows rather than one: a tight contact shadow that seats the
+            // card on the plane, and a wider, softer one that gives it height.
+            // A single blur can do one job or the other, never both.
+            .shadow(color: Palette.cardShadow, radius: 1, y: 1)
+            .shadow(color: Palette.cardShadow, radius: 10, y: 4)
     }
 
     /// Press feedback for a whole card acting as a button.

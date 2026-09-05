@@ -157,6 +157,10 @@ private struct SymptomRow: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        // Left to itself, SwiftUI guessed the separator inset per row and got a
+        // different answer for rows whose text wrapped — so the list alternated
+        // between full-width and text-inset rules. Pin it to the text column.
+        .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
         .accessibilityAddTraits(isOn ? [.isSelected] : [])
     }
 }

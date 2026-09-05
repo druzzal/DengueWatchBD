@@ -59,8 +59,15 @@ struct DengueRiskCard: View {
                 RoundedRectangle(cornerRadius: Radius.hero, style: .continuous)
                     .fill(Palette.card)
                     .overlay(
+                        // A flat wash made the hero card the dullest thing on
+                        // the screen. The gradient is shallow on purpose: it
+                        // gives the card a light source without shifting the
+                        // band's colour enough to be mistaken for a second one.
                         RoundedRectangle(cornerRadius: Radius.hero, style: .continuous)
-                            .fill(risk.soft)
+                            .fill(LinearGradient(
+                                colors: [risk.soft, risk.soft.opacity(0.45)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing))
                     )
             )
             .overlay(

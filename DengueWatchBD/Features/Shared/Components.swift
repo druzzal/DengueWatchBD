@@ -117,11 +117,23 @@ struct RiskMeter: View {
     let risk: RiskLevel
     var height: CGFloat = 6
 
+    /// Filled segments step up in strength toward the current band, so the
+    /// meter reads as a scale rather than a solid bar. At Severe every segment
+    /// is lit, and a single flat colour left it looking like one long block
+    /// with no sense of how far up the scale it sat. One hue, light to dark —
+    /// the band's own colour still carries the meaning.
+    private func opacity(for level: RiskLevel) -> Double {
+        guard level.rawValue <= risk.rawValue else { return 0 }
+        let distance = risk.rawValue - level.rawValue
+        return max(0.4, 1 - Double(distance) * 0.2)
+    }
+
     var body: some View {
         HStack(spacing: 3) {
             ForEach(RiskLevel.allCases) { level in
                 Capsule()
-                    .fill(level.rawValue <= risk.rawValue ? risk.tint : Palette.hairline)
+                    .fill(Palette.hairline)
+                    .overlay(Capsule().fill(risk.tint.opacity(opacity(for: level))))
                     .frame(height: height)
             }
         }
@@ -275,7 +287,7 @@ struct Sparkline: View {
                 .interpolationMethod(.monotone)
             LineMark(x: .value("i", index), y: .value("v", value))
                 .foregroundStyle(color)
-                .lineStyle(StrokeStyle(lineWidth: 1.6, lineCap: .round))
+                .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
                 .interpolationMethod(.monotone)
         }
         .chartXAxis(.hidden)

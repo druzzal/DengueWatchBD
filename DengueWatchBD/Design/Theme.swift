@@ -70,6 +70,16 @@ enum Palette {
     static let plane = Color(light: "#F5F5F7", dark: "#000000")
     static let hairline = Color(light: "#E6E6EB", dark: "#2C2C2E")
 
+    /// Card lift. Light mode gets a real (if quiet) shadow so cards read as
+    /// surfaces above the plane; dark mode gets almost none, because a drop
+    /// shadow on near-black reads as grime rather than elevation — there the
+    /// hairline and the lighter card fill carry the separation instead.
+    static let cardShadow = Color(uiColor: UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(white: 0, alpha: 0)
+            : UIColor(hex: "#0B0B14").withAlphaComponent(0.055)
+    })
+
     static let accent = cases
     static let upIsBad = Color(light: "#b3261e", dark: "#f87171")
     static let downIsGood = Color(light: "#0f6b30", dark: "#4ade80")

@@ -134,10 +134,11 @@ struct SymptomIllustration: View {
         GeometryReader { geometry in
             let rect = CGRect(origin: .zero, size: geometry.size)
             ZStack {
-                RoundedRectangle(cornerRadius: rect.s(16))
-                    .fill(accent.opacity(0.18))
-                RoundedRectangle(cornerRadius: rect.s(16))
-                    .stroke(accent, lineWidth: rect.s(4.5))
+                // A circular patch, concentric with the wash behind it. Drawn
+                // as a rounded square this was the only motif in the list that
+                // read as a tile instead of a disc.
+                Circle().fill(accent.opacity(0.18))
+                Circle().stroke(accent, lineWidth: rect.s(4.5))
                 // Scattered spots, deliberately irregular
                 Path { path in
                     let spots: [(CGFloat, CGFloat, CGFloat)] = [
@@ -154,6 +155,12 @@ struct SymptomIllustration: View {
                 }
                 .fill(accent)
             }
+            // Every other motif is a line drawing that sits comfortably inside
+            // the circular wash. The rash patch is a filled square, whose
+            // corners overran the circle and made this one row look like a
+            // tile among discs. A square inscribed in a circle is ~0.71 of its
+            // diameter, so it needs pulling in rather than merely padding.
+            .scaleEffect(0.96)
         }
     }
 

@@ -58,8 +58,17 @@ struct CareView: View {
                                     .typo(.caption).fontWeight(.semibold)
                                     .padding(.horizontal, 12)
                                     .padding(.vertical, 7)
-                                    .background(Palette.riskTint(.severe), in: Capsule())
-                                    .foregroundStyle(.white)
+                                    .frame(minHeight: Hit.minimum - 14)
+                                    .background {
+                                        if number.isEmergency {
+                                            Capsule().fill(Palette.riskTint(.severe))
+                                        } else {
+                                            Capsule().fill(Palette.accent.opacity(0.12))
+                                                .overlay(Capsule().strokeBorder(
+                                                    Palette.accent.opacity(0.35), lineWidth: 1))
+                                        }
+                                    }
+                                    .foregroundStyle(number.isEmergency ? .white : Palette.accent)
                             }
                         }
                     }

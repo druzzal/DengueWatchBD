@@ -201,7 +201,7 @@ struct DashboardView: View {
 
             LazyVGrid(columns: statColumns, spacing: Space.row) {
                 StatCard(label: loc.t("dash.stat.cases"),
-                         value: loc.compact(store.seasonCases),
+                         value: loc.num(store.seasonCases),
                          caption: store.dates.first.map { loc.t("activity.since", loc.dayMonth($0)) },
                          accent: Palette.cases,
                          series: store.nationalRecent(30).map { Double($0.cases) })
@@ -212,7 +212,7 @@ struct DashboardView: View {
                          accent: Palette.cases,
                          series: store.nationalRecent(14).map { Double($0.cases) })
                 StatCard(label: loc.t("dash.stat.admitted"),
-                         value: loc.compact(store.currentlyAdmitted),
+                         value: loc.num(store.currentlyAdmitted),
                          change: store.admittedChange,
                          caption: loc.t("dash.stat.vs7days"),
                          accent: Palette.admitted,

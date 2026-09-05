@@ -6,6 +6,10 @@ import Foundation
 struct EmergencyNumber: Identifiable, Hashable {
     let id: String
     let dial: String
+    /// 999 is a true emergency line; the other two are advice and information
+    /// services. Painting all three as the same urgent red button told the
+    /// reader nothing about which one to press when it matters.
+    var isEmergency: Bool { id == "999" }
     var nameKey: String { "care.sos.\(id).name" }
     var detailKey: String { "care.sos.\(id).detail" }
 

@@ -41,12 +41,16 @@ struct PreventionView: View {
             HStack(alignment: .bottom, spacing: 3) {
                 ForEach(Array(PreventionContent.seasonalPattern.enumerated()), id: \.element.id) { index, item in
                     VStack(spacing: 5) {
+                        // "Now" used to be a hard black outline drawn on top of
+                        // the bar, which fought the band colour it sat on. A
+                        // caret above the bar marks the month without touching
+                        // the colour that carries the meaning.
+                        Image(systemName: "arrowtriangle.down.fill")
+                            .font(.system(size: 7))
+                            .foregroundStyle(index == currentMonthIndex ? Color.primary : .clear)
                         RoundedRectangle(cornerRadius: 3)
                             .fill(item.level.tint)
                             .frame(height: 26 + CGFloat(item.level.rawValue) * 9)
-                            .overlay(RoundedRectangle(cornerRadius: 3)
-                                .strokeBorder(index == currentMonthIndex ? Color.primary : .clear,
-                                              lineWidth: 1.5))
                         Text(loc.t(item.labelKey))
                             .font(.system(size: 9,
                                           weight: index == currentMonthIndex ? .bold : .regular))
