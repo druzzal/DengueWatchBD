@@ -286,6 +286,64 @@ final class FeedDecodingTests: XCTestCase {
         }
     }
 
+    /// Dhaka's three areas share one metro, so nearest-centroid put Savar in
+    /// DNCC by 0.5 km and sent Gazipur, Tongi, Narayanganj and Keraniganj into
+    /// city corporations they are outside. The corporations read High while the
+    /// rest of the division reads Moderate, so that was a band error shown to a
+    /// reader standing somewhere else entirely.
+    @MainActor
+    func testDhakaMetroResolvesToTheRightArea() async throws {
+        let store = DengueStore()
+        await store.apply(document: try FeedDecoder.document(
+            from: try Data(contentsOf: try XCTUnwrap(
+                Bundle.main.url(forResource: "dengue-feed", withExtension: "json")))),
+                          source: .bundled)
+
+        let expected: [(String, Double, Double, String)] = [
+            ("Mirpur",      23.806, 90.369, "DNCC"),
+            ("Uttara",      23.874, 90.400, "DNCC"),
+            ("Gulshan",     23.792, 90.414, "DNCC"),
+            ("Dhanmondi",   23.746, 90.376, "DNCC"),
+            ("Motijheel",   23.733, 90.417, "DSCC"),
+            ("Old Dhaka",   23.710, 90.400, "DSCC"),
+            ("Jatrabari",   23.710, 90.435, "DSCC"),
+            ("Savar",       23.858, 90.266, "DHAKA_OUT_CC"),
+            ("Gazipur",     23.999, 90.420, "DHAKA_OUT_CC"),
+            ("Tongi",       23.890, 90.405, "DHAKA_OUT_CC"),
+            ("Narayanganj", 23.623, 90.500, "DHAKA_OUT_CC"),
+            ("Keraniganj",  23.700, 90.360, "DHAKA_OUT_CC"),
+            ("Manikganj",   23.861, 90.000, "DHAKA_OUT_CC"),
+        ]
+
+        for (name, lat, lon, code) in expected {
+            let here = CLLocation(latitude: lat, longitude: lon)
+            XCTAssertEqual(store.nearestArea(to: here)?.code, code, "\(name)")
+        }
+    }
+
+    /// Outside Dhaka the centroid is still the right tool.
+    @MainActor
+    func testAreasOutsideDhakaStillResolveByCentre() async throws {
+        let store = DengueStore()
+        await store.apply(document: try FeedDecoder.document(
+            from: try Data(contentsOf: try XCTUnwrap(
+                Bundle.main.url(forResource: "dengue-feed", withExtension: "json")))),
+                          source: .bundled)
+
+        let expected: [(String, Double, Double, Division)] = [
+            ("Chattogram city", 22.356, 91.783, .chattogram),
+            ("Cox's Bazar",     21.427, 92.005, .chattogram),
+            ("Khulna city",     22.845, 89.540, .khulna),
+            ("Sylhet city",     24.895, 91.869, .sylhet),
+            ("Rangpur city",    25.744, 89.275, .rangpur),
+            ("Barishal city",   22.701, 90.353, .barishal),
+        ]
+        for (name, lat, lon, division) in expected {
+            let here = CLLocation(latitude: lat, longitude: lon)
+            XCTAssertEqual(store.nearestArea(to: here)?.division, division, "\(name)")
+        }
+    }
+
     @MainActor
     func testNearestAreaNamesAnAreaOnlyInsideTheCountry() async throws {
         let store = DengueStore()

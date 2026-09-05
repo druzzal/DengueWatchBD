@@ -322,11 +322,21 @@ final class DengueStore {
     /// 198 km worst case inside the country.
     func nearestArea(to location: CLLocation,
                      within maxDistance: CLLocationDistance = 250_000) -> Area? {
-        guard Geography.containsBangladesh(latitude: location.coordinate.latitude,
-                                           longitude: location.coordinate.longitude) else {
+        let latitude = location.coordinate.latitude
+        let longitude = location.coordinate.longitude
+        guard Geography.containsBangladesh(latitude: latitude, longitude: longitude) else {
             return nil
         }
+        // Dhaka's three areas share one metro, so a centroid cannot tell them
+        // apart: the city corporations are small polygons inside the region
+        // they are carved out of. Ask the boundaries directly, and let anywhere
+        // else in the division fall through to the nearest centre.
+        if let code = Geography.cityCorporationCode(latitude: latitude, longitude: longitude),
+           let city = area(code: code) {
+            return city
+        }
         let ranked = areas
+            .filter { !Geography.apportionedCodes.contains($0.code) || $0.code == "DHAKA_OUT_CC" }
             .map { area -> (Area, CLLocationDistance) in
                 let centre = CLLocation(latitude: area.latitude, longitude: area.longitude)
                 return (area, centre.distance(from: location))

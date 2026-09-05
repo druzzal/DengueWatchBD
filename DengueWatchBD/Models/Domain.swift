@@ -175,12 +175,51 @@ enum Geography {
         (25.60, 88.10),
     ]
 
+    /// The two Dhaka city corporations, as coarse outlines.
+    ///
+    /// Nearest-centroid cannot separate these from the division around them:
+    /// all three areas share one metro, and DNCC and DSCC are small polygons
+    /// sitting inside the region they are carved out of. Measured against the
+    /// real centres, Savar landed in DNCC by 0.5 km, and Gazipur, Tongi,
+    /// Narayanganj and Keraniganj all resolved to a city corporation they are
+    /// outside. That is a band error, not a label error — the corporations read
+    /// High while the rest of the division reads Moderate — so someone in Savar
+    /// would have been shown a risk that is not theirs.
+    ///
+    /// Simplified to about ten vertices each. The DNCC/DSCC line through
+    /// Dhanmondi and New Market is intricate in reality; a point near it can
+    /// fall either side, but both are city corporations reporting similar
+    /// figures, so that error costs far less than the one it replaces.
+    private static let dnccOutline: [(lat: Double, lon: Double)] = [
+        (23.885, 90.345), (23.885, 90.425), (23.845, 90.437), (23.790, 90.442),
+        (23.755, 90.430), (23.752, 90.392), (23.736, 90.362), (23.758, 90.330),
+        (23.810, 90.328), (23.850, 90.332),
+    ]
+
+    private static let dsccOutline: [(lat: Double, lon: Double)] = [
+        (23.752, 90.394), (23.750, 90.432), (23.730, 90.462), (23.690, 90.470),
+        (23.668, 90.440), (23.688, 90.400), (23.708, 90.372), (23.736, 90.364),
+    ]
+
+    /// The city corporation a coordinate falls in, or `nil` for anywhere else —
+    /// including the rest of Dhaka division.
+    static func cityCorporationCode(latitude: Double, longitude: Double) -> String? {
+        if contains(latitude: latitude, longitude: longitude, polygon: dnccOutline) { return "DNCC" }
+        if contains(latitude: latitude, longitude: longitude, polygon: dsccOutline) { return "DSCC" }
+        return nil
+    }
+
     /// Ray casting against `outline`.
     static func containsBangladesh(latitude: Double, longitude: Double) -> Bool {
+        contains(latitude: latitude, longitude: longitude, polygon: outline)
+    }
+
+    private static func contains(latitude: Double, longitude: Double,
+                                 polygon: [(lat: Double, lon: Double)]) -> Bool {
         var inside = false
-        var j = outline.count - 1
-        for i in outline.indices {
-            let a = outline[i], b = outline[j]
+        var j = polygon.count - 1
+        for i in polygon.indices {
+            let a = polygon[i], b = polygon[j]
             if (a.lat > latitude) != (b.lat > latitude) {
                 let slope = (b.lon - a.lon) * (latitude - a.lat) / (b.lat - a.lat) + a.lon
                 if longitude < slope { inside.toggle() }
