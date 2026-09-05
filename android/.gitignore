@@ -1,0 +1,6 @@
+# Machine-specific SDK path
+local.properties
+.gradle/
+build/
+*.iml
+.idea/
