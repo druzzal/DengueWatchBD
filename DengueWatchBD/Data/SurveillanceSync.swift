@@ -80,8 +80,14 @@ final class SurveillanceSync {
             status = .offline
             return
         }
+        // The throttle asks two questions, not one. Elapsed time alone was
+        // enough to skip a sync even when the cache had gone missing, which
+        // left the app quietly serving bundled seed data for up to the
+        // interval despite a working connection. A skip is only safe if there
+        // is actually a cached payload to fall back on.
         if !force, let last = lastSuccessfulSync,
-           Date().timeIntervalSince(last) < AppConfig.minimumSyncInterval {
+           Date().timeIntervalSince(last) < AppConfig.minimumSyncInterval,
+           cache.cachedData != nil {
             status = .upToDate(last)
             return
         }
