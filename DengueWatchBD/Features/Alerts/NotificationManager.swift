@@ -55,9 +55,15 @@ final class NotificationManager {
     // MARK: - Entering a high-risk area
 
     /// Raised when the device crosses into a monitored high-risk area.
-    /// Rate-limited per area per day, so a commute across a boundary does
-    /// not produce a stream of notifications.
-    func raiseGeofenceAlert(area: Area, localization: LocalizationManager) async {
+    ///
+    /// Takes the persisted snapshot rather than an `Area`, because this runs on
+    /// a background relaunch where the feed has not loaded and there is no
+    /// store to ask. Localisation is rebuilt from the stored language, so the
+    /// notification still arrives in the reader's own language.
+    ///
+    /// Rate-limited per area per day, so a commute across a boundary does not
+    /// produce a stream of notifications.
+    func raiseGeofenceAlert(area: WatchedArea) async {
         guard await authorizationStatus() == .authorized else { return }
 
         let key = "\(lastGeofenceAlertKey).\(area.code)"
@@ -65,10 +71,15 @@ final class NotificationManager {
         guard today > UserDefaults.standard.double(forKey: key) else { return }
         UserDefaults.standard.set(today, forKey: key)
 
+        let localization = LocalizationManager()
+        let name = PlaceNames.area(code: area.code,
+                                   fallback: area.name,
+                                   language: localization.language)
+
         let content = UNMutableNotificationContent()
-        content.title = localization.t("geo.notification.title", area.name)
+        content.title = localization.t("geo.notification.title", name)
         content.body = localization.t("geo.notification.body",
-                                      area.name,
+                                      name,
                                       localization.t(area.risk.labelKey),
                                       localization.num(area.lastWeekCases))
         content.sound = .default

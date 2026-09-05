@@ -5,7 +5,8 @@ struct RootView: View {
     @State private var caseLog = CaseLogStore()
     @State private var preferences = Preferences()
     @State private var localization = LocalizationManager()
-    @State private var location = LocationManager()
+    // Owned by the process, not the view — see AppDelegate.
+    private let location = LocationManager.shared
     @State private var sync = FeedSync()
     @State private var router = AppRouter()
 
@@ -83,13 +84,10 @@ struct RootView: View {
     /// Wires region entry to a notification, and re-arms the geofences against
     /// whatever the current hotspot list is.
     private func configureLocationHandling() {
-        location.onRegionEntry = { code in
-            guard let area = store.area(code: code) else { return }
-            Task {
-                await NotificationManager.shared.raiseGeofenceAlert(area: area,
-                                                                    localization: localization)
-            }
-        }
+        // The entry notification is raised inside LocationManager, from the
+        // persisted snapshot, so it still fires when the app is relaunched in
+        // the background with no view alive. All this does is keep the armed
+        // set current with today's figures.
         if preferences.geofenceAlertsEnabled {
             location.monitorHighRiskAreas(store.hotspots)
         }

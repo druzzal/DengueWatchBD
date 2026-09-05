@@ -262,6 +262,50 @@ final class FeedDecodingTests: XCTestCase {
         XCTAssertEqual(Strings.missingBanglaKeys, [])
     }
 
+    // MARK: - Entry alerts survive a background relaunch
+
+    /// The alert has to be composable from disk alone.
+    ///
+    /// When iOS relaunches the app because the device crossed a boundary, the
+    /// feed has not loaded and no view exists. Everything the notification says
+    /// must therefore come from the snapshot written when the geofences were
+    /// armed — otherwise the alert silently fails in exactly the case it is for.
+    @MainActor
+    func testWatchedAreaSnapshotRoundTripsWithoutTheStore() async throws {
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: "geofence.snapshot.test"))
+        defaults.removePersistentDomain(forName: "geofence.snapshot.test")
+
+        let store = DengueStore()
+        await store.apply(document: try FeedDecoder.document(
+            from: try Data(contentsOf: try XCTUnwrap(
+                Bundle.main.url(forResource: "dengue-feed", withExtension: "json")))),
+                          source: .bundled)
+
+        let hotspots = store.hotspots
+        XCTAssertFalse(hotspots.isEmpty, "the shipped feed has areas in the high band")
+
+        WatchedAreaStore.save(hotspots.map(WatchedArea.init), to: defaults)
+        let restored = WatchedAreaStore.load(from: defaults)
+        XCTAssertEqual(restored.count, hotspots.count)
+
+        // Everything the notification needs, with the store out of the picture.
+        for area in hotspots {
+            let watched = try XCTUnwrap(WatchedAreaStore.area(code: area.code, in: defaults))
+            XCTAssertEqual(watched.name, area.name)
+            XCTAssertEqual(watched.risk, area.risk)
+            XCTAssertGreaterThanOrEqual(watched.risk, .high)
+            XCTAssertEqual(watched.lastWeekCases, area.lastWeekCases)
+            // The Bengali name is resolved by code at fire time, not stored.
+            XCTAssertFalse(PlaceNames.area(code: watched.code,
+                                           fallback: watched.name,
+                                           language: .bangla).isEmpty)
+        }
+
+        WatchedAreaStore.clear(defaults)
+        XCTAssertTrue(WatchedAreaStore.load(from: defaults).isEmpty)
+        defaults.removePersistentDomain(forName: "geofence.snapshot.test")
+    }
+
     // MARK: - Where the user is
 
     /// Nearest-centroid alone put Shillong (75 km from the Sylhet centre) and

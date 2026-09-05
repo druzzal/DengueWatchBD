@@ -12,11 +12,20 @@ import Observation
 @MainActor
 @Observable
 final class LocationManager: NSObject {
+    /// One instance for the process, created at launch by `AppDelegate`.
+    ///
+    /// It used to be a `@State` inside `RootView`, which meant CoreLocation was
+    /// only wired up once SwiftUI built the view. When iOS relaunches the app in
+    /// the background for a boundary crossing there is no such guarantee, so
+    /// entry events could arrive with nothing listening and be dropped — the
+    /// alert silently not firing in exactly the case it exists for.
+    static let shared = LocationManager()
+
     private(set) var authorization: CLAuthorizationStatus
     private(set) var lastKnownLocation: CLLocation?
     private(set) var monitoredAreaCodes: Set<String> = []
 
-    /// Called when the device enters a monitored high-risk area.
+    /// Optional hook for the UI. The notification does not depend on it.
     var onRegionEntry: ((String) -> Void)?
 
     private let manager = CLLocationManager()
@@ -26,6 +35,9 @@ final class LocationManager: NSObject {
         super.init()
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
+        // iOS keeps monitored regions across launches, so what is already being
+        // watched is authoritative — not whatever the UI last happened to arm.
+        monitoredAreaCodes = Set(manager.monitoredRegions.map(\.identifier))
     }
 
     var isAuthorized: Bool {
@@ -81,6 +93,10 @@ final class LocationManager: NSObject {
             manager.startMonitoring(for: region)
             monitoredAreaCodes.insert(area.code)
         }
+
+        // Written so a background relaunch can compose the notification without
+        // the feed, the store or the UI being available.
+        WatchedAreaStore.save(areas.prefix(20).map(WatchedArea.init))
     }
 
     func stopMonitoringAll() {
@@ -88,6 +104,7 @@ final class LocationManager: NSObject {
             manager.stopMonitoring(for: region)
         }
         monitoredAreaCodes.removeAll()
+        WatchedAreaStore.clear()
     }
 }
 
@@ -110,6 +127,11 @@ extension LocationManager: CLLocationManagerDelegate {
     nonisolated func locationManager(_ manager: CLLocationManager,
                                      didEnterRegion region: CLRegion) {
         Task { @MainActor in
+            // Raised from the persisted snapshot rather than from the store, so
+            // this works on a cold background launch where nothing else is up.
+            if let watched = WatchedAreaStore.area(code: region.identifier) {
+                await NotificationManager.shared.raiseGeofenceAlert(area: watched)
+            }
             self.onRegionEntry?(region.identifier)
         }
     }
