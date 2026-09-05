@@ -13,6 +13,23 @@ struct SurveillancePayload: Decodable {
         let year: Int
     }
 
+    /// Newer national figures from the DGHS dashboard, present only when the
+    /// press-release series it accompanies has fallen behind.
+    ///
+    /// Optional so an older build of the app simply ignores it, and so its
+    /// absence carries meaning: no block means the series is already current.
+    struct Latest: Decodable {
+        let reportDate: String
+        let seasonCases: Int
+        let seasonDeaths: Int
+        let cases24h: Int?
+        let deaths24h: Int?
+        let source: String
+        /// What the charts and the district map actually cover — always older
+        /// than `reportDate` when this block exists.
+        let seriesAsOf: String
+    }
+
     struct NationalSeries: Decodable {
         let cases: [Int]
         let deaths: [Int]
@@ -35,6 +52,7 @@ struct SurveillancePayload: Decodable {
     let national: NationalSeries
     let districts: [DistrictSeries]
     let history: [YearSummary]
+    let latest: Latest?
 }
 
 struct YearSummary: Decodable, Identifiable, Hashable {

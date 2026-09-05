@@ -323,7 +323,13 @@ struct DistrictMapView: View {
 
     private var legend: some View {
         MapLegend(
-            metricExplanation: loc.t(metric.explanationKey),
+            // When the dashboard has run ahead of the press releases, the
+            // national headline is newer than these district figures. Say so
+            // here rather than let the map read as current.
+            metricExplanation: store.breakdownTrailsHeadline
+                ? loc.t(metric.explanationKey) + " "
+                  + loc.t("breakdown.trails", store.seriesLastUpdated.map(loc.fullDate) ?? "—")
+                : loc.t(metric.explanationKey),
             sizeSamples: [0.08, 0.35, 1.0].map { fraction in
                 (label: metric == .total
                     ? loc.compact(Int(maxValue * fraction))

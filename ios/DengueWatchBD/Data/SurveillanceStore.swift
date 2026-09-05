@@ -85,6 +85,7 @@ final class SurveillanceStore {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withFullDate]
         let parsed = payload.dates.compactMap { formatter.date(from: $0) }
+        latestNational = payload.latest
 
         dates = parsed
         national = zip(parsed.indices, parsed).map { index, date in
@@ -119,7 +120,36 @@ final class SurveillanceStore {
 
     // MARK: - National roll-ups
 
-    var lastUpdated: Date? { dates.last }
+    /// Newer national figures, present only when the press-release series has
+    /// fallen behind the DGHS dashboard.
+    private(set) var latestNational: SurveillancePayload.Latest?
+
+    private static let dayFormatter: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withFullDate]
+        return formatter
+    }()
+
+    /// The newest reporting date DGHS has published, from either surface.
+    ///
+    /// This is what freshness is judged against. Using the series date alone
+    /// would have the app calling itself stale while it was in fact showing
+    /// figures published today.
+    var lastUpdated: Date? {
+        if let latestNational,
+           let day = Self.dayFormatter.date(from: latestNational.reportDate) {
+            return day
+        }
+        return dates.last
+    }
+
+    /// The date the per-district map and the charts actually cover. Equal to
+    /// `lastUpdated` unless the dashboard has run ahead of the press releases.
+    var seriesLastUpdated: Date? { dates.last }
+
+    /// True when the headline is newer than the breakdown behind it, which the
+    /// UI has to say out loud rather than let a reader assume the map is current.
+    var breakdownTrailsHeadline: Bool { latestNational != nil }
 
     /// How old the newest report is, in days.
     var dataAgeInDays: Int? {
@@ -148,8 +178,10 @@ final class SurveillanceStore {
     var isStale: Bool { freshness != .fresh }
     var latest: DailyPoint? { national.last }
 
-    var seasonCases: Int { Series.sum(national.map(\.cases)) }
-    var seasonDeaths: Int { Series.sum(national.map(\.deaths)) }
+    /// Season totals follow the newest DGHS figure available. Summing the
+    /// series alone would keep reporting a total DGHS has already superseded.
+    var seasonCases: Int { latestNational?.seasonCases ?? Series.sum(national.map(\.cases)) }
+    var seasonDeaths: Int { latestNational?.seasonDeaths ?? Series.sum(national.map(\.deaths)) }
     var currentlyAdmitted: Int { national.last?.admitted ?? 0 }
 
     var caseFatalityRate: Double {

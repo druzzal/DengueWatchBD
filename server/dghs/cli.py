@@ -20,6 +20,7 @@ from .build import build_payload, collect_reports
 from .dashboard import DGHSDashboardSource
 from .crosscheck import cross_check
 from .runlog import IngestionRun, append_run, status_document
+from .latest import build_latest
 from .publish import decide, freshness, publish
 from .source import DGHSSourceError
 
@@ -188,6 +189,20 @@ def main(argv: list[str] | None = None) -> int:
     result.payload["meta"]["primarySource"] = (
         "DGHS daily report" if snapshot is None else "DGHS dashboard"
     )
+    # When the press-release host is down, the dashboard may already have
+    # newer national totals. They travel in their own block rather than being
+    # appended to the series, which has no district figures to go with them.
+    latest_block = build_latest(snapshot, reports[-1].report_date)
+    if latest_block:
+        result.payload["latest"] = latest_block
+        LOG.info("dashboard is ahead of the press releases: carrying %s "
+                 "(%s cases) alongside a series that ends %s",
+                 latest_block["reportDate"],
+                 f"{latest_block['seasonCases']:,}",
+                 latest_block["seriesAsOf"])
+    else:
+        result.payload.pop("latest", None)
+
     result.payload["meta"]["parserVersion"] = (
         snapshot.parser_version if snapshot is not None else "dghs-pdf-v1"
     )
