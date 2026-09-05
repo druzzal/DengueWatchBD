@@ -30,6 +30,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI
+from api.v1 import router as v1_router
 from fastapi.responses import JSONResponse
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -126,6 +127,9 @@ def _stats() -> tuple[dict[str, Any], str, str | None]:
         if fallback:
             return fallback, "published-fallback", message
         return {}, "unavailable", message
+
+
+app.include_router(v1_router)
 
 
 @app.get("/api/dengue-stats")
