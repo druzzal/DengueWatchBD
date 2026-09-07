@@ -63,6 +63,23 @@ struct Area: Identifiable, Hashable {
     var risk: RiskLevel { RiskLevel(incidencePer100k: incidencePer100k) }
 
 
+    /// The risk band for one reporting week, judged on the same two-week
+    /// window `incidencePer100k` uses.
+    ///
+    /// A week is banded together with the week before it, never on its own.
+    /// The thresholds are calibrated for a fortnight's attack rate, so feeding
+    /// them a single week's count would read roughly half the true rate and
+    /// paint a Severe week as High — quietly understating exactly the weeks
+    /// that matter most. The first week of a series has no predecessor, so it
+    /// is banded on itself and will read low; that is a known floor, not a
+    /// claim about that week.
+    func risk(atWeekIndex index: Int) -> RiskLevel {
+        guard weeklyCases.indices.contains(index), populationThousands > 0 else { return .low }
+        let window = weeklyCases[max(0, index - 1)...index]
+        let incidence = Double(window.reduce(0, +)) / Double(populationThousands) * 100
+        return RiskLevel(incidencePer100k: incidence)
+    }
+
     func recentWeeks(_ count: Int) -> [Int] { Array(weeklyCases.suffix(count)) }
 }
 

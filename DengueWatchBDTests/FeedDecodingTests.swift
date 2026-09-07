@@ -207,6 +207,52 @@ final class FeedDecodingTests: XCTestCase {
 
     // MARK: - Risk
 
+    // MARK: - Per-week risk colouring on the area chart
+
+    private func area(weeklyCases: [Int], populationThousands: Int) -> Area {
+        Area(code: "TEST", name: "Test", division: .dhaka,
+             latitude: 23.8, longitude: 90.4,
+             populationThousands: populationThousands,
+             seasonCases: weeklyCases.reduce(0, +), seasonDeaths: 0,
+             weeklyCases: weeklyCases, weeklyIsApportioned: false,
+             geofenceRadiusMeters: 12000)
+    }
+
+    /// Each bar is banded on a fortnight, not on its own week. Banding a single
+    /// week with thresholds calibrated for two would read about half the true
+    /// rate and paint a severe week as merely high.
+    func testWeeklyRiskUsesTheTwoWeekWindow() {
+        // 1,000k people. Weeks of 300 each: one week alone is 30/100k
+        // (High), but the two-week window is 60/100k — Severe.
+        let a = area(weeklyCases: [300, 300], populationThousands: 1_000)
+        XCTAssertEqual(RiskLevel(incidencePer100k: 30), .high, "a single week would read High")
+        XCTAssertEqual(a.risk(atWeekIndex: 1), .severe, "the fortnight is what counts")
+    }
+
+    func testWeeklyRiskTracksTheSeriesRatherThanTheCurrentBand() {
+        // Quiet early weeks then a surge: early bars must not inherit the
+        // area's present risk, or every bar would be one flat colour.
+        let a = area(weeklyCases: [1, 1, 400, 400], populationThousands: 1_000)
+        XCTAssertEqual(a.risk(atWeekIndex: 1), .low)
+        XCTAssertEqual(a.risk(atWeekIndex: 3), .severe)
+        XCTAssertEqual(a.risk, a.risk(atWeekIndex: a.weeklyCases.count - 1),
+                       "the last bar should agree with the area's badge")
+    }
+
+    func testWeeklyRiskHandlesEdgesWithoutCrashing() {
+        // A lone first week bands on itself: 500 cases in 1,000k is 50/100k,
+        // which is High. Had a prior week of the same size existed the
+        // fortnight would be 100/100k and Severe — so the first bar of any
+        // series reads low by construction. A known floor, documented on the
+        // method, not a claim about that week.
+        let a = area(weeklyCases: [500], populationThousands: 1_000)
+        XCTAssertEqual(a.risk(atWeekIndex: 0), .high, "a lone first week bands on itself")
+        XCTAssertEqual(a.risk(atWeekIndex: 99), .low, "out of range is not a crash")
+        XCTAssertEqual(a.risk(atWeekIndex: -1), .low)
+        let noPeople = area(weeklyCases: [10, 10], populationThousands: 0)
+        XCTAssertEqual(noPeople.risk(atWeekIndex: 1), .low, "no population means no rate")
+    }
+
     func testRiskBandsAreCalibratedForATwoWeekWindow() {
         XCTAssertEqual(RiskLevel(incidencePer100k: 0.3), .low)
         XCTAssertEqual(RiskLevel(incidencePer100k: 4.9), .low)

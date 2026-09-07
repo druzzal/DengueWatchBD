@@ -441,12 +441,14 @@ struct AreaRow: View {
                 Text(loc.num(area.seasonCases)).typo(.subheadline).monospacedDigit()
                 RiskBadge(risk: area.risk, compact: true)
             }
-            // One measure, one hue: bar length is the season total for every row.
+            // Length is the season total, colour is the area's current risk
+            // band — the same band the badge above shows, so the row can be
+            // read either way round and a list can be scanned by colour.
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
                     Capsule().fill(Palette.grid).frame(height: 4)
                     Capsule()
-                        .fill(Palette.cases)
+                        .fill(area.risk.tint)
                         .frame(width: max(2, geometry.size.width * CGFloat(area.seasonCases) / CGFloat(max(peak, 1))),
                                height: 4)
                 }
