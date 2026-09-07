@@ -431,18 +431,29 @@ struct AreaRow: View {
     let area: Area
     let peak: Int
 
+    /// The division, unless it merely repeats the area's own name.
+    private var divisionLabel: String? {
+        let area = self.area.displayName(loc.language)
+        let division = self.area.division.displayName(loc.language)
+        return division == area ? nil : division
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
             HStack(spacing: 8) {
                 Text(area.displayName(loc.language))
                     .typo(.subheadline)
                     .lineLimit(1)
-                // The division is context, not identity: it is the first thing
-                // to give way when the row runs out of room.
-                Text(area.division.displayName(loc.language))
-                    .typo(.micro).foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .layoutPriority(-1)
+                // Most areas share their division's name — Mymensingh sits in
+                // Mymensingh — so printing both said the same word twice and
+                // used the room that forced it to truncate. Shown only when it
+                // adds something, and then in full.
+                if let division = divisionLabel {
+                    Text(division)
+                        .typo(.micro).foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
+                }
                 Spacer(minLength: 6)
                 Text(loc.num(area.seasonCases)).typo(.subheadline).monospacedDigit()
                 RiskBadge(risk: area.risk, compact: true)
