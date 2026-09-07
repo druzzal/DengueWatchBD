@@ -100,7 +100,15 @@ struct RiskBadge: View {
             Text(loc.t(risk.labelKey))
                 .typo(compact ? .micro : .caption)
                 .fontWeight(.semibold)
+                .lineLimit(1)
         }
+        // The badge keeps its intrinsic width instead of being squeezed.
+        // Without this, a row with a long area name — Mymensingh was the one
+        // that showed it — compressed the badge until "Moderate" wrapped onto
+        // two lines. A risk label broken across lines is harder to read than a
+        // truncated place name, and the place name is the part the reader
+        // already knows, so the name yields and this does not.
+        .fixedSize(horizontal: true, vertical: false)
         .foregroundStyle(risk.ink)
         .padding(.horizontal, compact ? 8 : 10)
         .padding(.vertical, compact ? 4 : 6)

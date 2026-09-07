@@ -434,9 +434,15 @@ struct AreaRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
             HStack(spacing: 8) {
-                Text(area.displayName(loc.language)).typo(.subheadline)
+                Text(area.displayName(loc.language))
+                    .typo(.subheadline)
+                    .lineLimit(1)
+                // The division is context, not identity: it is the first thing
+                // to give way when the row runs out of room.
                 Text(area.division.displayName(loc.language))
                     .typo(.micro).foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .layoutPriority(-1)
                 Spacer(minLength: 6)
                 Text(loc.num(area.seasonCases)).typo(.subheadline).monospacedDigit()
                 RiskBadge(risk: area.risk, compact: true)
