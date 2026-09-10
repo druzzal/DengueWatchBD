@@ -2,6 +2,19 @@ import Foundation
 
 extension Strings {
     static let enDashboard: [String: String] = [
+        // What changed — deterministic surveillance statements
+        "digest.title": "What changed",
+        "digest.subtitle": "Since the last DGHS report",
+        "digest.national.rise": "Reported cases rose %@%% nationwide this week.",
+        "digest.national.fall": "Reported cases fell %@%% nationwide this week.",
+        "digest.national.steady": "Reported cases held roughly steady nationwide this week.",
+        "digest.hotspots.one": "One area is at high risk or above.",
+        "digest.hotspots.many": "%@ areas are at high risk or above.",
+        "digest.rises.one": "The steepest rise was in %@.",
+        "digest.rises.two": "The steepest rises were in %@ and %@.",
+        "digest.noBreakdown": "Area-level figures were not in this report.",
+        "digest.action": "See surveillance",
+
         "who.title": "Who is affected",
         "who.subtitle": "Reported cases this season, by age and sex",
         "who.male": "Male",
@@ -43,6 +56,19 @@ extension Strings {
     ]
 
     static let bnDashboard: [String: String] = [
+        // What changed
+        "digest.title": "কী বদলাল",
+        "digest.subtitle": "স্বাস্থ্য অধিদপ্তরের গত প্রতিবেদনের পর",
+        "digest.national.rise": "এ সপ্তাহে সারা দেশে শনাক্ত রোগী %@%% বেড়েছে।",
+        "digest.national.fall": "এ সপ্তাহে সারা দেশে শনাক্ত রোগী %@%% কমেছে।",
+        "digest.national.steady": "এ সপ্তাহে সারা দেশে শনাক্ত রোগীর সংখ্যা প্রায় অপরিবর্তিত।",
+        "digest.hotspots.one": "একটি এলাকা উচ্চ বা তার বেশি ঝুঁকিতে আছে।",
+        "digest.hotspots.many": "%@টি এলাকা উচ্চ বা তার বেশি ঝুঁকিতে আছে।",
+        "digest.rises.one": "সবচেয়ে বেশি বেড়েছে %@-এ।",
+        "digest.rises.two": "সবচেয়ে বেশি বেড়েছে %@ ও %@-এ।",
+        "digest.noBreakdown": "এই প্রতিবেদনে এলাকাভিত্তিক তথ্য ছিল না।",
+        "digest.action": "নজরদারি দেখুন",
+
         "who.title": "কারা আক্রান্ত হচ্ছেন",
         "who.subtitle": "এ মৌসুমে বয়স ও লিঙ্গ অনুযায়ী শনাক্ত রোগী",
         "who.male": "পুরুষ",

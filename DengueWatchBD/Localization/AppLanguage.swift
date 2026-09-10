@@ -156,6 +156,12 @@ final class LocalizationManager {
         String(format: t(key), locale: locale, arguments: arguments)
     }
 
+    /// Same substitution, for callers that already hold their arguments as a
+    /// list — the surveillance digest builds them programmatically.
+    func t(_ key: String, arguments: [String]) -> String {
+        String(format: t(key), locale: locale, arguments: arguments)
+    }
+
     // MARK: - Numbers and dates (delegated, so there is one implementation)
 
     func num(_ value: Int) -> String { style.num(value) }

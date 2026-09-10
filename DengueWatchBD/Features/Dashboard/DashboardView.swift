@@ -135,6 +135,7 @@ struct DashboardView: View {
     @ViewBuilder
     private var loadedContent: some View {
         riskSection
+        whatChangedSection
         activitySection
         trendSection
         mapSection
@@ -206,6 +207,70 @@ struct DashboardView: View {
                           actionTitle: loc.t("alert.viewMap"),
                           action: { router.show(.map) })
             }
+        }
+    }
+
+    /// Statements about what moved since the last report.
+    ///
+    /// The section disappears entirely when the digest has nothing it can
+    /// support — an empty card saying "no changes" would be a claim of its own.
+    @ViewBuilder
+    private var whatChangedSection: some View {
+        let items = SurveillanceDigest.items(
+            nationalChange: store.weeklyCaseChange,
+            hotspotCount: store.hotspots.count,
+            hasAreaBreakdown: !store.areas.isEmpty,
+            risingAreas: store.areasByRisk.compactMap { area in
+                guard let change = area.weeklyChange, change > 0 else { return nil }
+                return (name: area.displayName(loc.language), change: change)
+            }
+            .sorted { $0.change > $1.change }
+        )
+
+        if !items.isEmpty {
+            VStack(alignment: .leading, spacing: Space.row) {
+                SectionHeader(loc.t("digest.title"), subtitle: loc.t("digest.subtitle"))
+                Card {
+                    VStack(alignment: .leading, spacing: Space.tight) {
+                        ForEach(items) { item in
+                            HStack(alignment: .firstTextBaseline, spacing: Space.tight) {
+                                Image(systemName: symbol(for: item.kind))
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundStyle(tint(for: item.kind))
+                                    .frame(width: 18)
+                                    .accessibilityHidden(true)
+                                Text(loc.t(item.key, arguments: item.arguments))
+                                    .typo(.callout)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                        SecondaryActionButton(title: loc.t("digest.action"),
+                                              systemImage: "map") { router.show(.map) }
+                            .padding(.top, Space.hair)
+                    }
+                }
+            }
+        }
+    }
+
+    /// Icon and colour carry the same meaning as the words, so the section still
+    /// reads without colour vision and without reading every sentence.
+    private func symbol(for kind: SurveillanceDigest.Kind) -> String {
+        switch kind {
+        case .nationalRise, .steepestRises: "arrow.up.right"
+        case .nationalFall: "arrow.down.right"
+        case .nationalSteady: "equal"
+        case .hotspots: "exclamationmark.triangle.fill"
+        case .noBreakdown: "questionmark.circle"
+        }
+    }
+
+    private func tint(for kind: SurveillanceDigest.Kind) -> Color {
+        switch kind {
+        case .nationalRise, .steepestRises: Palette.riskTint(.high)
+        case .nationalFall: Palette.riskTint(.low)
+        case .hotspots: Palette.riskTint(.severe)
+        case .nationalSteady, .noBreakdown: Color.secondary
         }
     }
 
