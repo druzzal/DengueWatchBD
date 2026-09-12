@@ -2,6 +2,19 @@ import Foundation
 
 extension Strings {
     static let enPrevent: [String: String] = [
+        // Today's prevention checklist
+        "checklist.title": "Today's prevention",
+        "checklist.subtitle": "Five minutes, once a day. Resets tomorrow.",
+        "checklist.progress": "%@ of %@ done",
+        "checklist.allDone": "All done for today.",
+        "checklist.task.standingWater": "Remove standing water",
+        "checklist.task.plantTrays": "Check plant trays and pots",
+        "checklist.task.containers": "Empty unused containers",
+        "checklist.task.storedWater": "Cover stored water",
+        "checklist.task.protection": "Use repellent or a net",
+        "checklist.a11y.done": "Done",
+        "checklist.a11y.notDone": "Not done",
+
         "alerts.state.both": "On — when your area gets worse, and when you enter a high-risk one",
         "alerts.state.entryOnly": "On — you will be warned when you enter a high-risk area",
         "prevent.title": "Prevention",
@@ -101,6 +114,19 @@ extension Strings {
     ]
 
     static let bnPrevent: [String: String] = [
+        // আজকের প্রতিরোধ তালিকা
+        "checklist.title": "আজকের প্রতিরোধ",
+        "checklist.subtitle": "দিনে একবার, পাঁচ মিনিট। আগামীকাল আবার শুরু।",
+        "checklist.progress": "%@টির মধ্যে %@টি হয়েছে",
+        "checklist.allDone": "আজকের সব কাজ শেষ।",
+        "checklist.task.standingWater": "জমা পানি সরান",
+        "checklist.task.plantTrays": "গাছের টব ও ট্রে দেখুন",
+        "checklist.task.containers": "অব্যবহৃত পাত্র খালি করুন",
+        "checklist.task.storedWater": "জমিয়ে রাখা পানি ঢেকে রাখুন",
+        "checklist.task.protection": "রিপেলেন্ট বা মশারি ব্যবহার করুন",
+        "checklist.a11y.done": "হয়েছে",
+        "checklist.a11y.notDone": "হয়নি",
+
         "alerts.state.both": "চালু — আপনার এলাকার অবস্থা খারাপ হলে, এবং উচ্চঝুঁকির এলাকায় ঢুকলে",
         "alerts.state.entryOnly": "চালু — উচ্চঝুঁকির এলাকায় ঢুকলে আপনাকে সতর্ক করা হবে",
         "prevent.title": "প্রতিরোধ",

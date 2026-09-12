@@ -6,6 +6,8 @@ struct PreventionView: View {
     @Environment(\.horizontalSizeClass) private var sizeClass
 
     @State private var expanded: Set<String> = ["breeding"]
+    @State private var checklist = PreventionChecklist()
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var currentMonthIndex: Int { Calendar.current.component(.month, from: Date()) - 1 }
 
@@ -16,6 +18,7 @@ struct PreventionView: View {
                     if sizeClass == .regular {
                         ScreenTitle(text: loc.t("prevent.title"))
                     }
+                    checklistCard
                     seasonalCard
 
                     ForEach(PreventionContent.topics) { topic in
@@ -34,6 +37,78 @@ struct PreventionView: View {
                 ToolbarItem(placement: .topBarLeading) { LanguageToggle() }
             }
         }
+    }
+
+    /// Today's five tasks, with an honest count and nothing else.
+    ///
+    /// No streak, no badge, no celebration beyond a quiet line when the last
+    /// one is ticked — the brief for this was explicitly that it must not
+    /// become a game people tire of.
+    private var checklistCard: some View {
+        CardSection(loc.t("checklist.title"), subtitle: loc.t("checklist.subtitle")) {
+            VStack(alignment: .leading, spacing: Space.row) {
+                HStack(spacing: Space.tight) {
+                    ProgressView(value: checklist.fraction)
+                        .tint(Palette.riskTint(.low))
+                    Text(loc.t("checklist.progress",
+                               loc.num(checklist.completedCount),
+                               loc.num(checklist.total)))
+                        .typo(.caption)
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                        .fixedSize(horizontal: true, vertical: false)
+                }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(loc.t("checklist.progress",
+                                          loc.num(checklist.completedCount),
+                                          loc.num(checklist.total)))
+
+                VStack(spacing: 0) {
+                    ForEach(PreventionTask.allCases) { task in
+                        let done = checklist.isDone(task)
+                        Button {
+                            withAnimation(reduceMotion ? nil : Motion.interactive) {
+                                checklist.toggle(task)
+                            }
+                            Haptic.selection()
+                        } label: {
+                            HStack(spacing: Space.row) {
+                                Image(systemName: done ? "checkmark.circle.fill" : "circle")
+                                    .font(.system(size: 20))
+                                    .foregroundStyle(done ? Palette.riskTint(.low) : Color.secondary)
+                                Image(systemName: task.symbol)
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(.secondary)
+                                    .frame(width: 20)
+                                    .accessibilityHidden(true)
+                                Text(loc.t(task.titleKey))
+                                    .typo(.callout)
+                                    .strikethrough(done, color: .secondary)
+                                    .foregroundStyle(done ? Color.secondary : Color.primary)
+                                    .multilineTextAlignment(.leading)
+                                Spacer(minLength: 0)
+                            }
+                            .frame(minHeight: Hit.minimum)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        // State goes through the trait, not through colour or a
+                        // strikethrough, so VoiceOver reads it as a checkbox.
+                        .accessibilityAddTraits(done ? [.isButton, .isSelected] : .isButton)
+                        .accessibilityValue(loc.t(done ? "checklist.a11y.done"
+                                                       : "checklist.a11y.notDone"))
+                    }
+                }
+
+                if checklist.isComplete {
+                    Text(loc.t("checklist.allDone"))
+                        .typo(.caption)
+                        .foregroundStyle(Palette.riskTint(.low))
+                        .transition(.opacity)
+                }
+            }
+        }
+        .onAppear { checklist.refreshIfDayChanged() }
     }
 
     private var seasonalCard: some View {
