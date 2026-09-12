@@ -12,7 +12,6 @@ struct SymptomCheckerView: View {
     @State private var feverStarted = Date()
     @State private var hasFeverDate = false
     @State private var showingResult = false
-    @State private var showingLog = false
 
     private var daysSinceFever: Int {
         Calendar.current.dateComponents([.day],
@@ -59,14 +58,7 @@ struct SymptomCheckerView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) { LanguageToggle() }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button { showingLog = true } label: {
-                        Image(systemName: "list.clipboard")
-                    }
-                    .accessibilityLabel(loc.t("log.title"))
-                }
             }
-            .sheet(isPresented: $showingLog) { CaseLogView() }
             // Reset once the reader comes back from the result, not when the
             // result opens: clearing while it is still on screen would blank
             // the answers it is explaining. Returning means that check is

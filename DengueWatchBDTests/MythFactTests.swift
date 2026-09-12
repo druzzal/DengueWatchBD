@@ -70,3 +70,34 @@ final class MythFactTests: XCTestCase {
         XCTAssertLessThanOrEqual(MythFact.all.count, 8)
     }
 }
+
+/// The My health screen once showed "Vital signs" twice — as a row in the
+/// Today card and as the heading of the card below it — which read as two
+/// separate features.
+final class HealthScreenLabelTests: XCTestCase {
+    func testTheTodayRowsDoNotRepeatTheSectionHeadings() {
+        let collisions = [
+            ("health.today.vitals", "vital.section"),
+            ("health.today.symptoms", "health.latest.title"),
+        ]
+        for (row, heading) in collisions {
+            for table in [Strings.english, Strings.bangla] {
+                let rowText = table[row] ?? ""
+                let headingText = table[heading] ?? ""
+                XCTAssertFalse(rowText.isEmpty || headingText.isEmpty, "\(row)/\(heading)")
+                XCTAssertNotEqual(rowText, headingText,
+                                  "'\(rowText)' appears as both a row and a heading")
+            }
+        }
+    }
+
+    func testTheTodayRowsReadAsActions() {
+        // They open a form; naming them after the data made them look like
+        // links to the cards further down.
+        for key in ["health.today.symptoms", "health.today.vitals"] {
+            let english = (Strings.english[key] ?? "").lowercased()
+            XCTAssertTrue(english.contains("record") || english.contains("check"),
+                          "\(key) should name an action: \(english)")
+        }
+    }
+}

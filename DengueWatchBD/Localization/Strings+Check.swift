@@ -56,8 +56,8 @@ extension Strings {
 
         "health.today.title": "Today",
         "health.today.subtitle": "Keeping a daily record makes a pattern visible.",
-        "health.today.symptoms": "Symptom check",
-        "health.today.vitals": "Vital signs",
+        "health.today.symptoms": "Record today's symptoms",
+        "health.today.vitals": "Record today's readings",
         "health.today.done": "Done",
         "health.today.todo": "Not yet",
         "health.latest.title": "Latest assessment",
@@ -274,8 +274,8 @@ extension Strings {
 
         "health.today.title": "আজ",
         "health.today.subtitle": "প্রতিদিন লিখে রাখলে ধরনটা বোঝা যায়।",
-        "health.today.symptoms": "উপসর্গ পরীক্ষা",
-        "health.today.vitals": "জীবনচিহ্ন",
+        "health.today.symptoms": "আজকের উপসর্গ লিখুন",
+        "health.today.vitals": "আজকের পরিমাপ লিখুন",
         "health.today.done": "হয়েছে",
         "health.today.todo": "এখনো হয়নি",
         "health.latest.title": "সর্বশেষ মূল্যায়ন",
