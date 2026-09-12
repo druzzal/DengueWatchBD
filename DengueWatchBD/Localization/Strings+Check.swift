@@ -2,6 +2,27 @@ import Foundation
 
 extension Strings {
     static let enCheck: [String: String] = [
+        // Stepped symptom check
+        "step.fever.title": "Do you have a fever?",
+        "step.fever.subtitle": "A sudden high fever is usually how dengue starts.",
+        "step.fever.yes": "Yes, I have a fever",
+        "step.fever.no": "No fever",
+        "step.symptoms.title": "What else are you feeling?",
+        "step.symptoms.subtitle": "Tick everything from the last 24 hours.",
+        "step.warning.title": "Any of these warning signs?",
+        "step.warning.subtitle": "These change what you should do. Read them carefully.",
+        "step.warning.none": "None of these",
+        "step.timeline.title": "Which day of fever?",
+        "step.timeline.subtitle": "Counting the first day of fever as day 1.",
+        "step.timeline.unknown": "I am not sure",
+        "step.risk.title": "Anything that raises your risk?",
+        "step.risk.subtitle": "Dengue can be more serious for some people.",
+        "step.next": "Continue",
+        "step.back": "Back",
+        "step.seeResult": "See what to do",
+        "step.progress": "Step %@ of %@",
+        "step.skip": "Skip",
+
         // Fever timeline
         "phase.title": "Where you are in the fever",
         "phase.subtitle": "Typical course. Days are counted from the first day of fever.",
@@ -112,6 +133,27 @@ extension Strings {
     ]
 
     static let bnCheck: [String: String] = [
+        // ধাপে ধাপে উপসর্গ পরীক্ষা
+        "step.fever.title": "আপনার কি জ্বর আছে?",
+        "step.fever.subtitle": "হঠাৎ তীব্র জ্বর দিয়েই সাধারণত ডেঙ্গু শুরু হয়।",
+        "step.fever.yes": "হ্যাঁ, জ্বর আছে",
+        "step.fever.no": "জ্বর নেই",
+        "step.symptoms.title": "আর কী কী অনুভব করছেন?",
+        "step.symptoms.subtitle": "গত ২৪ ঘণ্টার সবকিছু চিহ্নিত করুন।",
+        "step.warning.title": "এই বিপদচিহ্নগুলোর কোনোটি আছে?",
+        "step.warning.subtitle": "এগুলো থাকলে করণীয় বদলে যায়। মনোযোগ দিয়ে পড়ুন।",
+        "step.warning.none": "কোনোটিই নেই",
+        "step.timeline.title": "জ্বরের কত দিন?",
+        "step.timeline.subtitle": "জ্বরের প্রথম দিনকে ১ম দিন ধরে।",
+        "step.timeline.unknown": "আমি নিশ্চিত নই",
+        "step.risk.title": "ঝুঁকি বাড়ায় এমন কিছু আছে?",
+        "step.risk.subtitle": "কিছু মানুষের জন্য ডেঙ্গু বেশি মারাত্মক হতে পারে।",
+        "step.next": "পরবর্তী",
+        "step.back": "পেছনে",
+        "step.seeResult": "করণীয় দেখুন",
+        "step.progress": "ধাপ %@ / %@",
+        "step.skip": "এড়িয়ে যান",
+
         // জ্বরের সময়রেখা
         "phase.title": "আপনি জ্বরের কোন পর্যায়ে",
         "phase.subtitle": "সাধারণ গতিপথ। জ্বরের প্রথম দিন থেকে দিন গোনা হয়।",

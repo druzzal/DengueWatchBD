@@ -26,85 +26,41 @@ struct SymptomCheckerView: View {
         return TriageEngine.evaluate(selected: selected, context: resolved)
     }
 
+    @State private var step: CheckerStep = .fever
+
+    private var steps: [CheckerStep] { CheckerStep.sequence(hasFever: selected.contains("fever")) }
+    private var stepIndex: Int { steps.firstIndex(of: step) ?? 0 }
+    private var isLastStep: Bool { stepIndex == steps.count - 1 }
+
     var body: some View {
         NavigationStack {
-            Form {
-                Section {
-                    Text(loc.t("check.intro"))
-                        .typo(.callout)
-                        .foregroundStyle(.secondary)
-                }
-
-                ForEach(Symptom.Group.allCases) { group in
-                    Section {
-                        ForEach(TriageEngine.symptoms(in: group)) { symptom in
-                            SymptomRow(symptom: symptom,
-                                       isOn: selected.contains(symptom.id)) { isOn in
-                                if isOn { selected.insert(symptom.id) } else { selected.remove(symptom.id) }
-                            }
-                        }
-                    } header: {
-                        Text(loc.t(group.titleKey))
-                    } footer: {
-                        Text(loc.t(group.footnoteKey))
-                    }
-                }
-
-                Section(loc.t("check.fever.section")) {
-                    Toggle(loc.t("check.fever.knowDate"), isOn: $hasFeverDate.animation())
-                    if hasFeverDate {
-                        DatePicker(loc.t("check.fever.started"), selection: $feverStarted,
-                                   in: Date().addingTimeInterval(-30 * 86_400)...Date(),
-                                   displayedComponents: .date)
-                        if let key = TriageEngine.phaseKey(feverDaysAgo: daysSinceFever) {
-                            Text(loc.t(key, loc.num(daysSinceFever + 1)))
-                                .typo(.caption)
+            VStack(spacing: 0) {
+                progressBar
+                ScrollView {
+                    VStack(alignment: .leading, spacing: Space.stack) {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(loc.t(step.titleKey)).typo(.title)
+                            Text(loc.t(step.subtitleKey))
+                                .typo(.callout)
                                 .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
+                        stepContent
                     }
+                    .padding(.horizontal, Space.screen)
+                    .padding(.top, Space.row)
+                    .padding(.bottom, Space.section)
+                    .readableColumn()
                 }
-
-                Section {
-                    Toggle(loc.t("check.risk.pregnant"), isOn: $context.isPregnant)
-                    Toggle(loc.t("check.risk.age"), isOn: $context.isUnderFiveOrOverSixty)
-                    Toggle(loc.t("check.risk.chronic"), isOn: $context.hasChronicCondition)
-                    Toggle(loc.t("check.risk.previous"), isOn: $context.hadDengueBefore)
-                } header: {
-                    Text(loc.t("check.risk.section"))
-                } footer: {
-                    Text(loc.t("check.risk.footer"))
-                }
-
-                Section {
-                    Button {
-                        showingResult = true
-                    } label: {
-                        Text(loc.t("check.seeResult"))
-                            .typo(.headline)
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(selected.isEmpty)
-
-                    if !selected.isEmpty {
-                        Button(loc.t("check.clearAll"), role: .destructive) {
-                            selected.removeAll()
-                            context = TriageEngine.Context()
-                            hasFeverDate = false
-                        }
-                        .frame(maxWidth: .infinity)
-                    }
-                }
+                footer
             }
-            .readableColumn()
+            .background(Palette.plane)
             .navigationTitle(loc.t("check.title"))
-            .navigationBarTitleDisplayMode(sizeClass == .regular ? .inline : .large)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) { LanguageToggle() }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showingLog = true
-                    } label: {
+                    Button { showingLog = true } label: {
                         Image(systemName: "list.clipboard")
                     }
                     .accessibilityLabel(loc.t("log.title"))
@@ -128,52 +84,207 @@ struct SymptomCheckerView: View {
             }
         }
     }
-}
 
-/// A symptom row carries its own illustration — the drawing does the work of
-/// recognition before the words are read, which matters when someone is ill or
-/// reading in their second language.
-private struct SymptomRow: View {
-    @Environment(LocalizationManager.self) private var loc
-    let symptom: Symptom
-    let isOn: Bool
-    let onChange: (Bool) -> Void
+    /// Position in the flow, shown as segments rather than a percentage: the
+    /// number of questions left is the thing someone actually wants to know.
+    private var progressBar: some View {
+        HStack(spacing: 4) {
+            ForEach(Array(steps.enumerated()), id: \.element.id) { index, item in
+                Capsule()
+                    .fill(index <= stepIndex ? Palette.accent : Palette.grid)
+                    .frame(height: 4)
+            }
+        }
+        .padding(.horizontal, Space.screen)
+        .padding(.vertical, Space.tight)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(loc.t("step.progress", loc.num(stepIndex + 1), loc.num(steps.count)))
+    }
 
-    var body: some View {
-        Button {
-            onChange(!isOn)
+    @ViewBuilder
+    private var stepContent: some View {
+        switch step {
+        case .fever: feverStep
+        case .symptoms: symptomStep(group: .core, excluding: ["fever"])
+        case .warningSigns: warningStep
+        case .timeline: timelineStep
+        case .riskFactors: riskStep
+        }
+    }
+
+    // MARK: - Steps
+
+    private var feverStep: some View {
+        VStack(spacing: Space.row) {
+            choiceTile(title: loc.t("step.fever.yes"),
+                       symbol: "thermometer.high",
+                       isOn: selected.contains("fever")) {
+                selected.insert("fever")
+                advance()
+            }
+            choiceTile(title: loc.t("step.fever.no"),
+                       symbol: "thermometer.low",
+                       isOn: !selected.contains("fever") && step != .fever) {
+                selected.remove("fever")
+                hasFeverDate = false
+                advance()
+            }
+        }
+    }
+
+    private func symptomStep(group: Symptom.Group, excluding: Set<String>) -> some View {
+        VStack(spacing: Space.tight) {
+            ForEach(TriageEngine.symptoms(in: group).filter { !excluding.contains($0.id) }) { symptom in
+                selectableTile(symptom: symptom, emphasis: false)
+            }
+        }
+    }
+
+    /// Warning and severe signs share a screen, drawn louder than the core
+    /// symptoms, because these are the answers that change the advice.
+    private var warningStep: some View {
+        VStack(spacing: Space.tight) {
+            ForEach([Symptom.Group.warning, .severe], id: \.self) { group in
+                ForEach(TriageEngine.symptoms(in: group)) { symptom in
+                    selectableTile(symptom: symptom, emphasis: true)
+                }
+            }
+            Button(loc.t("step.warning.none")) {
+                for group in [Symptom.Group.warning, .severe] {
+                    for symptom in TriageEngine.symptoms(in: group) { selected.remove(symptom.id) }
+                }
+                advance()
+            }
+            .typo(.subheadline)
+            .frame(maxWidth: .infinity, minHeight: Hit.minimum)
+            .foregroundStyle(Palette.accent)
+        }
+    }
+
+    private var timelineStep: some View {
+        VStack(alignment: .leading, spacing: Space.row) {
+            Toggle(loc.t("check.fever.knowDate"), isOn: $hasFeverDate.animation())
+                .typo(.callout)
+            if hasFeverDate {
+                DatePicker(loc.t("check.fever.started"), selection: $feverStarted,
+                           in: Date().addingTimeInterval(-30 * 86_400)...Date(),
+                           displayedComponents: .date)
+                    .typo(.callout)
+                FeverTimelineView(feverDay: daysSinceFever + 1)
+                    .padding(.top, Space.tight)
+            } else {
+                Text(loc.t("step.timeline.unknown"))
+                    .typo(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(Space.card)
+        .cardSurface()
+    }
+
+    private var riskStep: some View {
+        VStack(alignment: .leading, spacing: Space.tight) {
+            Toggle(loc.t("check.risk.pregnant"), isOn: $context.isPregnant)
+            Toggle(loc.t("check.risk.age"), isOn: $context.isUnderFiveOrOverSixty)
+            Toggle(loc.t("check.risk.chronic"), isOn: $context.hasChronicCondition)
+            Toggle(loc.t("check.risk.previous"), isOn: $context.hadDengueBefore)
+            Text(loc.t("check.risk.footer"))
+                .typo(.micro)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, Space.hair)
+        }
+        .typo(.callout)
+        .padding(Space.card)
+        .cardSurface()
+    }
+
+    // MARK: - Pieces
+
+    private func choiceTile(title: String, symbol: String,
+                            isOn: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: Space.row) {
+                Image(systemName: symbol).font(.title3)
+                Text(title).typo(.headline)
+                Spacer(minLength: 0)
+                if isOn { Image(systemName: "checkmark.circle.fill") }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(minHeight: 64)
+            .padding(.horizontal, Space.card)
+            .foregroundStyle(isOn ? Color.white : Color.primary)
+            .background(isOn ? Palette.accent : Palette.card,
+                        in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(isOn ? [.isButton, .isSelected] : .isButton)
+    }
+
+    private func selectableTile(symptom: Symptom, emphasis: Bool) -> some View {
+        let isOn = selected.contains(symptom.id)
+        let tint = emphasis ? Palette.riskTint(.high) : Palette.accent
+        return Button {
+            if isOn { selected.remove(symptom.id) } else { selected.insert(symptom.id) }
+            Haptic.selection()
         } label: {
-            HStack(alignment: .center, spacing: 12) {
+            HStack(alignment: .top, spacing: Space.row) {
                 Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
-                    .font(.title3)
-                    .foregroundStyle(isOn ? Palette.accent : Color.secondary)
-
-                SymptomIllustration(symptomID: symptom.id, group: symptom.group, size: 46)
-
+                    .font(.system(size: 20))
+                    .foregroundStyle(isOn ? tint : Color.secondary)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(loc.t(symptom.titleKey))
-                        .typo(.subheadline)
-                        .foregroundStyle(.primary)
-                        .multilineTextAlignment(.leading)
+                    Text(loc.t(symptom.titleKey)).typo(.callout).fontWeight(.medium)
                     Text(loc.t(symptom.detailKey))
-                        .typo(.caption)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.leading)
+                        .typo(.micro).foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: 0)
             }
-            .padding(.vertical, 4)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(minHeight: Hit.minimum)
+            .padding(Space.row)
+            .background(isOn ? tint.opacity(0.10) : Palette.card,
+                        in: RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: Radius.control, style: .continuous)
+                    .strokeBorder(isOn ? tint.opacity(0.45) : Palette.hairline, lineWidth: 1)
+            )
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        // Left to itself, SwiftUI guessed the separator inset per row and got a
-        // different answer for rows whose text wrapped — so the list alternated
-        // between full-width and text-inset rules. Pin it to the text column.
-        .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
-        .accessibilityAddTraits(isOn ? [.isSelected] : [])
+        .accessibilityAddTraits(isOn ? [.isButton, .isSelected] : .isButton)
+    }
+
+    private var footer: some View {
+        HStack(spacing: Space.row) {
+            if stepIndex > 0 {
+                SecondaryActionButton(title: loc.t("step.back"),
+                                      systemImage: "chevron.left") { retreat() }
+            }
+            PrimaryActionButton(title: isLastStep ? loc.t("step.seeResult") : loc.t("step.next")) {
+                if isLastStep { showingResult = true } else { advance() }
+            }
+            // The engine tolerates an empty set, but a result from no answers
+            // tells the reader nothing, so the last step waits for one.
+            .disabled(isLastStep && selected.isEmpty)
+        }
+        .padding(.horizontal, Space.screen)
+        .padding(.vertical, Space.row)
+        .background(.bar)
+    }
+
+    private func advance() {
+        guard let next = steps.first(where: { $0 > step }) else { return }
+        withAnimation(Motion.interactive) { step = next }
+    }
+
+    private func retreat() {
+        guard let previous = steps.last(where: { $0 < step }) else { return }
+        withAnimation(Motion.interactive) { step = previous }
     }
 }
+
 
 struct TriageResultView: View {
     let outcome: TriageOutcome
