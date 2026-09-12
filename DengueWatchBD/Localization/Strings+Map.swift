@@ -2,6 +2,17 @@ import Foundation
 
 extension Strings {
     static let enMap: [String: String] = [
+        // Shareable surveillance card
+        "share.button": "Share this area",
+        "share.appName": "DengueWatch BD",
+        "share.tagline": "Independent app using official DGHS data",
+        "share.unit.incidence": "cases per 100,000\nlast 14 days",
+        "share.unit.season": "reported this season",
+        "share.change": "%@ on last week",
+        "share.source": "Source: DGHS · %@",
+        "share.sourceNoDate": "Source: DGHS",
+        "share.failed": "The card could not be created.",
+
         "area.apportioned.note": "Weekly figures for the Dhaka city corporations are shared out from the Dhaka division series, which is the finest weekly breakdown DGHS publishes. Season cases and deaths are reported for this area directly.",
         "map.title": "Where it is spreading",
         "map.metric.total": "Total cases",
@@ -43,6 +54,17 @@ extension Strings {
     ]
 
     static let bnMap: [String: String] = [
+        // শেয়ারযোগ্য কার্ড
+        "share.button": "এই এলাকা শেয়ার করুন",
+        "share.appName": "ডেঙ্গুওয়াচ বিডি",
+        "share.tagline": "স্বাস্থ্য অধিদপ্তরের সরকারি তথ্য ব্যবহারকারী স্বাধীন অ্যাপ",
+        "share.unit.incidence": "প্রতি লাখে রোগী\nগত ১৪ দিনে",
+        "share.unit.season": "এ মৌসুমে শনাক্ত",
+        "share.change": "গত সপ্তাহের তুলনায় %@",
+        "share.source": "উৎস: স্বাস্থ্য অধিদপ্তর · %@",
+        "share.sourceNoDate": "উৎস: স্বাস্থ্য অধিদপ্তর",
+        "share.failed": "কার্ডটি তৈরি করা যায়নি।",
+
         "area.apportioned.note": "ঢাকার সিটি করপোরেশনগুলোর সাপ্তাহিক হিসাব ঢাকা বিভাগের সিরিজ থেকে ভাগ করে বের করা — স্বাস্থ্য অধিদপ্তর সাপ্তাহিক হিসাব এর চেয়ে সূক্ষ্মভাবে প্রকাশ করে না। মৌসুমের রোগী ও মৃত্যু সরাসরি এই এলাকার জন্যই জানানো।",
         "map.title": "কোথায় ছড়াচ্ছে",
         "map.metric.total": "মোট রোগী",

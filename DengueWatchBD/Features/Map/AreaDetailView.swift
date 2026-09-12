@@ -114,6 +114,23 @@ struct AreaDetailView: View {
         }
         .background(Palette.plane)
         .navigationTitle(area.displayName(loc.language))
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                // Rendered on demand rather than kept in state: the card is a
+                // one-off artefact, and holding a 1080x1350 bitmap alive for a
+                // screen the reader may never share from is wasteful.
+                if let image = AreaShareCard.image(for: area,
+                                                   lastUpdated: store.lastUpdated,
+                                                   loc: loc) {
+                    ShareLink(item: image,
+                              preview: SharePreview(area.displayName(loc.language),
+                                                    image: image)) {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                    .accessibilityLabel(loc.t("share.button"))
+                }
+            }
+        }
         .navigationBarTitleDisplayMode(.large)
     }
 
