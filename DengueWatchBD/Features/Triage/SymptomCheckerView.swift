@@ -67,6 +67,16 @@ struct SymptomCheckerView: View {
                 }
             }
             .sheet(isPresented: $showingLog) { CaseLogView() }
+            // Reset once the reader comes back from the result, not when the
+            // result opens: clearing while it is still on screen would blank
+            // the answers it is explaining. Returning means that check is
+            // finished, and a half-filled form from a previous illness is a
+            // worse starting point than an empty one — stale ticks would be
+            // carried silently into the next result.
+            .onChange(of: showingResult) { _, isShowing in
+                guard !isShowing else { return }
+                resetCheck()
+            }
             .navigationDestination(isPresented: $showingResult) {
                 TriageResultView(
                     outcome: outcome,
@@ -272,6 +282,18 @@ struct SymptomCheckerView: View {
         .padding(.horizontal, Space.screen)
         .padding(.vertical, Space.row)
         .background(.bar)
+    }
+
+    /// Back to an empty check at step one.
+    ///
+    /// The case log keeps the finished check, so nothing is lost by clearing
+    /// here — the record lives in CaseLogStore, not in this form's state.
+    private func resetCheck() {
+        selected.removeAll()
+        context = TriageEngine.Context()
+        hasFeverDate = false
+        feverStarted = Date()
+        step = .fever
     }
 
     private func advance() {
