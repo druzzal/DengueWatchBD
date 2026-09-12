@@ -3,6 +3,7 @@ import SwiftUI
 struct RootView: View {
     @State private var store = DengueStore()
     @State private var caseLog = CaseLogStore()
+    @State private var vitals = VitalsStore()
     @State private var preferences = Preferences()
     @State private var localization = LocalizationManager()
     // Owned by the process, not the view — see AppDelegate.
@@ -22,9 +23,9 @@ struct RootView: View {
                 .tabItem { Label(localization.t("tab.map"), systemImage: AppRouter.Tab.map.symbol) }
                 .tag(AppRouter.Tab.map)
 
-            SymptomCheckerView()
-                .tabItem { Label(localization.t("tab.check"), systemImage: AppRouter.Tab.check.symbol) }
-                .tag(AppRouter.Tab.check)
+            MyHealthView()
+                .tabItem { Label(localization.t("tab.health"), systemImage: AppRouter.Tab.health.symbol) }
+                .tag(AppRouter.Tab.health)
 
             CareView()
                 .tabItem { Label(localization.t("tab.care"), systemImage: AppRouter.Tab.care.symbol) }
@@ -37,6 +38,7 @@ struct RootView: View {
         .tint(Palette.accent)
         .environment(store)
         .environment(caseLog)
+        .environment(vitals)
         .environment(preferences)
         .environment(localization)
         .environment(location)

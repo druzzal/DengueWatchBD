@@ -2,6 +2,35 @@ import Foundation
 
 extension Strings {
     static let enCheck: [String: String] = [
+        "health.today.title": "Today",
+        "health.today.subtitle": "Keeping a daily record makes a pattern visible.",
+        "health.today.symptoms": "Symptom check",
+        "health.today.vitals": "Vital signs",
+        "health.today.done": "Done",
+        "health.today.todo": "Not yet",
+        "health.latest.title": "Latest assessment",
+
+        // Vital signs
+        "vital.temperature": "Temperature",
+        "vital.pulse": "Pulse",
+        "vital.systolic": "Systolic",
+        "vital.diastolic": "Diastolic",
+        "vital.oxygenSaturation": "Oxygen saturation",
+        "vital.unit.temperature": "",
+        "vital.unit.pulse": "bpm",
+        "vital.unit.systolic": "mmHg",
+        "vital.unit.diastolic": "mmHg",
+        "vital.unit.oxygenSaturation": "%%",
+        "vital.bloodPressure": "Blood pressure",
+        "vital.section": "Vital signs",
+        "vital.record": "Record readings",
+        "vital.save": "Save readings",
+        "vital.none": "No readings yet.",
+        "vital.outsideUsual": "Outside the usual range",
+        "vital.outsideUsual.detail": "This app does not interpret readings. Show them to a doctor or pharmacist, especially with a fever.",
+        "vital.usualRange": "Usual %@–%@",
+        "vital.lastTaken": "Last taken %@",
+
         // Temperature units
         "temp.unit.label": "Unit",
         "temp.unit.celsius": "Celsius",
@@ -139,6 +168,35 @@ extension Strings {
     ]
 
     static let bnCheck: [String: String] = [
+        "health.today.title": "আজ",
+        "health.today.subtitle": "প্রতিদিন লিখে রাখলে ধরনটা বোঝা যায়।",
+        "health.today.symptoms": "উপসর্গ পরীক্ষা",
+        "health.today.vitals": "জীবনচিহ্ন",
+        "health.today.done": "হয়েছে",
+        "health.today.todo": "এখনো হয়নি",
+        "health.latest.title": "সর্বশেষ মূল্যায়ন",
+
+        // জীবনচিহ্ন
+        "vital.temperature": "তাপমাত্রা",
+        "vital.pulse": "নাড়ির গতি",
+        "vital.systolic": "সিস্টোলিক",
+        "vital.diastolic": "ডায়াস্টোলিক",
+        "vital.oxygenSaturation": "অক্সিজেনের মাত্রা",
+        "vital.unit.temperature": "",
+        "vital.unit.pulse": "বিপিএম",
+        "vital.unit.systolic": "মিমিএইচজি",
+        "vital.unit.diastolic": "মিমিএইচজি",
+        "vital.unit.oxygenSaturation": "%%",
+        "vital.bloodPressure": "রক্তচাপ",
+        "vital.section": "জীবনচিহ্ন",
+        "vital.record": "পরিমাপ লিখুন",
+        "vital.save": "সংরক্ষণ করুন",
+        "vital.none": "এখনো কোনো পরিমাপ নেই।",
+        "vital.outsideUsual": "স্বাভাবিক সীমার বাইরে",
+        "vital.outsideUsual.detail": "এই অ্যাপ পরিমাপের ব্যাখ্যা দেয় না। বিশেষত জ্বর থাকলে এগুলো চিকিৎসক বা ফার্মাসিস্টকে দেখান।",
+        "vital.usualRange": "স্বাভাবিক %@–%@",
+        "vital.lastTaken": "সর্বশেষ %@",
+
         // তাপমাত্রার একক
         "temp.unit.label": "একক",
         "temp.unit.celsius": "সেলসিয়াস",

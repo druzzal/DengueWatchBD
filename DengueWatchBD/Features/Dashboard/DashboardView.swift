@@ -369,7 +369,7 @@ struct DashboardView: View {
                             Spacer(minLength: 0)
                         }
                         SecondaryActionButton(title: loc.t("health.checkAgain"),
-                                              systemImage: "stethoscope") { router.show(.check) }
+                                              systemImage: "stethoscope") { router.show(.health) }
                     }
                 } else {
                     VStack(alignment: .leading, spacing: Space.row) {
@@ -378,7 +378,7 @@ struct DashboardView: View {
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                         SecondaryActionButton(title: loc.t("health.check"),
-                                              systemImage: "stethoscope") { router.show(.check) }
+                                              systemImage: "stethoscope") { router.show(.health) }
                     }
                 }
             }

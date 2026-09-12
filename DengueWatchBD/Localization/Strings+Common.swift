@@ -14,6 +14,7 @@ extension Strings {
         "tab.overview": "Overview",
         "tab.map": "Map",
         "tab.check": "Check",
+        "tab.health": "My health",
         "tab.care": "Care",
         "tab.prevent": "Prevent",
 
@@ -48,6 +49,7 @@ extension Strings {
         "tab.overview": "সারসংক্ষেপ",
         "tab.map": "মানচিত্র",
         "tab.check": "পরীক্ষা",
+        "tab.health": "আমার স্বাস্থ্য",
         "tab.care": "চিকিৎসা",
         "tab.prevent": "প্রতিরোধ",
 

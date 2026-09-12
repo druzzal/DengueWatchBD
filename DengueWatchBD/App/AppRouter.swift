@@ -7,7 +7,7 @@ import SwiftUI
 @Observable
 final class AppRouter {
     enum Tab: String, CaseIterable {
-        case home, map, check, care, prevent
+        case home, map, health, care, prevent
 
         var titleKey: String { "tab.\(rawValue)" }
 
@@ -15,7 +15,7 @@ final class AppRouter {
             switch self {
             case .home: "chart.line.uptrend.xyaxis"
             case .map: "map"
-            case .check: "stethoscope"
+            case .health: "heart.text.square"
             case .care: "cross.case"
             case .prevent: "shield.lefthalf.filled"
             }
