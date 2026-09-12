@@ -2,6 +2,24 @@ import Foundation
 
 extension Strings {
     static let enPrevent: [String: String] = [
+        // Myths and facts
+        "myth.section": "Myths and facts",
+        "myth.section.subtitle": "Beliefs that cost people time when it matters",
+        "myth.label": "Myth",
+        "myth.fact.label": "Fact",
+        "myth.feverGone.myth": "Once the fever goes down, the danger has passed.",
+        "myth.feverGone.fact": "The opposite is often true. Warning signs usually appear as the fever falls, which is why the days after it breaks need the most attention, not the least.",
+        "myth.papaya.myth": "Papaya leaf juice cures dengue.",
+        "myth.papaya.fact": "No food or juice cures dengue. There is no specific cure at all — care means fluids, rest and watching for warning signs. Relying on a remedy instead of a review is how people arrive at hospital late.",
+        "myth.nightOnly.myth": "Dengue mosquitoes bite at night, so a net at night is enough.",
+        "myth.nightOnly.fact": "This mosquito bites in daylight, with peaks after sunrise and before dusk. Daytime protection matters more than a net at night.",
+        "myth.onceOnly.myth": "You can only get dengue once.",
+        "myth.onceOnly.fact": "There are four types of the virus. A second infection with a different type carries a higher risk of severe illness, not a lower one.",
+        "myth.platelets.myth": "A platelet count is the only thing that matters.",
+        "myth.platelets.fact": "Warning signs in the person matter more than any single number. Severe dengue is driven by fluid leaking from blood vessels, and someone can be seriously unwell with a count that has not dropped far.",
+        "myth.painkillers.myth": "Any painkiller is fine for the fever.",
+        "myth.painkillers.fact": "Aspirin and ibuprofen-type painkillers raise the risk of bleeding in dengue. Ask a doctor or pharmacist which one to use before taking anything.",
+
         // Today's prevention checklist
         "checklist.title": "Today's prevention",
         "checklist.subtitle": "Five minutes, once a day. Resets tomorrow.",
@@ -114,6 +132,24 @@ extension Strings {
     ]
 
     static let bnPrevent: [String: String] = [
+        // ভ্রান্ত ধারণা ও সত্য
+        "myth.section": "ভ্রান্ত ধারণা ও সত্য",
+        "myth.section.subtitle": "যেসব ধারণা জরুরি সময়ে দেরি করিয়ে দেয়",
+        "myth.label": "ভ্রান্ত ধারণা",
+        "myth.fact.label": "সত্য",
+        "myth.feverGone.myth": "জ্বর কমে গেলেই বিপদ কেটে গেছে।",
+        "myth.feverGone.fact": "প্রায়ই উল্টোটা ঘটে। জ্বর কমার সময়েই বিপদচিহ্ন দেখা দেয়, তাই জ্বর ছাড়ার পরের দিনগুলোতেই সবচেয়ে বেশি খেয়াল রাখা দরকার।",
+        "myth.papaya.myth": "পেঁপে পাতার রস ডেঙ্গু সারায়।",
+        "myth.papaya.fact": "কোনো খাবার বা রস ডেঙ্গু সারায় না। ডেঙ্গুর নির্দিষ্ট কোনো ওষুধই নেই — পানি, বিশ্রাম আর বিপদচিহ্নের দিকে নজর রাখাই চিকিৎসা। ঘরোয়া টোটকার ভরসায় থেকে দেরিতে হাসপাতালে যাওয়াই বেশি বিপজ্জনক।",
+        "myth.nightOnly.myth": "ডেঙ্গুর মশা রাতে কামড়ায়, তাই রাতে মশারিই যথেষ্ট।",
+        "myth.nightOnly.fact": "এই মশা দিনের বেলায় কামড়ায়, বিশেষত সূর্য ওঠার পর ও সন্ধ্যার আগে। রাতের মশারির চেয়ে দিনের সুরক্ষা বেশি জরুরি।",
+        "myth.onceOnly.myth": "ডেঙ্গু একবারই হয়।",
+        "myth.onceOnly.fact": "ভাইরাসটির চারটি ধরন আছে। ভিন্ন ধরনে দ্বিতীয়বার আক্রান্ত হলে মারাত্মক হওয়ার ঝুঁকি কমে না, বরং বাড়ে।",
+        "myth.platelets.myth": "শুধু প্লেটলেটের সংখ্যাই গুরুত্বপূর্ণ।",
+        "myth.platelets.fact": "যেকোনো একটি সংখ্যার চেয়ে রোগীর বিপদচিহ্ন বেশি গুরুত্বপূর্ণ। মারাত্মক ডেঙ্গু হয় রক্তনালি থেকে পানি বেরিয়ে যাওয়ায়, আর প্লেটলেট খুব না কমলেও কেউ গুরুতর অসুস্থ হতে পারে।",
+        "myth.painkillers.myth": "জ্বরে যেকোনো ব্যথার ওষুধ চলে।",
+        "myth.painkillers.fact": "অ্যাসপিরিন ও আইবুপ্রোফেন জাতীয় ওষুধ ডেঙ্গুতে রক্তক্ষরণের ঝুঁকি বাড়ায়। কিছু খাওয়ার আগে চিকিৎসক বা ফার্মাসিস্টকে জিজ্ঞেস করে নিন।",
+
         // আজকের প্রতিরোধ তালিকা
         "checklist.title": "আজকের প্রতিরোধ",
         "checklist.subtitle": "দিনে একবার, পাঁচ মিনিট। আগামীকাল আবার শুরু।",

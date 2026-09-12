@@ -20,6 +20,7 @@ struct PreventionView: View {
                     }
                     checklistCard
                     seasonalCard
+                    mythCard
 
                     ForEach(PreventionContent.topics) { topic in
                         topicCard(topic)
@@ -109,6 +110,50 @@ struct PreventionView: View {
             }
         }
         .onAppear { checklist.refreshIfDayChanged() }
+    }
+
+    /// Beliefs that cost people time, paired with what is actually true.
+    ///
+    /// Myth first and fact second, visually distinct, because a reader
+    /// skimming must not come away remembering the myth as the message. The
+    /// myth is set in the muted colour and the fact in the primary one.
+    private var mythCard: some View {
+        CardSection(loc.t("myth.section"), subtitle: loc.t("myth.section.subtitle")) {
+            VStack(spacing: 0) {
+                ForEach(Array(MythFact.all.enumerated()), id: \.element.id) { index, item in
+                    VStack(alignment: .leading, spacing: Space.tight) {
+                        HStack(alignment: .top, spacing: Space.tight) {
+                            Text(loc.t("myth.label").uppercased())
+                                .typo(.micro)
+                                .fontWeight(.bold)
+                                .foregroundStyle(Palette.riskTint(.high))
+                                .frame(width: 54, alignment: .leading)
+                            Text(loc.t(item.mythKey))
+                                .typo(.callout)
+                                .foregroundStyle(.secondary)
+                                .strikethrough(true, color: Palette.riskTint(.high).opacity(0.5))
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        HStack(alignment: .top, spacing: Space.tight) {
+                            Text(loc.t("myth.fact.label").uppercased())
+                                .typo(.micro)
+                                .fontWeight(.bold)
+                                .foregroundStyle(Palette.riskTint(.low))
+                                .frame(width: 54, alignment: .leading)
+                            Text(loc.t(item.factKey))
+                                .typo(.callout)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    .padding(.vertical, Space.row)
+                    .accessibilityElement(children: .combine)
+
+                    if index < MythFact.all.count - 1 {
+                        Divider()
+                    }
+                }
+            }
+        }
     }
 
     private var seasonalCard: some View {
