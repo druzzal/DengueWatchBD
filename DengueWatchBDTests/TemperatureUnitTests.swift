@@ -112,3 +112,28 @@ final class TemperatureUnitTests: XCTestCase {
         }
     }
 }
+
+/// Unit labels are looked up with the no-argument `t(_:)`, which does not run
+/// String(format:). An escaped `%%` there is rendered literally.
+@MainActor
+final class UnitLabelTests: XCTestCase {
+    func testUnitLabelsAreNotFormatEscaped() {
+        let loc = LocalizationManager()
+        for language in AppLanguage.allCases {
+            loc.language = language
+            for kind in VitalKind.allCases {
+                let label = loc.t(kind.unitKey)
+                XCTAssertFalse(label.contains("%%"),
+                               "\(language.rawValue)/\(kind.unitKey) renders as \(label)")
+            }
+        }
+    }
+
+    func testOxygenSaturationShowsASinglePercentSign() {
+        let loc = LocalizationManager()
+        for language in AppLanguage.allCases {
+            loc.language = language
+            XCTAssertEqual(loc.t(VitalKind.oxygenSaturation.unitKey), "%", language.rawValue)
+        }
+    }
+}

@@ -95,6 +95,26 @@ struct NumberStyle: Sendable, Equatable {
         digits(date.formatted(.dateTime.day().month(.abbreviated).hour().minute().locale(locale)))
     }
 
+    /// Weekday-or-"today" plus the clock time.
+    ///
+    /// Health readings need the actual moment, not "2 hours ago": knowing a
+    /// temperature was taken at 3am rather than after lunch is the difference
+    /// between a fever chart that means something and one that does not. The
+    /// recent days are still named rather than dated, because "Today, 2:20 PM"
+    /// is read faster than "13 Sep, 2:20 PM" when it is in fact today.
+    func dayAndTime(_ date: Date, todayLabel: String, yesterdayLabel: String) -> String {
+        let calendar = Calendar.current
+        let time = digits(date.formatted(.dateTime.hour().minute().locale(locale)))
+        if calendar.isDateInToday(date) { return "\(todayLabel), \(time)" }
+        if calendar.isDateInYesterday(date) { return "\(yesterdayLabel), \(time)" }
+
+        let sameWeek = calendar.dateComponents([.day], from: date, to: Date()).day ?? 99
+        let day = sameWeek < 7
+            ? date.formatted(.dateTime.weekday(.wide).locale(locale))
+            : date.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated).locale(locale))
+        return digits("\(day), \(time)")
+    }
+
     func relative(_ date: Date) -> String {
         let formatter = RelativeDateTimeFormatter()
         formatter.locale = locale
@@ -172,4 +192,9 @@ final class LocalizationManager {
     func dayMonth(_ date: Date) -> String { style.dayMonth(date) }
     func dateTime(_ date: Date) -> String { style.dateTime(date) }
     func relative(_ date: Date) -> String { style.relative(date) }
+
+    /// Day and clock time, with "Today"/"Yesterday" resolved from the tables.
+    func dayAndTime(_ date: Date) -> String {
+        style.dayAndTime(date, todayLabel: t("common.today"), yesterdayLabel: t("common.yesterday"))
+    }
 }

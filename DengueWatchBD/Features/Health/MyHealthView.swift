@@ -105,7 +105,7 @@ struct MyHealthView: View {
 
     private var vitalsCard: some View {
         CardSection(loc.t("vital.section"),
-                    subtitle: vitals.latest.map { loc.t("vital.lastTaken", loc.relative($0.date)) }) {
+                    subtitle: vitals.latest.map { loc.t("vital.lastTaken", loc.dayAndTime($0.date)) }) {
             VStack(alignment: .leading, spacing: Space.row) {
                 if vitals.entries.isEmpty {
                     Text(loc.t("vital.none"))
@@ -141,7 +141,7 @@ struct MyHealthView: View {
     private var latestCheckCard: some View {
         if let latest = caseLog.entries.first {
             CardSection(loc.t("health.latest.title"),
-                        subtitle: loc.t("health.checkedAt", loc.relative(latest.date))) {
+                        subtitle: loc.t("health.checkedAt", loc.dayAndTime(latest.date))) {
                 VStack(alignment: .leading, spacing: Space.row) {
                     Text(loc.t(latest.outcome.headlineKey))
                         .typo(.subheadline)
@@ -188,6 +188,14 @@ private struct VitalTile: View {
                 Text(unitLabel)
                     .typo(.micro)
                     .foregroundStyle(.secondary)
+            }
+            if let taken = reading?.date {
+                // Per tile, because a card can mix a temperature from this
+                // morning with a blood pressure from two days ago.
+                Text(loc.dayAndTime(taken))
+                    .typo(.micro)
+                    .foregroundStyle(.tertiary)
+                    .lineLimit(1)
             }
             if outside {
                 Text(loc.t("vital.outsideUsual"))
