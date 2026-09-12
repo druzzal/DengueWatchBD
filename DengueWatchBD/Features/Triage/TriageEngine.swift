@@ -121,12 +121,45 @@ enum TriageEngine {
 
     /// Which phase of illness the person is in. The critical phase is when
     /// plasma leak starts, and it is not when people feel worst.
-    static func phaseKey(feverDaysAgo: Int?) -> String? {
-        guard let day = feverDaysAgo else { return nil }
-        switch day {
-        case 0...2: return "check.phase.febrile"
-        case 3...6: return "check.phase.critical"
-        default: return "check.phase.recovery"
+    /// The phase of illness, as a value rather than a string key.
+    ///
+    /// Introduced so the sentence under the result and the fever timeline read
+    /// the same boundaries from one place. The boundaries themselves are
+    /// unchanged: this wraps the rule that was already here rather than
+    /// restating it, so the two can never drift apart.
+    enum FeverPhase: String, CaseIterable, Identifiable {
+        case febrile
+        case critical
+        case recovery
+
+        var id: String { rawValue }
+        var key: String { "check.phase.\(rawValue)" }
+        var nameKey: String { "phase.\(rawValue).name" }
+
+        /// Days of fever this phase covers, counting the first day as day 1.
+        /// `feverDaysAgo` is zero-based, so these run one higher.
+        var dayRange: ClosedRange<Int> {
+            switch self {
+            case .febrile: 1...3
+            case .critical: 4...7
+            case .recovery: 8...10
+            }
         }
+
+        static func phase(feverDaysAgo: Int) -> FeverPhase {
+            switch feverDaysAgo {
+            case 0...2: .febrile
+            case 3...6: .critical
+            default: .recovery
+            }
+        }
+    }
+
+    static func phase(feverDaysAgo: Int?) -> FeverPhase? {
+        feverDaysAgo.map(FeverPhase.phase(feverDaysAgo:))
+    }
+
+    static func phaseKey(feverDaysAgo: Int?) -> String? {
+        phase(feverDaysAgo: feverDaysAgo)?.key
     }
 }

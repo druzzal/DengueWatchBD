@@ -250,13 +250,20 @@ struct TriageResultView: View {
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             if let phaseKey, let feverDay {
-                Text(loc.t(phaseKey, loc.num(feverDay)))
-                    .typo(.caption)
-                    .foregroundStyle(.secondary)
-                    .padding(11)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(accent.opacity(0.10),
-                                in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+                VStack(alignment: .leading, spacing: Space.row) {
+                    Text(loc.t(phaseKey, loc.num(feverDay)))
+                        .typo(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    // The same phase, drawn. The sentence says which phase this
+                    // is; the track shows how much of the illness is still to
+                    // come, which is what makes the critical window legible.
+                    FeverTimelineView(feverDay: feverDay)
+                }
+                .padding(11)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(accent.opacity(0.10),
+                            in: RoundedRectangle(cornerRadius: 11, style: .continuous))
             }
         }
         .padding(18)

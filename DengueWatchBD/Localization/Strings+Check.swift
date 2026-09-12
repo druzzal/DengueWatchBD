@@ -2,6 +2,16 @@ import Foundation
 
 extension Strings {
     static let enCheck: [String: String] = [
+        // Fever timeline
+        "phase.title": "Where you are in the fever",
+        "phase.subtitle": "Typical course. Days are counted from the first day of fever.",
+        "phase.febrile.name": "Febrile",
+        "phase.critical.name": "Critical",
+        "phase.recovery.name": "Recovery",
+        "phase.critical.note": "This is the window when warning signs most often appear, usually as the fever starts to fall. Feeling better is not by itself a sign that the danger has passed.",
+        "phase.a11y.day": "Day %@ of fever, %@ phase.",
+        "phase.a11y.unknown": "Fever timeline. No start date given.",
+
         "check.title": "Symptom check",
         "check.intro": "Tick everything you have felt in the last 24 hours. This is a guide based on WHO dengue criteria, not a diagnosis.",
         "check.seeResult": "See what to do",
@@ -102,6 +112,16 @@ extension Strings {
     ]
 
     static let bnCheck: [String: String] = [
+        // জ্বরের সময়রেখা
+        "phase.title": "আপনি জ্বরের কোন পর্যায়ে",
+        "phase.subtitle": "সাধারণ গতিপথ। জ্বরের প্রথম দিন থেকে দিন গোনা হয়।",
+        "phase.febrile.name": "জ্বরের পর্যায়",
+        "phase.critical.name": "সংকটকাল",
+        "phase.recovery.name": "সুস্থ হওয়া",
+        "phase.critical.note": "এই সময়েই সবচেয়ে বেশি বিপদচিহ্ন দেখা দেয়, সাধারণত জ্বর কমতে শুরু করার সময়। ভালো লাগা মানেই বিপদ কেটে গেছে তা নয়।",
+        "phase.a11y.day": "জ্বরের %@ দিন, %@।",
+        "phase.a11y.unknown": "জ্বরের সময়রেখা। শুরুর তারিখ দেওয়া হয়নি।",
+
         "check.title": "উপসর্গ পরীক্ষা",
         "check.intro": "গত ২৪ ঘণ্টায় আপনার যা যা হয়েছে সব চিহ্নিত করুন। এটি বিশ্ব স্বাস্থ্য সংস্থার নির্দেশনার ভিত্তিতে একটি দিকনির্দেশ, রোগনির্ণয় নয়।",
         "check.seeResult": "কী করণীয় দেখুন",
