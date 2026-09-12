@@ -9,12 +9,14 @@ import SwiftUI
 struct MyHealthView: View {
     @Environment(CaseLogStore.self) private var caseLog
     @Environment(VitalsStore.self) private var vitals
+    @Environment(LabStore.self) private var labs
     @Environment(Preferences.self) private var preferences
     @Environment(LocalizationManager.self) private var loc
     @Environment(\.horizontalSizeClass) private var sizeClass
 
     @State private var showingCheck = false
     @State private var showingVitals = false
+    @State private var showingLab = false
     @State private var showingLog = false
 
     var body: some View {
@@ -25,7 +27,9 @@ struct MyHealthView: View {
                         ScreenTitle(text: loc.t("tab.health"))
                     }
                     todayCard
+                    carePlanCard
                     vitalsCard
+                    labCard
                     latestCheckCard
                 }
                 .padding(.horizontal, Space.screen)
@@ -47,6 +51,7 @@ struct MyHealthView: View {
             .sheet(isPresented: $showingLog) { CaseLogView() }
             .sheet(isPresented: $showingCheck) { SymptomCheckerView() }
             .sheet(isPresented: $showingVitals) { VitalsEntryView() }
+            .sheet(isPresented: $showingLab) { LabEntryView() }
         }
     }
 
@@ -131,6 +136,98 @@ struct MyHealthView: View {
                 }
                 SecondaryActionButton(title: loc.t("vital.record"),
                                       systemImage: "plus.circle") { showingVitals = true }
+            }
+        }
+    }
+
+    // MARK: - Care plan
+
+    /// What to do now, taken from the triage outcome the engine already
+    /// produced.
+    ///
+    /// Driven by the symptom check and nothing else. It deliberately does not
+    /// read the lab values: turning a platelet count into advice is the step
+    /// from recording into practising medicine, and it is not a step an app
+    /// should take on behalf of someone with a fever.
+    @ViewBuilder
+    private var carePlanCard: some View {
+        if let latest = caseLog.entries.first {
+            CardSection(loc.t("care.plan.title"),
+                        subtitle: loc.t("care.plan.subtitle")) {
+                VStack(alignment: .leading, spacing: Space.row) {
+                    HStack(alignment: .top, spacing: Space.row) {
+                        Image(systemName: latest.outcome.symbolName)
+                            .font(.title3)
+                            .foregroundStyle(Palette.riskTint(outcomeRisk(latest.outcome)))
+                            .frame(width: 26)
+                            .accessibilityHidden(true)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(loc.t(latest.outcome.headlineKey))
+                                .typo(.subheadline)
+                                .fixedSize(horizontal: false, vertical: true)
+                            Text(loc.t(latest.outcome.summaryKey))
+                                .typo(.caption)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    InlineNote(symbol: "info.circle", detail: loc.t("care.plan.note"))
+                }
+            }
+        }
+    }
+
+    private func outcomeRisk(_ outcome: TriageOutcome) -> RiskLevel {
+        switch outcome {
+        case .selfCare: .low
+        case .testAdvised: .moderate
+        case .seeDoctorToday: .high
+        case .emergency: .severe
+        }
+    }
+
+    // MARK: - Lab reports
+
+    private var labCard: some View {
+        CardSection(loc.t("lab.section"),
+                    subtitle: labs.latest.map { loc.t("lab.reported", loc.dayAndTime($0.date)) }) {
+            VStack(alignment: .leading, spacing: Space.row) {
+                if labs.reports.isEmpty {
+                    Text(loc.t("lab.none")).typo(.callout).foregroundStyle(.secondary)
+                } else {
+                    LazyVGrid(columns: [GridItem(.flexible(), spacing: Space.row),
+                                        GridItem(.flexible(), spacing: Space.row)],
+                              spacing: Space.row) {
+                        ForEach(LabMeasure.allCases) { measure in
+                            LabTile(measure: measure, store: labs)
+                        }
+                    }
+
+                    let recorded = DengueTest.allCases.compactMap { test -> (DengueTest, TestResult)? in
+                        labs.mostRecentResult(test).map { (test, $0.result) }
+                    }
+                    if !recorded.isEmpty {
+                        VStack(alignment: .leading, spacing: Space.tight) {
+                            ForEach(recorded, id: \.0) { test, result in
+                                HStack(spacing: Space.tight) {
+                                    Text(loc.t(test.labelKey)).typo(.caption)
+                                    Spacer(minLength: Space.tight)
+                                    Text(loc.t(result.labelKey))
+                                        .typo(.caption).fontWeight(.semibold)
+                                        .foregroundStyle(result == .positive
+                                                         ? Palette.riskTint(.high) : .secondary)
+                                }
+                                Text(loc.t(test.usefulDaysKey))
+                                    .typo(.micro).foregroundStyle(.tertiary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                    }
+
+                    InlineNote(symbol: "info.circle", detail: loc.t("lab.rangeNote"))
+                }
+                SecondaryActionButton(title: loc.t("lab.add"),
+                                      systemImage: "plus.circle") { showingLab = true }
             }
         }
     }
@@ -220,5 +317,56 @@ private struct VitalTile: View {
             return String(format: "%.1f", preferences.temperatureUnit.fromCelsius(value))
         }
         return loc.num(Int(value.rounded()))
+    }
+}
+
+/// One lab measure's most recent value, with the typical range for context.
+///
+/// The range is shown so a reader can see where their number sits, and the
+/// note beside it says ranges differ by lab. Neither is an interpretation.
+private struct LabTile: View {
+    @Environment(LocalizationManager.self) private var loc
+    let measure: LabMeasure
+    let store: LabStore
+
+    var body: some View {
+        let reading = store.mostRecent(measure)
+        let outside = reading.map { measure.isOutsideTypical($0.value) } ?? false
+
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 5) {
+                Image(systemName: measure.symbol)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                Text(loc.t(measure.labelKey))
+                    .typo(.micro).foregroundStyle(.secondary).lineLimit(1)
+            }
+            HStack(alignment: .firstTextBaseline, spacing: 3) {
+                Text(reading.map { format($0.value) } ?? "—")
+                    .typo(.statValue)
+                    .monospacedDigit()
+                    .foregroundStyle(outside ? Palette.riskTint(.high) : Color.primary)
+                Text(loc.t(measure.unitKey))
+                    .typo(.micro).foregroundStyle(.secondary)
+            }
+            Text(loc.t("lab.typicalRange",
+                       format(measure.typicalRange.lowerBound),
+                       format(measure.typicalRange.upperBound)))
+                .typo(.micro).foregroundStyle(.tertiary).lineLimit(1)
+            if outside {
+                Text(loc.t("lab.outsideTypical"))
+                    .typo(.micro)
+                    .foregroundStyle(Palette.riskTint(.high))
+                    .lineLimit(2)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(Space.row)
+        .background(Palette.plane, in: RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
+        .accessibilityElement(children: .combine)
+    }
+
+    private func format(_ value: Double) -> String {
+        measure.decimals == 0 ? loc.num(Int(value.rounded())) : loc.decimal(value)
     }
 }
