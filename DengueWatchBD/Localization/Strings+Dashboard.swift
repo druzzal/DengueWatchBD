@@ -2,6 +2,12 @@ import Foundation
 
 extension Strings {
     static let enDashboard: [String: String] = [
+        // Top areas
+        "top.title": "Top areas",
+        "top.subtitle": "Highest 14-day rate per 100,000 people",
+        "top.rate": "%@ per 100,000",
+        "top.viewMap": "View map",
+
         // What changed — deterministic surveillance statements
         "digest.title": "What changed",
         "digest.subtitle": "Since the last DGHS report",
@@ -56,6 +62,12 @@ extension Strings {
     ]
 
     static let bnDashboard: [String: String] = [
+        // শীর্ষ এলাকা
+        "top.title": "শীর্ষ এলাকা",
+        "top.subtitle": "প্রতি লাখে ১৪ দিনের সর্বোচ্চ হার",
+        "top.rate": "প্রতি লাখে %@",
+        "top.viewMap": "মানচিত্র দেখুন",
+
         // What changed
         "digest.title": "কী বদলাল",
         "digest.subtitle": "স্বাস্থ্য অধিদপ্তরের গত প্রতিবেদনের পর",

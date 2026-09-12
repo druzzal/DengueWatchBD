@@ -136,6 +136,7 @@ struct DashboardView: View {
     private var loadedContent: some View {
         riskSection
         whatChangedSection
+        topAreasSection
         activitySection
         trendSection
         mapSection
@@ -272,6 +273,68 @@ struct DashboardView: View {
         case .hotspots: Palette.riskTint(.severe)
         case .nationalSteady, .noBreakdown: Color.secondary
         }
+    }
+
+    /// The areas carrying the most dengue per head, ranked.
+    ///
+    /// Ordered by `areasByRisk`, which sorts on the 14-day rate rather than raw
+    /// case counts. Ranking by counts would put the biggest cities on top every
+    /// week regardless of how bad things actually are there — which is the
+    /// question this list exists to answer.
+    @ViewBuilder
+    private var topAreasSection: some View {
+        let ranked = Array(store.areasByRisk.prefix(5))
+        if !ranked.isEmpty {
+            VStack(alignment: .leading, spacing: Space.row) {
+                SectionHeader(loc.t("top.title"), subtitle: loc.t("top.subtitle"))
+                Card {
+                    VStack(spacing: 0) {
+                        ForEach(Array(ranked.enumerated()), id: \.element.id) { index, area in
+                            NavigationLink(value: area) {
+                                topAreaRow(rank: index + 1, area: area)
+                            }
+                            .buttonStyle(.plain)
+                            if area.id != ranked.last?.id {
+                                Divider().padding(.leading, 44)
+                            }
+                        }
+                        SecondaryActionButton(title: loc.t("top.viewMap"),
+                                              systemImage: "map") { router.show(.map) }
+                            .padding(.top, Space.tight)
+                    }
+                }
+            }
+        }
+    }
+
+    private func topAreaRow(rank: Int, area: Area) -> some View {
+        HStack(spacing: Space.row) {
+            Text(loc.num(rank))
+                .typo(.caption)
+                .monospacedDigit()
+                .foregroundStyle(.secondary)
+                .frame(width: 24, alignment: .trailing)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(area.displayName(loc.language))
+                    .typo(.subheadline)
+                    .lineLimit(1)
+                Text(loc.t("top.rate", loc.decimal(area.incidencePer100k)))
+                    .typo(.micro)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer(minLength: Space.tight)
+
+            TrendIndicator(change: area.weeklyChange)
+            RiskBadge(risk: area.risk, compact: true)
+            Image(systemName: "chevron.right")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.tertiary)
+        }
+        .frame(minHeight: Hit.minimum)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
     }
 
     private var activitySection: some View {
