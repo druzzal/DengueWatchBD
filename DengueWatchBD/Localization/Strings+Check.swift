@@ -2,6 +2,10 @@ import Foundation
 
 extension Strings {
     static let enCheck: [String: String] = [
+        "lab.scan": "Scan a report",
+        "lab.scan.note": "The camera reads the values on this phone and fills them in below. Check every number against your report before saving — the camera can misread.",
+        "lab.scan.nothing": "Nothing could be read from that scan. Type the values instead.",
+
         "trend.rising": "Rising",
         "trend.falling": "Falling",
         "trend.steady": "Little change",
@@ -212,6 +216,10 @@ extension Strings {
     ]
 
     static let bnCheck: [String: String] = [
+        "lab.scan": "রিপোর্ট স্ক্যান করুন",
+        "lab.scan.note": "ক্যামেরা এই ফোনেই রিপোর্ট পড়ে নিচে বসিয়ে দেয়। সংরক্ষণের আগে প্রতিটি সংখ্যা নিজের রিপোর্টের সঙ্গে মিলিয়ে নিন — ক্যামেরা ভুল পড়তে পারে।",
+        "lab.scan.nothing": "স্ক্যান থেকে কিছু পড়া যায়নি। হাতে লিখুন।",
+
         "trend.rising": "বাড়ছে",
         "trend.falling": "কমছে",
         "trend.steady": "তেমন বদলায়নি",

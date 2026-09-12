@@ -13,10 +13,27 @@ struct LabEntryView: View {
     @State private var text: [LabMeasure: String] = [:]
     @State private var results: [DengueTest: TestResult] = [:]
     @State private var note = ""
+    @State private var showingScanner = false
+    @State private var scanFoundNothing = false
 
     var body: some View {
         NavigationStack {
             Form {
+                Section {
+                    Button {
+                        showingScanner = true
+                    } label: {
+                        Label(loc.t("lab.scan"), systemImage: "doc.text.viewfinder")
+                    }
+                    if scanFoundNothing {
+                        Text(loc.t("lab.scan.nothing"))
+                            .typo(.micro)
+                            .foregroundStyle(Palette.riskTint(.high))
+                    }
+                } footer: {
+                    Text(loc.t("lab.scan.note"))
+                }
+
                 Section {
                     DatePicker(loc.t("lab.reportDate"), selection: $reportDate,
                                in: Date().addingTimeInterval(-365 * 86_400)...Date(),
@@ -62,6 +79,16 @@ struct LabEntryView: View {
                         .lineLimit(2...4)
                 }
             }
+            .fullScreenCover(isPresented: $showingScanner) {
+                LabScannerView(
+                    onScan: { draft in
+                        apply(draft)
+                        showingScanner = false
+                    },
+                    onCancel: { showingScanner = false }
+                )
+                .ignoresSafeArea()
+            }
             .navigationTitle(loc.t("lab.add"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -78,6 +105,31 @@ struct LabEntryView: View {
                 }
             }
         }
+    }
+
+    /// Fills the form from a scan, leaving anything already typed alone.
+    ///
+    /// Deliberately does not save. The reader sees every value in the same
+    /// fields they would have typed, and corrects whatever the camera misread
+    /// before it becomes a record.
+    private func apply(_ draft: LabReport) {
+        var found = false
+        for measure in LabMeasure.allCases {
+            guard let value = draft.value(for: measure),
+                  (text[measure] ?? "").isEmpty else { continue }
+            text[measure] = measure.decimals == 0
+                ? String(Int(value.rounded()))
+                : String(format: "%.1f", value)
+            found = true
+        }
+        for test in DengueTest.allCases {
+            let result = draft.result(for: test)
+            guard result != .notDone, (results[test] ?? .notDone) == .notDone else { continue }
+            results[test] = result
+            found = true
+        }
+        scanFoundNothing = !found
+        if found { Haptic.selection() }
     }
 
     private func binding(for measure: LabMeasure) -> Binding<String> {
