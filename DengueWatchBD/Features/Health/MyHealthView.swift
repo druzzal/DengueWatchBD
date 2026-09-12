@@ -126,6 +126,24 @@ struct MyHealthView: View {
                         VitalTile(kind: .oxygenSaturation, store: vitals)
                     }
 
+                    let temperaturePoints = vitals.series(for: .temperature)
+                    if temperaturePoints.count >= 2 {
+                        HealthTrendChart(
+                            style: loc.style,
+                            title: loc.t("trend.chart.temperature"),
+                            points: temperaturePoints.map {
+                                // Charted in the reader's chosen unit; stored Celsius.
+                                (date: $0.date,
+                                 value: preferences.temperatureUnit.fromCelsius($0.value))
+                            },
+                            trend: HealthTrend.direction(
+                                of: temperaturePoints.map(\.value),
+                                minimumChange: VitalKind.temperature.minimumMeaningfulChange),
+                            tint: Palette.deaths,
+                            usualRange: usualTemperatureRange,
+                            format: { String(format: "%.1f", $0) })
+                    }
+
                     if let outside = vitals.latest?.readingsOutsideUsualRange, !outside.isEmpty {
                         // Names the readings and stops. What they mean together
                         // is a clinical question, and this app does not answer
@@ -138,6 +156,13 @@ struct MyHealthView: View {
                                       systemImage: "plus.circle") { showingVitals = true }
             }
         }
+    }
+
+    /// The usual temperature band, converted into whatever unit is on screen.
+    private var usualTemperatureRange: ClosedRange<Double> {
+        let range = VitalKind.temperature.usualRange
+        let unit = preferences.temperatureUnit
+        return unit.fromCelsius(range.lowerBound)...unit.fromCelsius(range.upperBound)
     }
 
     // MARK: - Care plan
@@ -222,6 +247,21 @@ struct MyHealthView: View {
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                         }
+                    }
+
+                    let plateletPoints = labs.series(for: .platelets)
+                    if plateletPoints.count >= 2 {
+                        HealthTrendChart(
+                            style: loc.style,
+                            title: loc.t("trend.chart.platelets"),
+                            points: plateletPoints,
+                            trend: HealthTrend.direction(
+                                of: plateletPoints.map(\.value),
+                                minimumChange: LabMeasure.platelets.minimumMeaningfulChange),
+                            tint: Palette.accent,
+                            usualRange: LabMeasure.platelets.typicalRange,
+                            format: { loc.style.num(Int($0.rounded())) })
+                        InlineNote(symbol: "info.circle", detail: loc.t("trend.note"))
                     }
 
                     InlineNote(symbol: "info.circle", detail: loc.t("lab.rangeNote"))

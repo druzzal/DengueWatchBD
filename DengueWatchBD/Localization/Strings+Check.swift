@@ -2,6 +2,15 @@ import Foundation
 
 extension Strings {
     static let enCheck: [String: String] = [
+        "trend.rising": "Rising",
+        "trend.falling": "Falling",
+        "trend.steady": "Little change",
+        "trend.notEnoughData": "Not enough readings",
+        "trend.chart.temperature": "Your temperature",
+        "trend.chart.platelets": "Your platelet count",
+        "trend.readings": "%@ readings",
+        "trend.note": "This shows which way your own readings have moved. It does not say what that means — take the pattern to your doctor.",
+
         "care.plan.title": "Your care plan",
         "care.plan.subtitle": "From your last symptom check",
         "care.plan.note": "This plan follows your symptom check, not your lab results. Your doctor reads the lab report.",
@@ -203,6 +212,15 @@ extension Strings {
     ]
 
     static let bnCheck: [String: String] = [
+        "trend.rising": "বাড়ছে",
+        "trend.falling": "কমছে",
+        "trend.steady": "তেমন বদলায়নি",
+        "trend.notEnoughData": "যথেষ্ট পরিমাপ নেই",
+        "trend.chart.temperature": "আপনার তাপমাত্রা",
+        "trend.chart.platelets": "আপনার প্লেটলেট",
+        "trend.readings": "%@টি পরিমাপ",
+        "trend.note": "এটি শুধু দেখায় আপনার পরিমাপ কোন দিকে যাচ্ছে। এর মানে কী তা বলে না — ধরনটি চিকিৎসককে দেখান।",
+
         "care.plan.title": "আপনার করণীয়",
         "care.plan.subtitle": "আপনার সর্বশেষ উপসর্গ পরীক্ষা অনুযায়ী",
         "care.plan.note": "এই পরামর্শ উপসর্গ পরীক্ষার ভিত্তিতে, ল্যাব রিপোর্টের ভিত্তিতে নয়। ল্যাব রিপোর্ট চিকিৎসকই দেখবেন।",
