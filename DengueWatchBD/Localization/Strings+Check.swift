@@ -2,6 +2,12 @@ import Foundation
 
 extension Strings {
     static let enCheck: [String: String] = [
+        // Temperature units
+        "temp.unit.label": "Unit",
+        "temp.unit.celsius": "Celsius",
+        "temp.unit.fahrenheit": "Fahrenheit",
+        "temp.outOfRange": "That does not look like a body temperature in %@.",
+
         // Stepped symptom check
         "step.fever.title": "Do you have a fever?",
         "step.fever.subtitle": "A sudden high fever is usually how dengue starts.",
@@ -118,7 +124,7 @@ extension Strings {
         "result.findHospital": "Find the nearest hospital",
         "result.addToLog": "Add this to your log",
         "result.keptOnPhone": "Kept on this phone only",
-        "result.temperature": "Temperature (°C), optional",
+        "result.temperature": "Temperature, optional",
         "result.note": "Note, optional",
         "result.saveEntry": "Save entry",
         "result.disclaimer": "DengueWatch cannot diagnose dengue. Only a clinician and a blood test can. If you feel worse at any point, go to a hospital regardless of what this screen says.",
@@ -133,6 +139,12 @@ extension Strings {
     ]
 
     static let bnCheck: [String: String] = [
+        // তাপমাত্রার একক
+        "temp.unit.label": "একক",
+        "temp.unit.celsius": "সেলসিয়াস",
+        "temp.unit.fahrenheit": "ফারেনহাইট",
+        "temp.outOfRange": "%@-এ এটি শরীরের তাপমাত্রা বলে মনে হচ্ছে না।",
+
         // ধাপে ধাপে উপসর্গ পরীক্ষা
         "step.fever.title": "আপনার কি জ্বর আছে?",
         "step.fever.subtitle": "হঠাৎ তীব্র জ্বর দিয়েই সাধারণত ডেঙ্গু শুরু হয়।",
@@ -249,7 +261,7 @@ extension Strings {
         "result.findHospital": "নিকটতম হাসপাতাল খুঁজুন",
         "result.addToLog": "আপনার তালিকায় যোগ করুন",
         "result.keptOnPhone": "শুধু এই ফোনেই থাকবে",
-        "result.temperature": "তাপমাত্রা (°সে), ঐচ্ছিক",
+        "result.temperature": "তাপমাত্রা, ঐচ্ছিক",
         "result.note": "মন্তব্য, ঐচ্ছিক",
         "result.saveEntry": "সংরক্ষণ করুন",
         "result.disclaimer": "ডেঙ্গুওয়াচ ডেঙ্গু নির্ণয় করতে পারে না। কেবল একজন চিকিৎসক ও রক্ত পরীক্ষাই তা পারে। যেকোনো সময় অবস্থা খারাপ মনে হলে এই পর্দা যা-ই বলুক, হাসপাতালে যান।",

@@ -21,12 +21,18 @@ final class Preferences {
         static let weeklyDigest = "weeklyDigestEnabled"
         static let hasSeenDisclaimer = "hasSeenDisclaimer"
         static let geofenceAlerts = "geofenceAlertsEnabled"
+        static let temperatureUnit = "temperatureUnit"
     }
 
     private let defaults: UserDefaults
 
     var homeAreaCode: String? {
         didSet { defaults.set(homeAreaCode, forKey: Key.homeArea) }
+    }
+
+    /// How temperatures are typed and shown. Storage stays Celsius regardless.
+    var temperatureUnit: TemperatureUnit {
+        didSet { defaults.set(temperatureUnit.rawValue, forKey: Key.temperatureUnit) }
     }
 
     var alertsEnabled: Bool {
@@ -60,5 +66,11 @@ final class Preferences {
         weeklyDigestEnabled = defaults.bool(forKey: Key.weeklyDigest)
         hasSeenDisclaimer = defaults.bool(forKey: Key.hasSeenDisclaimer)
         geofenceAlertsEnabled = defaults.bool(forKey: Key.geofenceAlerts)
+        // Home thermometers in Bangladesh are commonly Fahrenheit while
+        // clinical notes are Celsius, so neither is a safe silent default:
+        // follow the device's own measurement setting.
+        let stored = defaults.string(forKey: Key.temperatureUnit)
+            .flatMap(TemperatureUnit.init(rawValue:))
+        temperatureUnit = stored ?? (Locale.current.measurementSystem == .us ? .fahrenheit : .celsius)
     }
 }

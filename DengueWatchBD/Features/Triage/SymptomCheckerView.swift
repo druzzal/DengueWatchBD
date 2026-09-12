@@ -309,6 +309,7 @@ struct SymptomCheckerView: View {
 
 
 struct TriageResultView: View {
+    @Environment(Preferences.self) private var preferences
     let outcome: TriageOutcome
     let selected: Set<String>
     let phaseKey: String?
@@ -471,15 +472,39 @@ struct TriageResultView: View {
     }
 
     private var logCard: some View {
-        CardSection(loc.t("result.addToLog"), subtitle: loc.t("result.keptOnPhone")) {
-            TextField(loc.t("result.temperature"), text: $temperature)
-                .keyboardType(.decimalPad)
-                .textFieldStyle(.roundedBorder)
+        // The app's established way of binding to an @Observable from the
+        // environment, as in AlertSettingsView.
+        @Bindable var preferences = preferences
+        return CardSection(loc.t("result.addToLog"), subtitle: loc.t("result.keptOnPhone")) {
+            HStack(spacing: Space.tight) {
+                TextField(loc.t("result.temperature"), text: $temperature)
+                    .keyboardType(.decimalPad)
+                    .textFieldStyle(.roundedBorder)
+                // The unit sits beside the field rather than in settings, so
+                // it is changed where the number is typed and cannot be wrong
+                // without being visible.
+                Picker(loc.t("temp.unit.label"), selection: $preferences.temperatureUnit) {
+                    ForEach(TemperatureUnit.allCases) { unit in
+                        Text(unit.symbol).tag(unit)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 108)
+                .labelsHidden()
+            }
+            if !temperature.isEmpty,
+               preferences.temperatureUnit.celsiusValue(from: temperature) == nil {
+                // Catches the common slip of typing 101 with °C selected.
+                Text(loc.t("temp.outOfRange", preferences.temperatureUnit.symbol))
+                    .typo(.micro)
+                    .foregroundStyle(Palette.riskTint(.high))
+            }
             TextField(loc.t("result.note"), text: $note, axis: .vertical)
                 .lineLimit(2...4)
                 .textFieldStyle(.roundedBorder)
             Button {
-                onSave(note, Double(temperature))
+                // Always stored in Celsius, whatever was typed.
+                onSave(note, preferences.temperatureUnit.celsiusValue(from: temperature))
                 saved = true
             } label: {
                 Label(loc.t(saved ? "common.saved" : "result.saveEntry"),

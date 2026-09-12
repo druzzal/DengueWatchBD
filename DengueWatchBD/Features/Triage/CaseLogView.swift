@@ -2,6 +2,7 @@ import SwiftUI
 import Charts
 
 struct CaseLogView: View {
+    @Environment(Preferences.self) private var preferences
     @Environment(CaseLogStore.self) private var log
     @Environment(LocalizationManager.self) private var loc
     @Environment(\.horizontalSizeClass) private var sizeClass
@@ -93,6 +94,7 @@ struct CaseLogView: View {
 }
 
 private struct CaseLogRow: View {
+    @Environment(Preferences.self) private var preferences
     @Environment(LocalizationManager.self) private var loc
     let entry: CaseLogEntry
 
@@ -117,7 +119,7 @@ private struct CaseLogRow: View {
                     .typo(.subheadline).fontWeight(.medium)
                 Spacer(minLength: 6)
                 if let temperature = entry.temperature {
-                    Text("\(loc.decimal(temperature)) °C")
+                    Text(preferences.temperatureUnit.display(celsius: temperature))
                         .typo(.caption).fontWeight(.medium)
                         .monospacedDigit()
                         .foregroundStyle(.secondary)
