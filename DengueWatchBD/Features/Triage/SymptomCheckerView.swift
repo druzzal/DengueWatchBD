@@ -75,9 +75,8 @@ struct SymptomCheckerView: View {
                     selected: selected,
                     phaseKey: hasFeverDate ? TriageEngine.phaseKey(feverDaysAgo: daysSinceFever) : nil,
                     feverDay: hasFeverDate ? daysSinceFever + 1 : nil,
-                    onSave: { note, temperature in
-                        log.add(CaseLogEntry(temperature: temperature,
-                                             symptomIDs: Array(selected),
+                    onSave: { note in
+                        log.add(CaseLogEntry(symptomIDs: Array(selected),
                                              outcomeRawValue: outcome.rawValue,
                                              areaCode: preferences.homeAreaCode,
                                              note: note))
@@ -306,12 +305,11 @@ struct TriageResultView: View {
     let selected: Set<String>
     let phaseKey: String?
     let feverDay: Int?
-    let onSave: (String, Double?) -> Void
+    let onSave: (String) -> Void
 
     @Environment(LocalizationManager.self) private var loc
     @Environment(\.dismiss) private var dismiss
     @State private var note = ""
-    @State private var temperature = ""
     @State private var saved = false
 
     private var accent: Color {
@@ -464,39 +462,20 @@ struct TriageResultView: View {
     }
 
     private var logCard: some View {
-        // The app's established way of binding to an @Observable from the
-        // environment, as in AlertSettingsView.
-        @Bindable var preferences = preferences
-        return CardSection(loc.t("result.addToLog"), subtitle: loc.t("result.keptOnPhone")) {
-            HStack(spacing: Space.tight) {
-                TextField(loc.t("result.temperature"), text: $temperature)
-                    .keyboardType(.decimalPad)
-                    .textFieldStyle(.roundedBorder)
-                // The unit sits beside the field rather than in settings, so
-                // it is changed where the number is typed and cannot be wrong
-                // without being visible.
-                Picker(loc.t("temp.unit.label"), selection: $preferences.temperatureUnit) {
-                    ForEach(TemperatureUnit.allCases) { unit in
-                        Text(unit.symbol).tag(unit)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .frame(width: 108)
-                .labelsHidden()
-            }
-            if !temperature.isEmpty,
-               preferences.temperatureUnit.celsiusValue(from: temperature) == nil {
-                // Catches the common slip of typing 101 with °C selected.
-                Text(loc.t("temp.outOfRange", preferences.temperatureUnit.symbol))
-                    .typo(.micro)
-                    .foregroundStyle(Palette.riskTint(.high))
-            }
+        CardSection(loc.t("result.addToLog"), subtitle: loc.t("result.keptOnPhone")) {
             TextField(loc.t("result.note"), text: $note, axis: .vertical)
                 .lineLimit(2...4)
                 .textFieldStyle(.roundedBorder)
+            // Temperature is recorded once, in Vital signs, where it is charted
+            // alongside pulse and blood pressure. Asking for it again here gave
+            // two places to type the same reading and two records that could
+            // disagree.
+            Text(loc.t("result.temperatureMovedNote"))
+                .typo(.micro)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
             Button {
-                // Always stored in Celsius, whatever was typed.
-                onSave(note, preferences.temperatureUnit.celsiusValue(from: temperature))
+                onSave(note)
                 saved = true
             } label: {
                 Label(loc.t(saved ? "common.saved" : "result.saveEntry"),

@@ -2,6 +2,8 @@ import Foundation
 
 extension Strings {
     static let enCheck: [String: String] = [
+        "result.temperatureMovedNote": "Recording your temperature? Use Vital signs in My health, where it is charted with your other readings.",
+
         "status.normal": "In the usual range",
         "status.outside": "Outside the usual range",
         "status.farOutside": "Well outside the usual range",
@@ -220,6 +222,8 @@ extension Strings {
     ]
 
     static let bnCheck: [String: String] = [
+        "result.temperatureMovedNote": "তাপমাত্রা লিখতে চান? আমার স্বাস্থ্য-এর জীবনচিহ্ন ব্যবহার করুন, সেখানে অন্য পরিমাপের সঙ্গে এটি গ্রাফে দেখা যায়।",
+
         "status.normal": "স্বাভাবিক সীমার মধ্যে",
         "status.outside": "স্বাভাবিক সীমার বাইরে",
         "status.farOutside": "স্বাভাবিক সীমার অনেক বাইরে",
