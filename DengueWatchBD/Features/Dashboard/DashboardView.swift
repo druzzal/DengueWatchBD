@@ -5,6 +5,7 @@ import MapKit
 /// current risk, then local activity, then the trend, then where it is
 /// spreading, then what to do about it.
 struct DashboardView: View {
+    @Environment(CaseLogStore.self) private var caseLog
     @Environment(DengueStore.self) private var store
     @Environment(Preferences.self) private var preferences
     @Environment(LocalizationManager.self) private var loc
@@ -136,6 +137,7 @@ struct DashboardView: View {
     private var loadedContent: some View {
         riskSection
         whatChangedSection
+        myHealthSection
         topAreasSection
         activitySection
         trendSection
@@ -335,6 +337,63 @@ struct DashboardView: View {
         .frame(minHeight: Hit.minimum)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
+    }
+
+    /// The reader's own last check, if they have done one.
+    ///
+    /// Shows the recommendation and when it was made, and nothing else. The
+    /// symptoms themselves stay in the case log behind the Check tab: Home is
+    /// the screen most likely to be glanced at by someone else in the room,
+    /// and a list of someone's symptoms is not a thing to put there by default.
+    @ViewBuilder
+    private var myHealthSection: some View {
+        VStack(alignment: .leading, spacing: Space.row) {
+            SectionHeader(loc.t("health.title"))
+            Card {
+                if let latest = caseLog.entries.first {
+                    VStack(alignment: .leading, spacing: Space.row) {
+                        HStack(alignment: .top, spacing: Space.row) {
+                            Image(systemName: latest.outcome.symbolName)
+                                .font(.title3)
+                                .foregroundStyle(Palette.riskTint(outcomeRisk(latest.outcome)))
+                                .frame(width: 26)
+                                .accessibilityHidden(true)
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(loc.t(latest.outcome.headlineKey))
+                                    .typo(.subheadline)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                Text(loc.t("health.checkedAt", loc.relative(latest.date)))
+                                    .typo(.micro)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer(minLength: 0)
+                        }
+                        SecondaryActionButton(title: loc.t("health.checkAgain"),
+                                              systemImage: "stethoscope") { router.show(.check) }
+                    }
+                } else {
+                    VStack(alignment: .leading, spacing: Space.row) {
+                        Text(loc.t("health.empty"))
+                            .typo(.callout)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                        SecondaryActionButton(title: loc.t("health.check"),
+                                              systemImage: "stethoscope") { router.show(.check) }
+                    }
+                }
+            }
+        }
+    }
+
+    /// Maps a triage outcome onto the risk palette, so the colour here means
+    /// the same thing it means everywhere else in the app.
+    private func outcomeRisk(_ outcome: TriageOutcome) -> RiskLevel {
+        switch outcome {
+        case .selfCare: .low
+        case .testAdvised: .moderate
+        case .seeDoctorToday: .high
+        case .emergency: .severe
+        }
     }
 
     private var activitySection: some View {

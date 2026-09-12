@@ -2,6 +2,13 @@ import Foundation
 
 extension Strings {
     static let enDashboard: [String: String] = [
+        // My health
+        "health.title": "My health",
+        "health.empty": "Track your symptoms and understand when to seek care.",
+        "health.check": "Check symptoms",
+        "health.checkAgain": "Check again",
+        "health.checkedAt": "Checked %@",
+
         // Top areas
         "top.title": "Top areas",
         "top.subtitle": "Highest 14-day rate per 100,000 people",
@@ -62,6 +69,13 @@ extension Strings {
     ]
 
     static let bnDashboard: [String: String] = [
+        // আমার স্বাস্থ্য
+        "health.title": "আমার স্বাস্থ্য",
+        "health.empty": "উপসর্গ লিখে রাখুন, কখন চিকিৎসা নিতে হবে বুঝে নিন।",
+        "health.check": "উপসর্গ পরীক্ষা করুন",
+        "health.checkAgain": "আবার পরীক্ষা করুন",
+        "health.checkedAt": "%@ পরীক্ষা করা হয়েছে",
+
         // শীর্ষ এলাকা
         "top.title": "শীর্ষ এলাকা",
         "top.subtitle": "প্রতি লাখে ১৪ দিনের সর্বোচ্চ হার",
