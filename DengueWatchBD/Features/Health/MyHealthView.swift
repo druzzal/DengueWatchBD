@@ -305,7 +305,7 @@ private struct VitalTile: View {
 
     var body: some View {
         let reading = store.mostRecent(kind)
-        let outside = reading.map { kind.isOutsideUsual($0.value) } ?? false
+        let status = reading.map { kind.status($0.value) }
 
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 5) {
@@ -321,7 +321,7 @@ private struct VitalTile: View {
                 Text(displayValue(reading?.value))
                     .typo(.statValue)
                     .monospacedDigit()
-                    .foregroundStyle(outside ? Palette.riskTint(.high) : Color.primary)
+                    .foregroundStyle(status.map { Palette.riskTint($0.risk) } ?? Color.primary)
                 Text(unitLabel)
                     .typo(.micro)
                     .foregroundStyle(.secondary)
@@ -334,10 +334,13 @@ private struct VitalTile: View {
                     .foregroundStyle(.tertiary)
                     .lineLimit(1)
             }
-            if outside {
-                Text(loc.t("vital.outsideUsual"))
+            if let status {
+                // Icon and words carry the same grading as the colour, so the
+                // tile still reads in greyscale and to a colour-blind reader.
+                Label(loc.t("status.\(status.rawValue)"), systemImage: status.symbol)
                     .typo(.micro)
-                    .foregroundStyle(Palette.riskTint(.high))
+                    .foregroundStyle(Palette.riskTint(status.risk))
+                    .labelStyle(.titleAndIcon)
                     .lineLimit(2)
             }
         }
@@ -371,7 +374,7 @@ private struct LabTile: View {
 
     var body: some View {
         let reading = store.mostRecent(measure)
-        let outside = reading.map { measure.isOutsideTypical($0.value) } ?? false
+        let status = reading.map { measure.status($0.value) }
 
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 5) {
@@ -385,7 +388,7 @@ private struct LabTile: View {
                 Text(reading.map { format($0.value) } ?? "—")
                     .typo(.statValue)
                     .monospacedDigit()
-                    .foregroundStyle(outside ? Palette.riskTint(.high) : Color.primary)
+                    .foregroundStyle(status.map { Palette.riskTint($0.risk) } ?? Color.primary)
                 Text(loc.t(measure.unitKey))
                     .typo(.micro).foregroundStyle(.secondary)
             }
@@ -393,10 +396,11 @@ private struct LabTile: View {
                        format(measure.typicalRange.lowerBound),
                        format(measure.typicalRange.upperBound)))
                 .typo(.micro).foregroundStyle(.tertiary).lineLimit(1)
-            if outside {
-                Text(loc.t("lab.outsideTypical"))
+            if let status {
+                Label(loc.t("status.\(status.rawValue)"), systemImage: status.symbol)
                     .typo(.micro)
-                    .foregroundStyle(Palette.riskTint(.high))
+                    .foregroundStyle(Palette.riskTint(status.risk))
+                    .labelStyle(.titleAndIcon)
                     .lineLimit(2)
             }
         }
