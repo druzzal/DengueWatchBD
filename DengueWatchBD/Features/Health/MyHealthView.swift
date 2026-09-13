@@ -274,10 +274,9 @@ struct MyHealthView: View {
         }
     }
 
-    /// Analyte, value, flag. The flag follows the two-tier rule the palette
-    /// asks for, which is exactly the distinction `MeasureStatus` already
-    /// draws: far enough out to matter takes the alarm ink, merely outside its
-    /// range stays neutral. Both say which they are, in a word.
+    /// Analyte, value, flag. The flag takes its risk band's ink — the same
+    /// scale the vital tiles and the map use — and says which side of the
+    /// printed range it fell on, so the colour is never the only signal.
     private var labTable: some View {
         let rows = LabMeasure.allCases.compactMap { measure -> (LabMeasure, Double)? in
             labs.mostRecent(measure).map { (measure, $0.value) }
@@ -295,9 +294,10 @@ struct MyHealthView: View {
                         .monospacedDigit()
                     Text(flag(row.1, row.0))
                         .typo(.micro)
-                        .foregroundStyle(status == .farOutside
-                                         ? Palette.riskInk(.high) : Color.secondary)
-                        .frame(width: 44, alignment: .trailing)
+                        // The same band the tiles use, so one status is never
+                        // two colours on one screen.
+                        .foregroundStyle(Palette.riskInk(status.risk))
+                        .frame(width: 72, alignment: .trailing)
                 }
                 .frame(minHeight: Hit.minimum)
                 .accessibilityElement(children: .combine)

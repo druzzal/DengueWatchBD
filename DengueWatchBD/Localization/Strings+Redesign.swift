@@ -114,7 +114,7 @@ extension Strings {
         "activity.thisWeek": "এ সপ্তাহে রোগী",
         "activity.hotspots": "উচ্চঝুঁকির এলাকা",
         "activity.hotspotsCaption": "%@টি এলাকার মধ্যে",
-        "activity.title.stale": "ডিজিএইচএস-এর সর্বশেষ",
+        "activity.title.stale": "স্বাস্থ্য অধিদপ্তরের সর্বশেষ",
         "activity.reported": "%@ তারিখের হিসাব",
         "activity.since": "%@ থেকে",
         "risk.a11y.rate": "১৪ দিনে প্রতি লাখে %@ জন",
