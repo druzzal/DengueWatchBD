@@ -31,7 +31,7 @@ struct HealthTrendChart: View {
                 Label(loc.t(trend.labelKey), systemImage: trend.symbol)
                     .typo(.micro)
                     .fontWeight(.semibold)
-                    .foregroundStyle(Broadsheet.neutral700)
+                    .foregroundStyle(Color.secondary)
                     .labelStyle(.titleAndIcon)
             }
 
@@ -39,26 +39,26 @@ struct HealthTrendChart: View {
                 // The usual range as a band, so a reading can be seen sitting
                 // inside or outside it without reading any numbers.
                 if let usualRange {
-                    // The bundle's threshold rule, not a "you are fine" band:
-                    // Broadsheet has no success colour, so the line marks the
-                    // edge that matters and is labelled in words.
+                    // A threshold line rather than a "you are fine" band: the
+                    // edge a reader has crossed is the thing worth marking,
+                    // and it is labelled in words as well as drawn.
                     RuleMark(y: .value("Threshold", usualRange.upperBound))
-                        .foregroundStyle(Broadsheet.alarm400)
+                        .foregroundStyle(Palette.riskTint(.high))
                         .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 4]))
                         .annotation(position: .bottom, alignment: .leading, spacing: 2) {
                             Text(thresholdLabel)
                                 .typoStatic(.micro)
-                                .foregroundStyle(Broadsheet.alarm700)
+                                .foregroundStyle(Palette.riskInk(.high))
                                 // The line sits inside the plot, so the label
                                 // needs its own ground wherever a reading
                                 // happens to cross it.
                                 .padding(.horizontal, 3)
-                                .background(Broadsheet.neutral100.opacity(0.9))
+                                .background(Palette.card.opacity(0.9))
                                 // The line sits inside the plot, so the label
                                 // needs its own ground wherever a reading
                                 // happens to cross it.
                                 .padding(.horizontal, 3)
-                                .background(Broadsheet.neutral100.opacity(0.9))
+                                .background(Palette.card.opacity(0.9))
                         }
                 }
                 ForEach(points, id: \.date) { point in
@@ -67,7 +67,7 @@ struct HealthTrendChart: View {
                         .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round))
                         .interpolationMethod(.monotone)
                     PointMark(x: .value("Date", point.date), y: .value("Value", point.value))
-                        .foregroundStyle(isLatestAndOut(point) ? Broadsheet.alarm600 : tint)
+                        .foregroundStyle(isLatestAndOut(point) ? Palette.riskTint(.severe) : tint)
                         .symbolSize(isLatestAndOut(point) ? 90 : 50)
                 }
             }
@@ -75,12 +75,12 @@ struct HealthTrendChart: View {
             .chartXAxis { dateAxis(style, desiredCount: 3) }
             .chartYAxis {
                 AxisMarks(values: .automatic(desiredCount: 3)) { value in
-                    AxisGridLine().foregroundStyle(Broadsheet.neutral300)
+                    AxisGridLine().foregroundStyle(Palette.grid)
                     AxisValueLabel {
                         if let number = value.as(Double.self) {
                             Text(format(number))
                                 .typoStatic(.micro)
-                                .foregroundStyle(Broadsheet.neutral600)
+                                .foregroundStyle(Palette.mutedInk)
                         }
                     }
                 }
@@ -91,7 +91,7 @@ struct HealthTrendChart: View {
 
             Text(loc.t("trend.readings", loc.num(points.count)))
                 .typo(.micro)
-                .foregroundStyle(Broadsheet.neutral600)
+                .foregroundStyle(Palette.mutedInk)
         }
     }
 

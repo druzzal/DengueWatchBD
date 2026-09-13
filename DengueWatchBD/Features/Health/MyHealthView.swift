@@ -41,7 +41,7 @@ struct MyHealthView: View {
                 .padding(.bottom, Space.section)
                 .readableColumn()
             }
-            .background(Broadsheet.paper)
+            .background(Palette.plane)
             .navigationTitle(loc.t("tab.health"))
             .navigationBarTitleDisplayMode(sizeClass == .regular ? .inline : .large)
             .toolbar {
@@ -94,16 +94,16 @@ struct MyHealthView: View {
                     .font(.system(size: 20))
                     // Done is not an alarm and not a success colour: in this
                     // palette only what needs attention is coloured.
-                    .foregroundStyle(done ? Broadsheet.neutral600 : Palette.accent)
+                    .foregroundStyle(done ? Palette.mutedInk : Palette.accent)
                     .frame(width: 26)
                 Text(title).typo(.callout)
                 Spacer(minLength: 0)
                 Text(loc.t(done ? "health.today.done" : "health.today.todo"))
                     .typo(.micro)
-                    .foregroundStyle(Broadsheet.neutral700)
+                    .foregroundStyle(Color.secondary)
                 Image(systemName: "chevron.right")
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(Broadsheet.neutral500)
+                    .foregroundStyle(Palette.mutedInk)
             }
             .frame(minHeight: Hit.minimum)
             .contentShape(Rectangle())
@@ -130,17 +130,17 @@ struct MyHealthView: View {
                     HStack(alignment: .top, spacing: Space.row) {
                         Image(systemName: latest.outcome.symbolName)
                             .font(.title3)
-                            .foregroundStyle(urgent ? Broadsheet.alarm700 : Broadsheet.neutral700)
+                            .foregroundStyle(urgent ? Palette.riskInk(.high) : Color.secondary)
                             .frame(width: 26)
                             .accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: 4) {
                             Text(loc.t(latest.outcome.headlineKey))
                                 .typo(.subheadline)
-                                .foregroundStyle(urgent ? Broadsheet.alarm700 : Broadsheet.ink)
+                                .foregroundStyle(urgent ? Palette.riskInk(.high) : Color.primary)
                                 .fixedSize(horizontal: false, vertical: true)
                             Text(loc.t(latest.outcome.summaryKey))
                                 .typo(.caption)
-                                .foregroundStyle(Broadsheet.neutral800)
+                                .foregroundStyle(Color.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                     }
@@ -149,7 +149,7 @@ struct MyHealthView: View {
                     if context.hasAnything {
                         InlineNote(symbol: "exclamationmark.triangle.fill",
                                    detail: loc.t("care.plan.readings", readingNames(context)),
-                                   tint: Broadsheet.alarm700)
+                                   tint: Palette.riskInk(.high))
                     }
                     SecondaryActionButton(title: loc.t("care.plan.recheck"),
                                           systemImage: "stethoscope") { showingCheck = true }
@@ -168,7 +168,7 @@ struct MyHealthView: View {
                 if vitals.entries.isEmpty {
                     Text(loc.t("vital.none"))
                         .typo(.callout)
-                        .foregroundStyle(Broadsheet.neutral700)
+                        .foregroundStyle(Color.secondary)
                 } else {
                     LazyVGrid(columns: tileColumns, spacing: Space.row) {
                         VitalTile(kind: .temperature, store: vitals)
@@ -202,7 +202,7 @@ struct MyHealthView: View {
                         // clinical questions.
                         InlineNote(symbol: "exclamationmark.triangle.fill",
                                    detail: loc.t("vital.outsideUsual.detail"),
-                                   tint: Broadsheet.alarm700)
+                                   tint: Palette.riskInk(.high))
                     }
                 }
                 SecondaryActionButton(title: loc.t("vital.record"),
@@ -232,13 +232,13 @@ struct MyHealthView: View {
                 if labs.reports.isEmpty {
                     Text(loc.t("lab.none"))
                         .typo(.callout)
-                        .foregroundStyle(Broadsheet.neutral700)
+                        .foregroundStyle(Color.secondary)
                 } else {
                     serologyChips
                     labTable
                     Text(loc.t("lab.rangeNote"))
                         .typo(.micro)
-                        .foregroundStyle(Broadsheet.neutral700)
+                        .foregroundStyle(Color.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 SecondaryActionButton(title: loc.t("lab.add"),
@@ -261,11 +261,11 @@ struct MyHealthView: View {
                     let positive = result == .positive
                     Text("\(loc.t(test.labelKey)) \(loc.t(result.labelKey))")
                         .typo(.micro)
-                        .foregroundStyle(positive ? Broadsheet.alarm800 : Broadsheet.neutral800)
+                        .foregroundStyle(positive ? Palette.riskInk(.high) : Color.secondary)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(positive ? Broadsheet.alarm200 : Broadsheet.neutral200,
+                        .background(positive ? Palette.riskSoft(.high) : Palette.hairline,
                                     in: RoundedRectangle(cornerRadius: Radius.control,
                                                          style: .continuous))
                         .accessibilityElement(children: .combine)
@@ -296,7 +296,7 @@ struct MyHealthView: View {
                     Text(flag(row.1, row.0))
                         .typo(.micro)
                         .foregroundStyle(status == .farOutside
-                                         ? Broadsheet.alarm700 : Broadsheet.neutral700)
+                                         ? Palette.riskInk(.high) : Color.secondary)
                         .frame(width: 44, alignment: .trailing)
                 }
                 .frame(minHeight: Hit.minimum)
@@ -361,27 +361,27 @@ private struct VitalTile: View {
             HStack(spacing: 5) {
                 Image(systemName: kind.symbol)
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(Broadsheet.neutral600)
+                    .foregroundStyle(Palette.mutedInk)
                 Text(loc.t(kind.labelKey))
                     .typo(.micro)
-                    .foregroundStyle(Broadsheet.neutral700)
+                    .foregroundStyle(Color.secondary)
                     .lineLimit(1)
             }
             HStack(alignment: .firstTextBaseline, spacing: 3) {
                 Text(displayValue(reading?.value))
                     .typo(.statValue)
                     .monospacedDigit()
-                    .foregroundStyle(Broadsheet.valueInk(status))
+                    .foregroundStyle(status.map { Palette.riskInk($0.risk) } ?? Color.primary)
                 Text(unitLabel)
                     .typo(.micro)
-                    .foregroundStyle(Broadsheet.neutral700)
+                    .foregroundStyle(Color.secondary)
             }
             if let taken = reading?.date {
                 // Per tile, because a card can mix a temperature from this
                 // morning with a blood pressure from two days ago.
                 Text(loc.dayAndTime(taken))
                     .typo(.micro)
-                    .foregroundStyle(Broadsheet.neutral600)
+                    .foregroundStyle(Palette.mutedInk)
                     .lineLimit(1)
             }
             if let status {
@@ -389,14 +389,14 @@ private struct VitalTile: View {
                 // still reads in greyscale and to a colour-blind reader.
                 Text(loc.t("status.\(status.rawValue)"))
                     .typo(.micro)
-                    .foregroundStyle(Broadsheet.statusInk(status))
+                    .foregroundStyle(Palette.riskInk(status.risk))
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(Space.row)
-        .background(Broadsheet.neutral100,
+        .background(Palette.plane,
                     in: RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
         .accessibilityElement(children: .combine)
     }

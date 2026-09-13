@@ -85,7 +85,13 @@ enum Palette {
             : UIColor(hex: "#0B0B14").withAlphaComponent(0.055)
     })
 
-    static let accent = cases
+    /// The app's theme colour: cyan, and dark enough to be legible as text.
+    ///
+    /// Measured, not picked by eye: #0088b0 is the cyan you reach for first
+    /// and it reaches only 4.08:1 on white, under the 4.5:1 small-text bar.
+    /// This step measures 4.93:1 on white and 4.52:1 on the plane, so a link
+    /// or a button label set in it is readable everywhere it appears.
+    static let accent = Color(light: "#007a9c", dark: "#3fc4ea")
     static let upIsBad = Color(light: "#b3261e", dark: "#f87171")
     static let downIsGood = Color(light: "#0f6b30", dark: "#4ade80")
 
