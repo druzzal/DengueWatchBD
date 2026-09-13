@@ -34,7 +34,15 @@ final class LocationManager: NSObject {
         authorization = manager.authorizationStatus
         super.init()
         manager.delegate = self
-        manager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
+        // The smallest thing this app resolves is a city corporation, about
+        // twelve kilometres across. Ten-metre accuracy was asking the GPS
+        // chip for a precision no screen here uses, and paying for it in
+        // battery on a phone people keep open while they are unwell.
+        manager.desiredAccuracy = kCLLocationAccuracyHundredMeters
+        // Nor does a few metres of drift change any answer. Without a filter
+        // every jitter delivered an update, and each one redrew the hero, the
+        // map marker and the legend.
+        manager.distanceFilter = 250
         // iOS keeps monitored regions across launches, so what is already being
         // watched is authoritative — not whatever the UI last happened to arm.
         monitoredAreaCodes = Set(manager.monitoredRegions.map(\.identifier))
@@ -57,10 +65,23 @@ final class LocationManager: NSObject {
 
     // MARK: - Coarse location for nearby search
 
+    /// A stream of positions, for the map, where the marker has to keep up
+    /// with the reader as they move.
     func startUpdatingCoarse() {
         guard isAuthorized else { return }
-        manager.desiredAccuracy = kCLLocationAccuracyHundredMeters
         manager.startUpdatingLocation()
+    }
+
+    /// A single fix, for screens that only need to know which area the reader
+    /// is in right now.
+    ///
+    /// Home wants one answer, not a subscription. It had no matching stop, so
+    /// opening the app once left the GPS running for as long as it stayed
+    /// open — the most expensive way to learn something that changes when you
+    /// travel between districts.
+    func requestOneFix() {
+        guard isAuthorized else { return }
+        manager.requestLocation()
     }
 
     func stopUpdatingCoarse() {

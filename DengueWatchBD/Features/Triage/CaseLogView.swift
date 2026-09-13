@@ -16,7 +16,6 @@ struct CaseLogView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var showingClearConfirmation = false
-    @State private var exportURL: URL?
 
     private var days: [HealthLogDay] {
         HealthLog.days(checks: log.entries, vitals: vitals.entries, labs: labs.reports)
@@ -84,25 +83,30 @@ struct CaseLogView: View {
                 }
                 Button(loc.t("common.cancel"), role: .cancel) {}
             }
-            .task(id: days.count) { refreshExport() }
+
         }
     }
 
+    /// The PDF is built when the reader actually shares, not when the screen
+    /// opens.
+    ///
+    /// It used to be rendered eagerly on appear: opening the log laid out and
+    /// rasterised every page of the document — four pages for a month of
+    /// entries — on the main actor, for a file most readers never ask for. The
+    /// export is also always current this way, with no cached copy to go stale
+    /// behind a later entry.
     @ViewBuilder
     private var exportButton: some View {
-        if let exportURL {
-            ShareLink(item: exportURL,
+        if !days.isEmpty {
+            ShareLink(item: exportDocument,
                       preview: SharePreview(loc.t("log.pdf.title"))) {
                 Label(loc.t("log.export"), systemImage: "square.and.arrow.up")
             }
         }
     }
 
-    /// Rebuilt when the log changes, so the shared file is never a stale copy
-    /// of an earlier version of the record.
-    private func refreshExport() {
-        exportURL = HealthLogPDF.write(days: days, loc: loc,
-                                       unit: preferences.temperatureUnit)
+    private var exportDocument: HealthLogDocumentFile {
+        HealthLogDocumentFile(days: days, loc: loc, unit: preferences.temperatureUnit)
     }
 
     @ViewBuilder

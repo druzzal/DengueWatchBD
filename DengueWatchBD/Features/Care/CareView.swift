@@ -31,7 +31,7 @@ struct CareView: View {
                 ToolbarItem(placement: .topBarLeading) { LanguageToggle() }
             }
             .task {
-                if location.isAuthorized { location.startUpdatingCoarse() }
+                if location.isAuthorized { location.requestOneFix() }
             }
         }
     }
@@ -154,7 +154,7 @@ struct CareView: View {
         if !location.isAuthorized {
             location.requestWhenInUse()
         }
-        location.startUpdatingCoarse()
+        location.requestOneFix()
         await search.search(around: location.lastKnownLocation)
     }
 

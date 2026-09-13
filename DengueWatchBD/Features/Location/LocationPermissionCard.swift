@@ -50,7 +50,7 @@ struct LocationPermissionCard: View {
                         PrimaryActionButton(title: loc.t("location.why.allow"),
                                             systemImage: "location.fill") {
                             location.requestWhenInUse()
-                            location.startUpdatingCoarse()
+                            location.requestOneFix()
                         }
                         if let onChooseManually {
                             Button(loc.t("location.why.manual"), action: onChooseManually)

@@ -214,3 +214,30 @@ private struct HealthLogDocument: View {
         .padding(.top, 8)
     }
 }
+
+/// The health log as a shareable file, rendered at the moment the reader
+/// shares rather than when the screen appears.
+///
+/// `ShareLink` needs something it can offer before anyone taps it. A
+/// `Transferable` lets that be a promise: the pages are laid out inside
+/// `exporting`, which the system calls only once a share actually begins.
+struct HealthLogDocumentFile: Transferable {
+    let days: [HealthLogDay]
+    let loc: LocalizationManager
+    let unit: TemperatureUnit
+
+    static var transferRepresentation: some TransferRepresentation {
+        FileRepresentation(exportedContentType: .pdf) { document in
+            let url = await MainActor.run {
+                HealthLogPDF.write(days: document.days,
+                                   loc: document.loc,
+                                   unit: document.unit)
+            }
+            guard let url else {
+                throw CocoaError(.fileNoSuchFile)
+            }
+            return SentTransferredFile(url)
+        }
+        .suggestedFileName { _ in "DengueWatch-health-log.pdf" }
+    }
+}

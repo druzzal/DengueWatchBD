@@ -25,8 +25,12 @@ struct AreaMapView: View {
     @State private var searchText = ""
     @State private var showingLocationExplainer = false
     @State private var camera: MapCameraPosition = .region(.bangladesh)
-    /// Bumped on every camera change so the position marker re-reads the proxy.
-    @State private var cameraTick: UInt64 = 0
+    /// Bumped on every camera change so the position marker re-reads the
+    /// proxy. Deliberately an object rather than `@State` on this view: with
+    /// Observation, only the view that reads `tick` is invalidated, so a pan
+    /// redraws a marker instead of the whole screen — the bubbles, the legend
+    /// and the footer all stayed out of it.
+    @State private var cameraTicker = CameraTicker()
     @State private var selectedArea: Area?
     @State private var pushedArea: Area?
     /// Auto-zoom happens once per visit to the tab, never again.
@@ -150,18 +154,17 @@ struct AreaMapView: View {
                 // North bubble — centred a few hundred metres away — covered
                 // it exactly where "am I inside this one?" matters most.
                 // `cameraTick` is what keeps it pinned while the map moves.
-                if let here = location.lastKnownLocation,
-                   let point = proxy.convert(here.coordinate, to: .local) {
-                    youAreHereMarker
-                        .position(point)
-                        .allowsHitTesting(false)
-                        .id(cameraTick)
+                if let here = location.lastKnownLocation {
+                    YouAreHereOverlay(coordinate: here.coordinate,
+                                      proxy: proxy,
+                                      ticker: cameraTicker,
+                                      label: loc.t("map.youAreHere.a11y"))
                 }
             }
             .onMapCameraChange(frequency: .continuous) { _ in
                 // Re-reads the proxy as the camera moves; without it the
                 // marker would stay where the map used to be.
-                cameraTick &+= 1
+                cameraTicker.tick &+= 1
             }
             .mapStyle(.standard(elevation: .flat, pointsOfInterest: .excludingAll))
             .mapControls {
@@ -231,24 +234,6 @@ struct AreaMapView: View {
             .accessibilityLabel(loc.t("map.bubble.a11y", area.displayName(loc.language),
                                       loc.num(area.seasonCases),
                                       loc.t(area.risk.labelKey)))
-    }
-
-    /// The reader's own position, drawn to stay legible on top of a case
-    /// bubble rather than under one.
-    private var youAreHereMarker: some View {
-        ZStack {
-            Circle()
-                .fill(Palette.accent.opacity(0.22))
-                .frame(width: 34, height: 34)
-            Circle()
-                .fill(.white)
-                .frame(width: 20, height: 20)
-                .shadow(color: .black.opacity(0.25), radius: 2, y: 1)
-            Circle()
-                .fill(Palette.accent)
-                .frame(width: 13, height: 13)
-        }
-        .accessibilityLabel(loc.t("map.youAreHere.a11y"))
     }
 
     /// Which area the user is standing in, if a fix has come through.
@@ -540,4 +525,47 @@ extension MKCoordinateRegion {
         center: CLLocationCoordinate2D(latitude: 23.68, longitude: 90.35),
         span: MKCoordinateSpan(latitudeDelta: 6.1, longitudeDelta: 5.0)
     )
+}
+
+
+/// Carries the camera's heartbeat without dragging the whole map view into
+/// each frame. Only `YouAreHereOverlay` reads `tick`, so only it redraws.
+@Observable
+final class CameraTicker {
+    var tick: UInt64 = 0
+}
+
+/// The reader's own position, drawn over the map rather than in it.
+///
+/// As map content it sat *under* the case bubbles — MapKit z-orders
+/// annotations north to south, so the Dhaka North bubble covered it exactly
+/// where "am I inside this one?" matters most.
+private struct YouAreHereOverlay: View {
+    let coordinate: CLLocationCoordinate2D
+    let proxy: MapProxy
+    let ticker: CameraTicker
+    let label: String
+
+    var body: some View {
+        // Reading `tick` here, and only here, is what keeps the marker pinned
+        // to the ground as the map moves.
+        let _ = ticker.tick
+        if let point = proxy.convert(coordinate, to: .local) {
+            ZStack {
+                Circle()
+                    .fill(Palette.accent.opacity(0.22))
+                    .frame(width: 34, height: 34)
+                Circle()
+                    .fill(.white)
+                    .frame(width: 20, height: 20)
+                    .shadow(color: .black.opacity(0.25), radius: 2, y: 1)
+                Circle()
+                    .fill(Palette.accent)
+                    .frame(width: 13, height: 13)
+            }
+            .position(point)
+            .allowsHitTesting(false)
+            .accessibilityLabel(label)
+        }
+    }
 }

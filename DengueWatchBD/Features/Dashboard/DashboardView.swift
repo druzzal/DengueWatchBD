@@ -109,7 +109,7 @@ struct DashboardView: View {
                 // Already allowed: ask for a fix now, so the hero opens on the
                 // local reading instead of the national one. Never prompts —
                 // the permission card below does that, with an explanation.
-                if location.isAuthorized { location.startUpdatingCoarse() }
+                if location.isAuthorized { location.requestOneFix() }
             }
             .navigationDestination(for: Area.self) { AreaDetailView(area: $0) }
             .sheet(isPresented: $showingAbout) { AboutDataView() }
