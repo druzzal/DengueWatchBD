@@ -191,6 +191,19 @@ extension LocationManager: CLLocationManagerDelegate {
         }
     }
 
+    /// Required, not optional: `requestLocation()` asserts at runtime if the
+    /// delegate does not implement this, and takes the app down with it. The
+    /// one-shot fix on Home and Care depends on it existing.
+    ///
+    /// A failure is not worth surfacing. The last known position, if there is
+    /// one, still answers "which area am I in" perfectly well, and if there is
+    /// none the screens already have their national fallback.
+    nonisolated func locationManager(_ manager: CLLocationManager,
+                                     didFailWithError error: Error) {
+        // Deliberately silent. A denied or momentarily unavailable fix is an
+        // expected state here, not an error the reader can act on.
+    }
+
     nonisolated func locationManager(_ manager: CLLocationManager,
                                      didEnterRegion region: CLRegion) {
         Task { @MainActor in
