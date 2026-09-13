@@ -1,13 +1,16 @@
 # App icon
 
-`denguewatch_icon_crimson.svg` is the artwork as supplied.
+`AppIcon1024.png` in the asset catalogue is a copy of
+`denguewatch_icon_crimson.png`, supplied as artwork. It is already what iOS
+needs: 1024×1024, RGB, no alpha channel — iOS rejects an app icon that
+carries one.
 
-`denguewatch_icon_crimson_baked.svg` is the same drawing with the group's
-`transform-origin="512 512"` written out as explicit translates. macOS's SVG
-renderer ignores `transform-origin` — it is a CSS property, not an SVG 1.1
-attribute — so rendering the original put the artwork lower and smaller than
-the design intends. The baked file is what `AppIcon1024.png` was rendered
-from.
+`denguewatch_icon_crimson.svg` is the vector the PNG was drawn from, kept for
+future edits.
 
-To regenerate: render the baked SVG at 1024×1024 and flatten away the alpha
-channel. iOS rejects an app icon that carries one.
+A note for anyone regenerating the PNG from the SVG: the artwork group uses
+`transform-origin`, and renderers differ on it — it is a CSS property rather
+than an SVG 1.1 attribute. Writing that transform out as explicit translates
+produces a visibly different composition from the supplied PNG, so it is the
+wrong thing to do here. Render the SVG as written, and compare the result
+against this PNG before shipping it.
