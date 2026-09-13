@@ -95,6 +95,20 @@ struct NumberStyle: Sendable, Equatable {
         digits(date.formatted(.dateTime.day().month(.abbreviated).hour().minute().locale(locale)))
     }
 
+    /// The date under "Today in Bangladesh", which Bangla sets month first.
+    ///
+    /// CLDR orders both bn_BD and en_BD day-first — chaining
+    /// `.month(.wide).day()` still yields "১২ সেপ্টেম্বর" — so the Bangla form
+    /// is an explicit pattern, set that way on the author's instruction rather
+    /// than derived. English keeps the locale's own order.
+    func reportedDate(_ date: Date) -> String {
+        guard language == .bangla else { return dayMonth(date) }
+        let formatter = DateFormatter()
+        formatter.locale = locale
+        formatter.dateFormat = "MMMM d"
+        return digits(formatter.string(from: date))
+    }
+
     /// Weekday and date, as the Broadsheet header kicker sets it: "Fri 12 Sep".
     func weekdayDate(_ date: Date) -> String {
         digits(date.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated).locale(locale)))
@@ -212,6 +226,7 @@ final class LocalizationManager {
     func dayMonth(_ date: Date) -> String { style.dayMonth(date) }
     func dateTime(_ date: Date) -> String { style.dateTime(date) }
     func time(_ date: Date) -> String { style.time(date) }
+    func reportedDate(_ date: Date) -> String { style.reportedDate(date) }
     func relative(_ date: Date) -> String { style.relative(date) }
 
     /// Day and clock time, with "Today"/"Yesterday" resolved from the tables.

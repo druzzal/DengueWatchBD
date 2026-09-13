@@ -34,6 +34,24 @@ final class LocalizationParityTests: XCTestCase {
         XCTAssertTrue(copies.isEmpty, "untranslated: \(copies.keys.sorted())")
     }
 
+    /// Bangla sets this date month-first, which CLDR does not: both bn_BD and
+    /// en_BD order it day-first, so chaining `.month(.wide).day()` yields
+    /// "১২ সেপ্টেম্বর". The explicit pattern is the whole point of the
+    /// formatter, and this is what would silently revert it.
+    func testTheReportedDateIsMonthFirstInBangla() {
+        var parts = DateComponents()
+        parts.year = 2026; parts.month = 9; parts.day = 12
+        let date = Calendar(identifier: .gregorian).date(from: parts)!
+
+        let bangla = NumberStyle(language: .bangla).reportedDate(date)
+        XCTAssertTrue(bangla.hasPrefix("সেপ্টেম্বর"), bangla)
+        XCTAssertTrue(bangla.contains("১২"), "Bangla numerals expected: \(bangla)")
+
+        // English keeps its own locale's order.
+        let english = NumberStyle(language: .english).reportedDate(date)
+        XCTAssertTrue(english.hasPrefix("12"), english)
+    }
+
     /// Format specifiers must survive translation: a string that takes one
     /// argument in English and none in Bangla crashes or silently drops data.
     func testFormatPlaceholdersMatchBetweenLanguages() {

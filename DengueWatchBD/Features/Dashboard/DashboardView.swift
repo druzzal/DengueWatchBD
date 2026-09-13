@@ -505,7 +505,7 @@ struct DashboardView: View {
     }
 
     private var activitySubtitle: String? {
-        store.lastUpdated.map { loc.t("activity.reported", loc.dayMonth($0)) }
+        store.lastUpdated.map { loc.t("activity.reported", loc.reportedDate($0)) }
     }
 
     private var trendSection: some View {
