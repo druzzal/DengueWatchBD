@@ -23,20 +23,44 @@ final class HealthLogTests: XCTestCase {
         VitalsEntry(date: date, temperature: temperature)
     }
 
-    private func days(checks: [CaseLogEntry] = [], vitals: [VitalsEntry] = []) -> [HealthLogDay] {
-        HealthLog.days(checks: checks, vitals: vitals, calendar: calendar)
+    private func lab(_ date: Date, platelets: Double = 96, ns1: TestResult = .positive) -> LabReport {
+        LabReport(date: date, platelets: platelets, ns1: ns1)
+    }
+
+    private func days(checks: [CaseLogEntry] = [],
+                      vitals: [VitalsEntry] = [],
+                      labs: [LabReport] = []) -> [HealthLogDay] {
+        HealthLog.days(checks: checks, vitals: vitals, labs: labs, calendar: calendar)
     }
 
     func testNothingRecordedIsNoDays() {
         XCTAssertTrue(days().isEmpty)
     }
 
-    func testBothKindsOfRecordShareOneDay() {
-        let result = days(checks: [check(at(10, 9))], vitals: [vitals(at(10, 21))])
+    func testEveryKindOfRecordSharesOneDay() {
+        let result = days(checks: [check(at(10, 9))],
+                          vitals: [vitals(at(10, 21))],
+                          labs: [lab(at(10, 12))])
         XCTAssertEqual(result.count, 1, "one day, not one day per store")
         XCTAssertEqual(result[0].checks.count, 1)
         XCTAssertEqual(result[0].vitals.count, 1)
-        XCTAssertEqual(result[0].itemsNewestFirst.count, 2)
+        XCTAssertEqual(result[0].labs.count, 1)
+        XCTAssertEqual(result[0].itemsNewestFirst.count, 3)
+    }
+
+    func testALabReportOnItsOwnStillMakesADay() {
+        let result = days(labs: [lab(at(10, 12))])
+        XCTAssertEqual(result.count, 1)
+        XCTAssertTrue(result[0].checks.isEmpty)
+        XCTAssertTrue(result[0].vitals.isEmpty)
+    }
+
+    func testLabsTakeTheirPlaceInTheDaysTimeOrder() {
+        let result = days(checks: [check(at(10, 8))],
+                          vitals: [vitals(at(10, 20))],
+                          labs: [lab(at(10, 14))])
+        XCTAssertEqual(result[0].itemsNewestFirst.map(\.date),
+                       [at(10, 20), at(10, 14), at(10, 8)])
     }
 
     func testADayIsTheReadersCalendarDayNotTwentyFourHours() {
@@ -78,7 +102,8 @@ final class HealthLogTests: XCTestCase {
         // says nothing about its index in either store.
         let c = check(at(10, 9))
         let v = vitals(at(10, 10))
-        let items = days(checks: [c], vitals: [v])[0].itemsNewestFirst
-        XCTAssertEqual(Set(items.map(\.id)), [c.id, v.id])
+        let l = lab(at(10, 11))
+        let items = days(checks: [c], vitals: [v], labs: [l])[0].itemsNewestFirst
+        XCTAssertEqual(Set(items.map(\.id)), [c.id, v.id, l.id])
     }
 }

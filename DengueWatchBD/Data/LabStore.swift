@@ -34,6 +34,18 @@ final class LabStore {
         save()
     }
 
+    /// Delete one report by identity. The combined log groups every store by
+    /// day, so a row's position there says nothing about its index here.
+    func delete(id: UUID) {
+        reports.removeAll { $0.id == id }
+        save()
+    }
+
+    func clear() {
+        reports.removeAll()
+        save()
+    }
+
     var latest: LabReport? { reports.first }
 
     /// Oldest first, for charting a measure over the course of an illness.

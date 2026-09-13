@@ -110,6 +110,7 @@ private struct HealthLogDocument: View {
                 switch item {
                 case .check(let entry): checkRow(entry)
                 case .vitals(let entry): vitalsRow(entry)
+                case .lab(let report): labRow(report)
                 }
             }
         }
@@ -159,6 +160,28 @@ private struct HealthLogDocument: View {
                 detail: parts.joined(separator: "   ·   "))
             if !entry.note.isEmpty {
                 Text(entry.note).font(.system(size: 10)).italic().padding(.leading, 74)
+            }
+        }
+    }
+
+    private func labRow(_ report: LabReport) -> some View {
+        var parts: [String] = []
+        for measure in LabMeasure.allCases {
+            guard let value = report.value(for: measure) else { continue }
+            parts.append("\(loc.t(measure.labelKey)) \(loc.decimal(value, places: measure.decimals)) \(loc.t(measure.unitKey))")
+        }
+        // Tests that were not done are left out: "NS1 not done" is not a
+        // result, and a doctor reading this wants the ones that were.
+        for test in DengueTest.allCases where report.result(for: test) != .notDone {
+            parts.append("\(loc.t(test.labelKey)) \(loc.t(report.result(for: test).labelKey))")
+        }
+
+        return VStack(alignment: .leading, spacing: 3) {
+            row(time: report.date,
+                label: loc.t("log.pdf.labs"),
+                detail: parts.joined(separator: "   ·   "))
+            if !report.note.isEmpty {
+                Text(report.note).font(.system(size: 10)).italic().padding(.leading, 74)
             }
         }
     }

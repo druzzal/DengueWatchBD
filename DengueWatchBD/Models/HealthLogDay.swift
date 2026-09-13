@@ -1,7 +1,7 @@
 import Foundation
 
-/// One day of the reader's own record: the symptom checks they ran and the
-/// readings they took, together.
+/// One day of the reader's own record: the symptom checks they ran, the
+/// readings they took and the lab reports they were given, together.
 ///
 /// They were always two separate stores, which is right — a check and a blood
 /// pressure are different things recorded at different moments. But a person
@@ -11,28 +11,31 @@ import Foundation
 struct HealthLogDay: Identifiable, Equatable {
     /// Start of the day, in the reader's calendar.
     let date: Date
-    /// Newest first, matching both stores.
+    /// Newest first, matching the stores.
     let checks: [CaseLogEntry]
     let vitals: [VitalsEntry]
+    let labs: [LabReport]
 
     var id: Date { date }
 
-    var isEmpty: Bool { checks.isEmpty && vitals.isEmpty }
+    var isEmpty: Bool { checks.isEmpty && vitals.isEmpty && labs.isEmpty }
 
     /// Everything recorded that day, newest first, so a day reads as one list.
     var itemsNewestFirst: [Item] {
-        let combined = checks.map(Item.check) + vitals.map(Item.vitals)
+        let combined = checks.map(Item.check) + vitals.map(Item.vitals) + labs.map(Item.lab)
         return combined.sorted { $0.date > $1.date }
     }
 
     enum Item: Identifiable, Equatable {
         case check(CaseLogEntry)
         case vitals(VitalsEntry)
+        case lab(LabReport)
 
         var id: UUID {
             switch self {
             case .check(let entry): entry.id
             case .vitals(let entry): entry.id
+            case .lab(let report): report.id
             }
         }
 
@@ -40,6 +43,7 @@ struct HealthLogDay: Identifiable, Equatable {
             switch self {
             case .check(let entry): entry.date
             case .vitals(let entry): entry.date
+            case .lab(let report): report.date
             }
         }
     }
@@ -53,6 +57,7 @@ enum HealthLog {
     /// row for it would suggest they recorded "nothing wrong".
     static func days(checks: [CaseLogEntry],
                      vitals: [VitalsEntry],
+                     labs: [LabReport] = [],
                      calendar: Calendar = .current) -> [HealthLogDay] {
         var checksByDay: [Date: [CaseLogEntry]] = [:]
         for entry in checks {
@@ -63,13 +68,19 @@ enum HealthLog {
             vitalsByDay[calendar.startOfDay(for: entry.date), default: []].append(entry)
         }
 
-        return Set(checksByDay.keys).union(vitalsByDay.keys)
+        var labsByDay: [Date: [LabReport]] = [:]
+        for report in labs {
+            labsByDay[calendar.startOfDay(for: report.date), default: []].append(report)
+        }
+
+        return Set(checksByDay.keys).union(vitalsByDay.keys).union(labsByDay.keys)
             .sorted(by: >)
             .map { day in
                 HealthLogDay(
                     date: day,
                     checks: (checksByDay[day] ?? []).sorted { $0.date > $1.date },
-                    vitals: (vitalsByDay[day] ?? []).sorted { $0.date > $1.date })
+                    vitals: (vitalsByDay[day] ?? []).sorted { $0.date > $1.date },
+                    labs: (labsByDay[day] ?? []).sorted { $0.date > $1.date })
             }
     }
 }

@@ -1,15 +1,16 @@
 import SwiftUI
 import Charts
 
-/// The reader's own record: symptom checks and vital-sign readings, grouped by
-/// the day they were taken.
+/// The reader's own record: symptom checks, vital-sign readings and lab
+/// reports, grouped by the day they were taken.
 ///
-/// They are two stores because they are two different kinds of record, but a
-/// person looking back at an illness thinks in days, not in stores.
+/// They are three stores because they are three different kinds of record, but
+/// a person looking back at an illness thinks in days, not in stores.
 struct CaseLogView: View {
     @Environment(Preferences.self) private var preferences
     @Environment(CaseLogStore.self) private var log
     @Environment(VitalsStore.self) private var vitals
+    @Environment(LabStore.self) private var labs
     @Environment(LocalizationManager.self) private var loc
     @Environment(\.horizontalSizeClass) private var sizeClass
     @Environment(\.dismiss) private var dismiss
@@ -18,7 +19,7 @@ struct CaseLogView: View {
     @State private var exportURL: URL?
 
     private var days: [HealthLogDay] {
-        HealthLog.days(checks: log.entries, vitals: vitals.entries)
+        HealthLog.days(checks: log.entries, vitals: vitals.entries, labs: labs.reports)
     }
 
     /// Temperature now comes from Vital signs, which is where it is recorded.
@@ -79,6 +80,7 @@ struct CaseLogView: View {
                 Button(loc.t("common.deleteAll"), role: .destructive) {
                     log.clear()
                     vitals.clear()
+                    labs.clear()
                 }
                 Button(loc.t("common.cancel"), role: .cancel) {}
             }
@@ -108,6 +110,7 @@ struct CaseLogView: View {
         switch item {
         case .check(let entry): CaseLogRow(entry: entry)
         case .vitals(let entry): VitalsLogRow(entry: entry)
+        case .lab(let report): LabLogRow(report: report)
         }
     }
 
@@ -115,6 +118,7 @@ struct CaseLogView: View {
         switch item {
         case .check(let entry): log.delete(id: entry.id)
         case .vitals(let entry): vitals.delete(id: entry.id)
+        case .lab(let report): labs.delete(id: report.id)
         }
     }
 
@@ -127,8 +131,19 @@ struct CaseLogView: View {
         return loc.fullDate(date)
     }
 
+    /// Days covered by the temperature readings.
+    private var temperatureSpanInDays: Int {
+        guard let first = temperatureSeries.first?.date,
+              let last = temperatureSeries.last?.date else { return 0 }
+        return Calendar.current.dateComponents([.day], from: first, to: last).day ?? 0
+    }
+
     private var temperatureChart: some View {
-        Chart(temperatureSeries, id: \.date) { item in
+        // Read outside the axis builders: those are nonisolated and cannot
+        // touch the stores or the environment.
+        let style = loc.style
+        let shortSpan = temperatureSpanInDays <= 2
+        return Chart(temperatureSeries, id: \.date) { item in
             LineMark(x: .value("Date", item.date), y: .value("C", item.value))
                 .foregroundStyle(Palette.deaths)
                 .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round))
@@ -143,14 +158,32 @@ struct CaseLogView: View {
                 AxisGridLine().foregroundStyle(Palette.grid)
                 AxisValueLabel {
                     if let temp = value.as(Double.self) {
-                        Text(loc.decimal(temp, places: 0))
+                        // A fever moves in tenths. Whole degrees label a
+                        // two-reading chart "39, 39, 39, 39, 39".
+                        Text(style.decimal(temp, places: 1))
                             .typoStatic(.micro)
                             .foregroundStyle(Palette.mutedInk)
                     }
                 }
             }
         }
-        .chartXAxis { dateAxis(loc.style, desiredCount: 3) }
+        .chartXAxis {
+            if shortSpan {
+                // Over a day or two, "automatic" puts ticks inside a day and
+                // the day-only label then prints the same date twice.
+                AxisMarks(values: .stride(by: .day)) { value in
+                    AxisValueLabel(collisionResolution: .disabled) {
+                        if let date = value.as(Date.self) {
+                            Text(style.dayMonth(date))
+                                .typoStatic(.micro)
+                                .foregroundStyle(Palette.mutedInk)
+                        }
+                    }
+                }
+            } else {
+                dateAxis(style, desiredCount: 3)
+            }
+        }
         .frame(height: 130)
         .padding(.trailing, 22)
         .padding(.vertical, 6)
@@ -284,6 +317,85 @@ private struct FlowReadings: View {
             Text(label)
                 .typo(.micro).foregroundStyle(.secondary)
                 .lineLimit(2)
+        }
+    }
+}
+
+/// One lab report: the blood count coloured the way the readings are, and the
+/// dengue tests as they were reported. Recorded, never interpreted — what the
+/// values mean is the doctor's to say.
+private struct LabLogRow: View {
+    @Environment(LocalizationManager.self) private var loc
+    let report: LabReport
+
+    private var testsDone: [DengueTest] {
+        DengueTest.allCases.filter { report.result(for: $0) != .notDone }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(Palette.admitted)
+                    .frame(width: 3, height: 14)
+                Text(loc.t("lab.section"))
+                    .typo(.subheadline).fontWeight(.medium)
+                Spacer(minLength: 6)
+                Text(loc.time(report.date))
+                    .typo(.micro).foregroundStyle(.secondary).monospacedDigit()
+            }
+
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 108), spacing: 8)],
+                      alignment: .leading, spacing: 6) {
+                ForEach(LabMeasure.allCases) { measure in
+                    if let value = report.value(for: measure) {
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text("\(loc.decimal(value, places: measure.decimals)) \(loc.t(measure.unitKey))")
+                                .typo(.caption).fontWeight(.semibold).monospacedDigit()
+                                .foregroundStyle(Palette.riskInk(measure.status(value).risk))
+                            Text(loc.t(measure.labelKey))
+                                .typo(.micro).foregroundStyle(.secondary).lineLimit(2)
+                        }
+                    }
+                }
+            }
+
+            if !testsDone.isEmpty {
+                // A positive antigen or antibody test is a finding worth
+                // seeing at a glance; it is still not this app's diagnosis.
+                FlowTests(results: testsDone.map { ($0, report.result(for: $0)) })
+            }
+
+            if !report.note.isEmpty {
+                Text(report.note).typo(.caption).italic()
+            }
+        }
+        .padding(.vertical, 5)
+    }
+}
+
+private struct FlowTests: View {
+    @Environment(LocalizationManager.self) private var loc
+    let results: [(test: DengueTest, result: TestResult)]
+
+    var body: some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 132), spacing: 8)],
+                  alignment: .leading, spacing: 6) {
+            ForEach(results, id: \.test) { item in
+                HStack(spacing: 5) {
+                    Image(systemName: item.result == .positive
+                          ? "exclamationmark.circle.fill" : "checkmark.circle")
+                        .typo(.micro)
+                        .foregroundStyle(item.result == .positive
+                                         ? Palette.riskInk(.high) : Palette.mutedInk)
+                    Text("\(loc.t(item.test.labelKey)) \(loc.t(item.result.labelKey))")
+                        .typo(.micro)
+                        .foregroundStyle(item.result == .positive
+                                         ? Palette.riskInk(.high) : .secondary)
+                        .lineLimit(2)
+                }
+                .accessibilityElement(children: .combine)
+            }
         }
     }
 }
