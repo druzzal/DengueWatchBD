@@ -343,19 +343,29 @@ struct DashboardView: View {
                 .foregroundStyle(.secondary)
                 .frame(width: 24, alignment: .trailing)
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(area.displayName(loc.language))
-                    .typo(.subheadline)
-                    .lineLimit(1)
-                Text(loc.t("top.rate", loc.decimal(area.incidencePer100k)))
-                    .typo(.micro)
-                    .foregroundStyle(.secondary)
+            // Two full-width lines rather than one row of five competing
+            // items. The badge shares the name's line because their widths
+            // vary together — a long name is not also a long badge — and the
+            // rate then has the whole row, so nothing is ever cut short.
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: Space.tight) {
+                    Text(area.displayName(loc.language))
+                        .typo(.subheadline)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
+                    Spacer(minLength: Space.tight)
+                    RiskBadge(risk: area.risk, compact: true)
+                }
+                HStack(spacing: Space.tight) {
+                    Text(loc.t("top.rate", loc.decimal(area.incidencePer100k)))
+                        .typo(.micro)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                    TrendIndicator(change: area.weeklyChange)
+                    Spacer(minLength: 0)
+                }
             }
 
-            Spacer(minLength: Space.tight)
-
-            TrendIndicator(change: area.weeklyChange)
-            RiskBadge(risk: area.risk, compact: true)
             Image(systemName: "chevron.right")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.tertiary)
