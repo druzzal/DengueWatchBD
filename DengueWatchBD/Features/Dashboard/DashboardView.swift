@@ -21,14 +21,28 @@ struct DashboardView: View {
 
     /// The area the user is being told about: their chosen area, else the
     /// area they are standing in, else the country.
+    /// The area the hero reads for: where the reader is now when the phone can
+    /// say so, and their chosen area otherwise.
+    ///
+    /// Location comes first deliberately. "The risk here" is the question this
+    /// card answers, and someone who has travelled to a district with an
+    /// outbreak needs that district's reading, not the one they picked at home
+    /// last month. The card always names the area it is reading, so there is
+    /// no guessing which one is on screen.
     private var focusArea: Area? {
+        if let here = location.lastKnownLocation, let area = store.nearestArea(to: here) {
+            return area
+        }
         if let code = preferences.homeAreaCode, let area = store.area(code: code) {
             return area
         }
-        if let here = location.lastKnownLocation {
-            return store.nearestArea(to: here)
-        }
         return nil
+    }
+
+    /// True when the area on screen came from the phone's own position.
+    private var focusIsCurrentLocation: Bool {
+        guard let here = location.lastKnownLocation else { return false }
+        return store.nearestArea(to: here) != nil
     }
 
     private var focusRisk: RiskLevel { focusArea?.risk ?? store.nationalRisk }
@@ -90,6 +104,12 @@ struct DashboardView: View {
             .refreshable {
                 await sync.sync(force: true)
                 await store.refresh()
+            }
+            .task {
+                // Already allowed: ask for a fix now, so the hero opens on the
+                // local reading instead of the national one. Never prompts —
+                // the permission card below does that, with an explanation.
+                if location.isAuthorized { location.startUpdatingCoarse() }
             }
             .navigationDestination(for: Area.self) { AreaDetailView(area: $0) }
             .sheet(isPresented: $showingAbout) { AboutDataView() }
@@ -154,16 +174,22 @@ struct DashboardView: View {
                 lastUpdated: store.lastUpdated,
                 incidence: focusArea?.incidencePer100k ?? nationalIncidence,
                 isNationwide: focusArea == nil,
+                isCurrentLocation: focusIsCurrentLocation,
                 onTap: {
                     Haptic.selection()
                     showingRiskDetail = true
                 }
             )
 
-            if focusArea == nil {
-                // Without a area the reading is national, which is much
-                // less useful than a local one. Offer the fix rather than
-                // silently showing a country-wide number.
+            if focusArea == nil, location.authorization != .authorizedWhenInUse,
+               location.authorization != .authorizedAlways {
+                // The reading is national, which is much less useful than a
+                // local one. Explain what location is for before iOS asks, and
+                // always leave the manual route open.
+                LocationPermissionCard(onChooseManually: { router.show(.map) })
+            } else if focusArea == nil {
+                // Allowed, but no fix yet or the reader is outside Bangladesh.
+                // The picker is the only route left.
                 Button {
                     router.show(.map)
                 } label: {

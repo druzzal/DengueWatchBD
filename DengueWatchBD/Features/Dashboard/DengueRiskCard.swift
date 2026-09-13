@@ -18,6 +18,10 @@ struct DengueRiskCard: View {
     /// 14-day cases per 100,000 — spoken, since the meter is decorative.
     var incidence: Double?
     var isNationwide = false
+    /// True when the area came from the phone's position rather than from a
+    /// choice the reader made. Worth saying: "Dhaka North" means one thing if
+    /// they picked it and another if they are standing in it.
+    var isCurrentLocation = false
     var onTap: () -> Void
 
     @State private var pulsing = false
@@ -134,10 +138,18 @@ struct DengueRiskCard: View {
                     .accessibilityHidden(true)
             }
 
-            Text(areaName)
-                .typo(.subheadline)
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
+            HStack(spacing: 4) {
+                if isCurrentLocation {
+                    Image(systemName: "location.fill")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                        .accessibilityHidden(true)
+                }
+                Text(areaName)
+                    .typo(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
         }
     }
 
@@ -178,11 +190,15 @@ struct DengueRiskCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    private var locationPhrase: String {
+        isCurrentLocation ? loc.t("risk.card.hereNow", areaName) : areaName
+    }
+
     private var accessibilitySummary: String {
         var parts = [
             loc.t("risk.card.title"),
             loc.t(risk.labelKey),
-            areaName,
+            locationPhrase,
         ]
         if let incidence {
             parts.append(loc.t("risk.a11y.rate", loc.decimal(incidence)))
