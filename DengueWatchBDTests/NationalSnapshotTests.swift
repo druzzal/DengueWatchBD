@@ -52,6 +52,52 @@ final class NationalSnapshotTests: XCTestCase {
         XCTAssertNil(result.highRiskAreas)
     }
 
+    // MARK: - Grid shape
+
+    /// Five tiles in four columns leaves one stranded on its own row, which is
+    /// what the iPad was doing.
+    func testAWideGridNeverStrandsASingleTileOnTheLastRow() {
+        // On a wide screen there is room to drop a column, so stranding is
+        // always avoidable. On a phone two columns is already the floor, and
+        // an odd tile count has nowhere better to go — that case is left as
+        // it is rather than squeezed into three columns at 375pt.
+        for tiles in 2...8 {
+            let columns = StatGrid.columns(forTiles: tiles, wide: true)
+            XCTAssertGreaterThanOrEqual(columns, 2, "\(tiles) tiles")
+            if tiles > columns {
+                XCTAssertNotEqual(tiles % columns, 1,
+                                  "\(tiles) tiles in \(columns) columns strands one")
+            }
+        }
+    }
+
+    func testACompactGridStaysAtTwoColumns() {
+        for tiles in 2...8 {
+            XCTAssertEqual(StatGrid.columns(forTiles: tiles, wide: false), 2, "\(tiles) tiles")
+        }
+    }
+
+    func testTheGridKeepsItsPreferredWidthWhenThatDividesEvenly() {
+        XCTAssertEqual(StatGrid.columns(forTiles: 4, wide: true), 4)
+        XCTAssertEqual(StatGrid.columns(forTiles: 4, wide: false), 2)
+        XCTAssertEqual(StatGrid.columns(forTiles: 6, wide: false), 2)
+    }
+
+    func testFiveTilesDropToThreeColumnsOnAWideScreen() {
+        XCTAssertEqual(StatGrid.columns(forTiles: 5, wide: true), 3)
+    }
+
+    /// The tile count is not a constant: each tile is dropped when its figure
+    /// is unknown, which is the whole point of the snapshot.
+    func testTheTileCountFollowsWhatIsActuallyKnown() {
+        XCTAssertEqual(snapshot().tileCount, 0)
+        XCTAssertEqual(snapshot(headline: headline(last24Cases: 10)).tileCount, 1)
+        let full = snapshot(headline: headline(ytdCases: 100, ytdDeaths: 2, last24Cases: 10),
+                            national: series(Array(repeating: 5, count: 14)),
+                            areas: [area(code: "A", weeklyCases: [0, 0], populationThousands: 1000)])
+        XCTAssertEqual(full.tileCount, 5)
+    }
+
     // MARK: - The hotspot denominator
 
     func testNoAreaBreakdownIsNotZeroHotspots() {

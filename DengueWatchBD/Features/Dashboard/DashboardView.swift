@@ -445,7 +445,7 @@ struct DashboardView: View {
                 SourceBadge(kind: .official, detail: "DGHS")
             }
 
-            LazyVGrid(columns: statColumns, spacing: Space.row) {
+            LazyVGrid(columns: statColumns(for: snapshot.tileCount), spacing: Space.row) {
                 if let cases24 = snapshot.last24Cases {
                     StatCard(label: loc.t("dash.stat.last24"),
                              value: loc.num(cases24),
@@ -546,11 +546,11 @@ struct DashboardView: View {
     /// One column once text is large enough that two would crush the figures;
     /// four across on a regular-width screen, where two leaves each card mostly
     /// empty.
-    private var statColumns: [GridItem] {
+    private func statColumns(for tiles: Int) -> [GridItem] {
         if typeSize.isAccessibilitySize {
             return [GridItem(.flexible(), spacing: Space.row)]
         }
-        let count = sizeClass == .regular ? 4 : 2
+        let count = StatGrid.columns(forTiles: tiles, wide: sizeClass == .regular)
         return Array(repeating: GridItem(.flexible(), spacing: Space.row), count: count)
     }
 

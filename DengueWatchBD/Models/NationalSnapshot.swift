@@ -42,6 +42,13 @@ struct NationalSnapshot: Equatable {
     /// The day these figures describe, which is not necessarily today.
     let reportedFor: Date?
 
+    /// How many tiles the snapshot will actually draw. Each is omitted when
+    /// its figure is unknown, so the count is not a constant.
+    var tileCount: Int {
+        [last24Cases != nil, weekCases != nil, seasonCases != nil,
+         seasonDeaths != nil, highRiskAreas != nil].filter { $0 }.count
+    }
+
     var hasAnything: Bool {
         seasonCases != nil || seasonDeaths != nil || weekCases != nil || last24Cases != nil || highRiskAreas != nil
     }
@@ -88,5 +95,25 @@ extension NationalSnapshot {
             highRiskAreas: areas.isEmpty ? nil : areas.filter { $0.risk >= .high }.count,
             reportingAreas: areas.count,
             reportedFor: lastUpdated)
+    }
+}
+
+/// Choosing how many columns a grid of stat tiles should use.
+///
+/// Four columns and five tiles leaves one stranded on a row of its own, which
+/// is what the iPad was doing. Picking a width that divides the tiles more
+/// evenly is a better answer than either stretching the last tile or padding
+/// the row with an empty one.
+enum StatGrid {
+    static func columns(forTiles tiles: Int, wide: Bool) -> Int {
+        let preferred = wide ? 4 : 2
+        guard tiles > 0 else { return preferred }
+        // Walk down from the preferred width to the first that does not leave
+        // a single tile alone on the last row.
+        for candidate in stride(from: preferred, through: 2, by: -1)
+        where tiles % candidate != 1 {
+            return candidate
+        }
+        return preferred
     }
 }

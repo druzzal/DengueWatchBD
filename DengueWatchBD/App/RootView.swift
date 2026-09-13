@@ -75,6 +75,9 @@ struct RootView: View {
             FirstRunDisclaimerView()
                 .environment(preferences)
                 .environment(localization)
+                // A cover is its own presentation context, so the tint set on
+                // the tab view above does not reach it.
+                .tint(Palette.accent)
         }
     }
 

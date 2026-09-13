@@ -60,7 +60,10 @@ final class PreventionChecklistTests: XCTestCase {
     // MARK: - Persistence
 
     func testTicksSurviveRelaunchOnTheSameDay() {
-        let today = day(2026, 9, 13)
+        // Must be the real today, not a fixed date: the initialiser compares
+        // the stored day against the clock, so a hardcoded "today" makes this
+        // test pass on one calendar day and fail on every other.
+        let today = Date()
         let first = PreventionChecklist(defaults: defaults)
         first.toggle(.plantTrays, now: today)
         first.toggle(.storedWater, now: today)
