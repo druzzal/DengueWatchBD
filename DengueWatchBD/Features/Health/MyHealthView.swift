@@ -404,12 +404,17 @@ struct MyHealthView: View {
         }
     }
 
-    /// "Required on every screen that outputs a stage."
+    /// "Required on every screen that outputs a stage" — and only then. With
+    /// no symptom check there is no plan above it, and the sentence would be
+    /// explaining something that is not on the screen.
+    @ViewBuilder
     private var disclaimer: some View {
-        Text(loc.t("care.plan.note"))
-            .broadsheet(.secondary)
-            .foregroundStyle(Broadsheet.neutral700)
-            .fixedSize(horizontal: false, vertical: true)
+        if !caseLog.entries.isEmpty {
+            Text(loc.t("care.plan.note"))
+                .broadsheet(.secondary)
+                .foregroundStyle(Broadsheet.neutral700)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 
     // MARK: - The readings worth raising
