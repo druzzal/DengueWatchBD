@@ -482,11 +482,17 @@ struct AreaRow: View {
     let area: Area
     let peak: Int
 
-    /// The division, unless it merely repeats the area's own name.
+    /// The division, unless the area's own name already carries it.
+    ///
+    /// Equality was not enough: "Dhaka (outside city)" is not the string
+    /// "Dhaka", so the chip was printed beside it and took the room that
+    /// forced the name to truncate to "Dhaka (outside…". Every Dhaka row has
+    /// the same shape — the three city-corporation rows all name their
+    /// division — so containment is the rule that was meant.
     private var divisionLabel: String? {
         let area = self.area.displayName(loc.language)
         let division = self.area.division.displayName(loc.language)
-        return division == area ? nil : division
+        return area.contains(division) ? nil : division
     }
 
     var body: some View {
@@ -495,6 +501,8 @@ struct AreaRow: View {
                 Text(area.displayName(loc.language))
                     .typo(.subheadline)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                    .layoutPriority(1)
                 // Most areas share their division's name — Mymensingh sits in
                 // Mymensingh — so printing both said the same word twice and
                 // used the room that forced it to truncate. Shown only when it
