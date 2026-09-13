@@ -11,17 +11,41 @@ struct WHOCarePlanCard: View {
     @Environment(LocalizationManager.self) private var loc
 
     let plan: WHOCarePlan
+    /// When the check behind this plan was run.
+    let checkedAt: Date
+    /// False once the check is old enough that it describes a past day.
+    let isCurrent: Bool
+    /// Lab measures well outside their range, named for the doctor rather
+    /// than folded into the group.
+    let notableLabs: String?
     var onRecheck: () -> Void
 
     private var risk: RiskLevel { plan.group.risk }
 
     var body: some View {
-        CardSection(loc.t("who.plan.title"), subtitle: loc.t("who.plan.subtitle")) {
+        CardSection(loc.t("who.plan.title"),
+                    subtitle: loc.t("who.plan.checkedAt", loc.dayAndTime(checkedAt))) {
             VStack(alignment: .leading, spacing: Space.row) {
+                if !isCurrent {
+                    // Shown rather than hidden — it is the reader's own record
+                    // — but never presented as advice for today.
+                    InlineNote(symbol: "clock.arrow.circlepath",
+                               detail: loc.t("who.plan.stale"),
+                               tint: Palette.riskInk(.moderate))
+                }
                 header
                 advice
                 if !plan.reasons.isEmpty && plan.reasons != [.noneOfThese] {
                     reasons
+                }
+                if let notableLabs {
+                    InlineNote(symbol: "drop.triangle",
+                               detail: loc.t("care.plan.readings", notableLabs),
+                               tint: Palette.riskInk(.high))
+                    // Only where a lab value is on the card: this is the one
+                    // place a reader could reasonably assume their blood count
+                    // moved the group. It did not.
+                    InlineNote(symbol: "info.circle", detail: loc.t("care.plan.note"))
                 }
                 if !plan.measuredReasons.isEmpty {
                     // A home cuff is not a clinician's hands, and the plan

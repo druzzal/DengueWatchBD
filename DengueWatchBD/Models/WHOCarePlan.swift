@@ -101,6 +101,34 @@ struct WHOCarePlan: Equatable {
 
 extension WHOCarePlan {
 
+    /// How long a plan still describes the person who made it.
+    ///
+    /// A symptom check is a snapshot. Dengue changes day to day — that is the
+    /// whole reason the critical phase matters — so a plan from last week is a
+    /// record of last week, not advice for today. Past this it is still shown,
+    /// because it is the reader's own record, but it is labelled as old and
+    /// asks to be run again.
+    static let freshForDays = 2
+
+    /// How long the fever timeline keeps describing a live illness.
+    ///
+    /// Dengue runs about ten days. Beyond a fortnight the card would be
+    /// counting "day 41 of a fever" from a check nobody has updated, with no
+    /// day of the strip marked as today — a timeline of an illness that ended.
+    static let illnessWindowDays = 14
+
+    /// Whether a plan made this many days ago still speaks for today.
+    static func describesToday(checkedDaysAgo: Int) -> Bool {
+        checkedDaysAgo >= 0 && checkedDaysAgo <= freshForDays
+    }
+
+    /// Whether a fever that began this many days ago is still a live illness
+    /// worth charting. Negative days mean a clock that moved backwards, and
+    /// are no more chartable than a fever from last month.
+    static func showsTimeline(feverDaysAgo: Int) -> Bool {
+        feverDaysAgo >= 0 && feverDaysAgo < illnessWindowDays
+    }
+
     /// The readings WHO's guidance actually speaks to, as thresholds.
     ///
     /// Deliberately conservative, and deliberately few. WHO's bedside signs of

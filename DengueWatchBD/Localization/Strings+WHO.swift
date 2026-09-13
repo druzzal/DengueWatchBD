@@ -12,6 +12,11 @@ extension Strings {
     static let enWHO: [String: String] = [
         "who.plan.title": "WHO care plan",
         "who.plan.subtitle": "Your symptom check and readings, matched to WHO's guidance",
+        "who.plan.checkedAt": "From your symptom check on %@",
+        "who.plan.stale": "This is from an older check. Dengue changes day by day — run the check again so this reflects how you are now.",
+        // Shown beside the lab line, which is the one place a reader might
+        // otherwise assume their blood count moved the group. It did not.
+        "care.plan.note": "This plan follows your symptom check and the readings you took, not your lab results. Your doctor reads the lab report.",
         "who.plan.becauseTitle": "Why this group",
         "who.plan.measuredNote": "Readings you take at home are not a substitute for being examined. If you feel worse than the numbers suggest, go anyway.",
         "who.plan.source": "Groups A, B and C are WHO's, from its dengue guidelines. This app matches what you recorded against that guidance. It does not decide whether you have dengue.",
@@ -60,6 +65,9 @@ extension Strings {
     static let bnWHO: [String: String] = [
         "who.plan.title": "বিশ্ব স্বাস্থ্য সংস্থার পরামর্শ",
         "who.plan.subtitle": "আপনার উপসর্গ পরীক্ষা ও পরিমাপ বিশ্ব স্বাস্থ্য সংস্থার নির্দেশিকার সঙ্গে মিলিয়ে",
+        "who.plan.checkedAt": "%@ তারিখের উপসর্গ পরীক্ষা থেকে",
+        "who.plan.stale": "এটি আগের একটি পরীক্ষার ফল। ডেঙ্গু দিনে দিনে বদলায় — এখন কেমন আছেন তা জানতে আবার পরীক্ষা করুন।",
+        "care.plan.note": "এই পরামর্শ আপনার উপসর্গ পরীক্ষা ও নেওয়া পরিমাপ অনুযায়ী, ল্যাব রিপোর্ট অনুযায়ী নয়। ল্যাব রিপোর্ট আপনার ডাক্তার দেখবেন।",
         "who.plan.becauseTitle": "কেন এই ধাপ",
         "who.plan.measuredNote": "বাড়িতে নেওয়া পরিমাপ ডাক্তারের পরীক্ষার বিকল্প নয়। সংখ্যায় যা-ই দেখাক, শরীর বেশি খারাপ লাগলে ডাক্তারের কাছে যান।",
         "who.plan.source": "A, B ও C ধাপ বিশ্ব স্বাস্থ্য সংস্থার ডেঙ্গু নির্দেশিকার। অ্যাপটি আপনার লেখা তথ্য ওই নির্দেশিকার সঙ্গে মিলিয়ে দেখায়। ডেঙ্গু হয়েছে কি না, তা এটি ঠিক করে না।",

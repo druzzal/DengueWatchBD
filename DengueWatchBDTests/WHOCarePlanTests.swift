@@ -110,6 +110,43 @@ final class WHOCarePlanTests: XCTestCase {
         XCTAssertEqual(plan(["fever"], feverDaysAgo: 4).group, .home)
     }
 
+    // MARK: - How long a record speaks for
+
+    /// A symptom check is a snapshot. Presenting last month's as "your care
+    /// plan" is the same mistake as a surveillance figure with no date on it.
+    func testAPlanOnlySpeaksForTodayForAFewDays() {
+        XCTAssertTrue(WHOCarePlan.describesToday(checkedDaysAgo: 0))
+        XCTAssertTrue(WHOCarePlan.describesToday(checkedDaysAgo: WHOCarePlan.freshForDays))
+        XCTAssertFalse(WHOCarePlan.describesToday(checkedDaysAgo: WHOCarePlan.freshForDays + 1))
+        XCTAssertFalse(WHOCarePlan.describesToday(checkedDaysAgo: 40))
+    }
+
+    /// A clock that moved backwards should not make an old check look new.
+    func testAFutureDatedCheckIsNotTreatedAsCurrent() {
+        XCTAssertFalse(WHOCarePlan.describesToday(checkedDaysAgo: -1))
+    }
+
+    /// The timeline charts a live illness, not an old record. Past the window
+    /// no day of the strip is today, so it would draw a whole illness with
+    /// nothing marked and a headline counting "day 41 of a fever".
+    func testTheTimelineStopsOnceTheIllnessIsOver() {
+        XCTAssertTrue(WHOCarePlan.showsTimeline(feverDaysAgo: 0))
+        XCTAssertTrue(WHOCarePlan.showsTimeline(feverDaysAgo: 9))
+        XCTAssertFalse(WHOCarePlan.showsTimeline(feverDaysAgo: WHOCarePlan.illnessWindowDays))
+        XCTAssertFalse(WHOCarePlan.showsTimeline(feverDaysAgo: 40))
+    }
+
+    func testTheTimelineRejectsNegativeDays() {
+        XCTAssertFalse(WHOCarePlan.showsTimeline(feverDaysAgo: -3))
+    }
+
+    func testTheStaleNoticeExistsInBothLanguages() {
+        for key in ["who.plan.stale", "who.plan.checkedAt"] {
+            XCTAssertNotNil(Strings.english[key], key)
+            XCTAssertNotNil(Strings.bangla[key], key)
+        }
+    }
+
     // MARK: - What it shows
 
     func testTheReasonsAreNeverEmpty() {

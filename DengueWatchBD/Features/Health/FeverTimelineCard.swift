@@ -12,7 +12,6 @@ import SwiftUI
 /// the sentence under the symptom result can never disagree.
 struct FeverTimelineCard: View {
     @Environment(LocalizationManager.self) private var loc
-    @Environment(Preferences.self) private var preferences
 
     /// Day of illness, counting the first day of fever as day 1.
     let currentDay: Int
@@ -84,11 +83,16 @@ struct FeverTimelineCard: View {
                                 .frame(height: 34)
                         }
                     }
+                    // A strip of ten columns is an axis, and axis labels do
+                    // not scale with Dynamic Type — at accessibility sizes the
+                    // two-digit "10" was being replaced by an ellipsis.
                     Text(loc.num(day))
-                        .typo(.micro)
+                        .typoStatic(.micro)
                         .fontWeight(isToday ? .bold : .regular)
                         .foregroundStyle(isToday ? Color.primary : .secondary)
                         .monospacedDigit()
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
                 }
                 .frame(maxWidth: .infinity)
             }

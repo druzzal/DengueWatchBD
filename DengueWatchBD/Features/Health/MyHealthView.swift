@@ -126,8 +126,21 @@ struct MyHealthView: View {
     @ViewBuilder
     private var carePlanCard: some View {
         if let latest = caseLog.entries.first {
-            WHOCarePlanCard(plan: whoPlan(for: latest)) { showingCheck = true }
+            WHOCarePlanCard(plan: whoPlan(for: latest),
+                            checkedAt: latest.date,
+                            isCurrent: WHOCarePlan.describesToday(
+                                checkedDaysAgo: daysSince(latest.date)),
+                            notableLabs: notableLabNames) {
+                showingCheck = true
+            }
         }
+    }
+
+    private func daysSince(_ date: Date) -> Int {
+        let calendar = Calendar.current
+        return calendar.dateComponents([.day],
+                                       from: calendar.startOfDay(for: date),
+                                       to: calendar.startOfDay(for: Date())).day ?? 0
     }
 
     private func whoPlan(for entry: CaseLogEntry) -> WHOCarePlan {
@@ -161,7 +174,8 @@ struct MyHealthView: View {
     private var feverTimelineCard: some View {
         if let entry = caseLog.entries.first,
            let started = entry.feverStarted,
-           let daysAgo = currentFeverDaysAgo(entry) {
+           let daysAgo = currentFeverDaysAgo(entry),
+           WHOCarePlan.showsTimeline(feverDaysAgo: daysAgo) {
             FeverTimelineCard(currentDay: daysAgo + 1,
                               temperatures: vitals.series(for: .temperature),
                               feverStarted: started)
@@ -330,21 +344,27 @@ struct MyHealthView: View {
 
     // MARK: - The readings worth raising
 
-    /// Recent readings worth mentioning beside the advice. Empty when there is
-    /// nothing recent and far enough out to raise.
-    private var carePlanContext: CarePlanContext {
-        CarePlanContext.from(
-            vitals: vitals.entries.flatMap { entry in
-                VitalKind.allCases.compactMap { kind in
-                    entry.value(for: kind).map { (kind: kind, value: $0, date: entry.date) }
-                }
-            },
+    /// Lab values far enough out to be worth showing to a doctor.
+    ///
+    /// Deliberately kept out of the WHO group. That group is decided by what
+    /// the reader reports and what a home monitor measures; a platelet count
+    /// is neither, and letting one move someone between groups would be this
+    /// app reading a lab report. It is raised beside the plan instead — which
+    /// is where a lab result belongs, in the hands of whoever reads it.
+    ///
+    /// Vitals are passed as empty because the plan already speaks for them,
+    /// through WHO's own thresholds. Naming them twice on one card would
+    /// suggest two findings where there is one.
+    private var notableLabNames: String? {
+        let context = CarePlanContext.from(
+            vitals: [],
             labs: labs.reports.flatMap { report in
                 LabMeasure.allCases.compactMap { measure in
                     report.value(for: measure).map { (measure: measure, value: $0, date: report.date) }
                 }
-            }
-        )
+            })
+        guard context.hasAnything else { return nil }
+        return readingNames(context)
     }
 
     private func readingNames(_ context: CarePlanContext) -> String {
