@@ -95,6 +95,11 @@ struct NumberStyle: Sendable, Equatable {
         digits(date.formatted(.dateTime.day().month(.abbreviated).hour().minute().locale(locale)))
     }
 
+    /// Clock time alone, for a record that already states the day.
+    func time(_ date: Date) -> String {
+        digits(date.formatted(.dateTime.hour().minute().locale(locale)))
+    }
+
     /// Weekday-or-"today" plus the clock time.
     ///
     /// Health readings need the actual moment, not "2 hours ago": knowing a
@@ -201,6 +206,7 @@ final class LocalizationManager {
     func fullDate(_ date: Date) -> String { style.fullDate(date) }
     func dayMonth(_ date: Date) -> String { style.dayMonth(date) }
     func dateTime(_ date: Date) -> String { style.dateTime(date) }
+    func time(_ date: Date) -> String { style.time(date) }
     func relative(_ date: Date) -> String { style.relative(date) }
 
     /// Day and clock time, with "Today"/"Yesterday" resolved from the tables.

@@ -40,6 +40,13 @@ final class CaseLogStore {
         save()
     }
 
+    /// Delete one entry by identity. The combined log groups both stores by
+    /// day, so a row's position there says nothing about its index here.
+    func delete(id: UUID) {
+        entries.removeAll { $0.id == id }
+        save()
+    }
+
     func clear() {
         entries.removeAll()
         save()

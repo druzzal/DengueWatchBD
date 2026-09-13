@@ -1,25 +1,35 @@
 import SwiftUI
 import Charts
 
+/// The reader's own record: symptom checks and vital-sign readings, grouped by
+/// the day they were taken.
+///
+/// They are two stores because they are two different kinds of record, but a
+/// person looking back at an illness thinks in days, not in stores.
 struct CaseLogView: View {
     @Environment(Preferences.self) private var preferences
     @Environment(CaseLogStore.self) private var log
+    @Environment(VitalsStore.self) private var vitals
     @Environment(LocalizationManager.self) private var loc
     @Environment(\.horizontalSizeClass) private var sizeClass
     @Environment(\.dismiss) private var dismiss
 
     @State private var showingClearConfirmation = false
+    @State private var exportURL: URL?
 
+    private var days: [HealthLogDay] {
+        HealthLog.days(checks: log.entries, vitals: vitals.entries)
+    }
+
+    /// Temperature now comes from Vital signs, which is where it is recorded.
     private var temperatureSeries: [(date: Date, value: Double)] {
-        log.entries
-            .compactMap { entry in entry.temperature.map { (entry.date, $0) } }
-            .sorted { $0.0 < $1.0 }
+        vitals.series(for: .temperature)
     }
 
     var body: some View {
         NavigationStack {
             Group {
-                if log.entries.isEmpty {
+                if days.isEmpty {
                     ContentUnavailableView {
                         Label(loc.t("log.empty.title"), systemImage: "list.clipboard")
                     } description: {
@@ -28,41 +38,20 @@ struct CaseLogView: View {
                 } else {
                     List {
                         if temperatureSeries.count >= 2 {
-                            Section(loc.t("log.temperature")) {
-                                Chart(temperatureSeries, id: \.date) { item in
-                                    LineMark(x: .value("Date", item.date), y: .value("C", item.value))
-                                        .foregroundStyle(Palette.deaths)
-                                        .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round))
-                                        .interpolationMethod(.monotone)
-                                    PointMark(x: .value("Date", item.date), y: .value("C", item.value))
-                                        .foregroundStyle(Palette.deaths)
-                                        .symbolSize(60)
-                                }
-                                .chartYScale(domain: .automatic(includesZero: false))
-                                .chartYAxis {
-                                    AxisMarks(position: .leading) { value in
-                                        AxisGridLine().foregroundStyle(Palette.grid)
-                                        AxisValueLabel {
-                                            if let temp = value.as(Double.self) {
-                                                Text(loc.decimal(temp, places: 0))
-                                                    .typoStatic(.micro)
-                                                    .foregroundStyle(Palette.mutedInk)
-                                            }
-                                        }
-                                    }
-                                }
-                                .chartXAxis { dateAxis(loc.style, desiredCount: 3) }
-                                .frame(height: 130)
-                                .padding(.trailing, 22)
-                                .padding(.vertical, 6)
-                            }
+                            Section(loc.t("log.temperature")) { temperatureChart }
                         }
 
-                        Section(loc.t("log.checkins")) {
-                            ForEach(log.entries) { entry in
-                                CaseLogRow(entry: entry)
+                        ForEach(days) { day in
+                            Section(dayTitle(day.date)) {
+                                ForEach(day.itemsNewestFirst) { item in
+                                    row(for: item)
+                                        .swipeActions {
+                                            Button(loc.t("common.delete"), role: .destructive) {
+                                                delete(item)
+                                            }
+                                        }
+                                }
                             }
-                            .onDelete { log.delete(at: $0) }
                         }
 
                         Section {
@@ -80,21 +69,95 @@ struct CaseLogView: View {
             .navigationBarTitleDisplayMode(sizeClass == .regular ? .inline : .large)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) { LanguageToggle() }
+                ToolbarItem(placement: .topBarTrailing) { exportButton }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(loc.t("common.done")) { dismiss() }
                 }
             }
             .confirmationDialog(loc.t("log.confirmDelete"),
                                 isPresented: $showingClearConfirmation, titleVisibility: .visible) {
-                Button(loc.t("common.deleteAll"), role: .destructive) { log.clear() }
+                Button(loc.t("common.deleteAll"), role: .destructive) {
+                    log.clear()
+                    vitals.clear()
+                }
                 Button(loc.t("common.cancel"), role: .cancel) {}
             }
+            .task(id: days.count) { refreshExport() }
         }
+    }
+
+    @ViewBuilder
+    private var exportButton: some View {
+        if let exportURL {
+            ShareLink(item: exportURL,
+                      preview: SharePreview(loc.t("log.pdf.title"))) {
+                Label(loc.t("log.export"), systemImage: "square.and.arrow.up")
+            }
+        }
+    }
+
+    /// Rebuilt when the log changes, so the shared file is never a stale copy
+    /// of an earlier version of the record.
+    private func refreshExport() {
+        exportURL = HealthLogPDF.write(days: days, loc: loc,
+                                       unit: preferences.temperatureUnit)
+    }
+
+    @ViewBuilder
+    private func row(for item: HealthLogDay.Item) -> some View {
+        switch item {
+        case .check(let entry): CaseLogRow(entry: entry)
+        case .vitals(let entry): VitalsLogRow(entry: entry)
+        }
+    }
+
+    private func delete(_ item: HealthLogDay.Item) {
+        switch item {
+        case .check(let entry): log.delete(id: entry.id)
+        case .vitals(let entry): vitals.delete(id: entry.id)
+        }
+    }
+
+    /// "Today" and "Yesterday" read faster than a date when that is what they
+    /// are; anything older gets the date it happened.
+    private func dayTitle(_ date: Date) -> String {
+        let calendar = Calendar.current
+        if calendar.isDateInToday(date) { return loc.t("common.today") }
+        if calendar.isDateInYesterday(date) { return loc.t("common.yesterday") }
+        return loc.fullDate(date)
+    }
+
+    private var temperatureChart: some View {
+        Chart(temperatureSeries, id: \.date) { item in
+            LineMark(x: .value("Date", item.date), y: .value("C", item.value))
+                .foregroundStyle(Palette.deaths)
+                .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round))
+                .interpolationMethod(.monotone)
+            PointMark(x: .value("Date", item.date), y: .value("C", item.value))
+                .foregroundStyle(Palette.deaths)
+                .symbolSize(60)
+        }
+        .chartYScale(domain: .automatic(includesZero: false))
+        .chartYAxis {
+            AxisMarks(position: .leading) { value in
+                AxisGridLine().foregroundStyle(Palette.grid)
+                AxisValueLabel {
+                    if let temp = value.as(Double.self) {
+                        Text(loc.decimal(temp, places: 0))
+                            .typoStatic(.micro)
+                            .foregroundStyle(Palette.mutedInk)
+                    }
+                }
+            }
+        }
+        .chartXAxis { dateAxis(loc.style, desiredCount: 3) }
+        .frame(height: 130)
+        .padding(.trailing, 22)
+        .padding(.vertical, 6)
     }
 }
 
 private struct CaseLogRow: View {
-    @Environment(Preferences.self) private var preferences
     @Environment(LocalizationManager.self) private var loc
     let entry: CaseLogEntry
 
@@ -118,15 +181,9 @@ private struct CaseLogRow: View {
                 Text(loc.t(entry.outcome.headlineKey))
                     .typo(.subheadline).fontWeight(.medium)
                 Spacer(minLength: 6)
-                if let temperature = entry.temperature {
-                    Text(preferences.temperatureUnit.display(celsius: temperature))
-                        .typo(.caption).fontWeight(.medium)
-                        .monospacedDigit()
-                        .foregroundStyle(.secondary)
-                }
+                Text(loc.time(entry.date))
+                    .typo(.micro).foregroundStyle(.secondary).monospacedDigit()
             }
-            Text(loc.dateTime(entry.date))
-                .typo(.micro).foregroundStyle(.secondary)
 
             if !symptoms.isEmpty {
                 HStack(spacing: 6) {
@@ -145,5 +202,88 @@ private struct CaseLogRow: View {
             }
         }
         .padding(.vertical, 5)
+    }
+}
+
+/// One set of readings, coloured the way the tiles in My health are: green
+/// while normal, orange then red as they move out of range.
+private struct VitalsLogRow: View {
+    @Environment(LocalizationManager.self) private var loc
+    let entry: VitalsEntry
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(Palette.cases)
+                    .frame(width: 3, height: 14)
+                Text(loc.t("vital.section"))
+                    .typo(.subheadline).fontWeight(.medium)
+                Spacer(minLength: 6)
+                Text(loc.time(entry.date))
+                    .typo(.micro).foregroundStyle(.secondary).monospacedDigit()
+            }
+
+            FlowReadings(entry: entry)
+
+            if !entry.note.isEmpty {
+                Text(entry.note).typo(.caption).italic()
+            }
+        }
+        .padding(.vertical, 5)
+    }
+}
+
+private struct FlowReadings: View {
+    @Environment(Preferences.self) private var preferences
+    @Environment(LocalizationManager.self) private var loc
+    let entry: VitalsEntry
+
+    var body: some View {
+        // Adaptive columns so a row of readings wraps instead of truncating at
+        // large Dynamic Type.
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 108), spacing: 8)],
+                  alignment: .leading, spacing: 6) {
+            if let systolic = entry.systolic, let diastolic = entry.diastolic {
+                reading(label: loc.t("vital.bloodPressure"),
+                        value: "\(loc.num(Int(systolic)))/\(loc.num(Int(diastolic)))",
+                        status: worse(VitalKind.systolic.status(systolic),
+                                      VitalKind.diastolic.status(diastolic)))
+            }
+            ForEach(VitalKind.allCases.filter(shouldShow)) { kind in
+                if let value = entry.value(for: kind) {
+                    reading(label: loc.t(kind.labelKey),
+                            value: kind == .temperature
+                                ? preferences.temperatureUnit.display(celsius: value)
+                                : "\(loc.decimal(value, places: kind.decimals)) \(loc.t(kind.unitKey))",
+                            status: kind.status(value))
+                }
+            }
+        }
+    }
+
+    /// Systolic and diastolic are shown as one blood-pressure reading above,
+    /// unless only one of the pair was recorded.
+    private func shouldShow(_ kind: VitalKind) -> Bool {
+        switch kind {
+        case .systolic: entry.diastolic == nil
+        case .diastolic: entry.systolic == nil
+        default: true
+        }
+    }
+
+    private func worse(_ a: MeasureStatus, _ b: MeasureStatus) -> MeasureStatus {
+        a.risk >= b.risk ? a : b
+    }
+
+    private func reading(label: String, value: String, status: MeasureStatus) -> some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(value)
+                .typo(.caption).fontWeight(.semibold).monospacedDigit()
+                .foregroundStyle(Palette.riskInk(status.risk))
+            Text(label)
+                .typo(.micro).foregroundStyle(.secondary)
+                .lineLimit(2)
+        }
     }
 }
