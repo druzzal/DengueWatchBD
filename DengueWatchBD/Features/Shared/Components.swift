@@ -19,20 +19,47 @@ struct SectionHeader<Trailing: View>: View {
     }
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: Space.tight) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title).typo(.sectionTitle)
-                if let subtitle {
-                    Text(subtitle)
-                        .typo(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            Spacer(minLength: Space.tight)
-            trailing
+        // Side by side while both fit; otherwise the badge drops below rather
+        // than squeezing the title into two lines. "Today in Bangladesh" beside
+        // a source badge is exactly wide enough to need this.
+        ViewThatFits(in: .horizontal) {
+            sideBySide
+            stacked
         }
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
+    }
+
+    private var sideBySide: some View {
+        HStack(alignment: .firstTextBaseline, spacing: Space.tight) {
+            titleBlock
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+            Spacer(minLength: Space.tight)
+            trailing
+        }
+    }
+
+    private var stacked: some View {
+        VStack(alignment: .leading, spacing: Space.tight) {
+            HStack { titleBlock; Spacer(minLength: 0) }
+            // A header with no accessory must not gain a gap where one would
+            // have gone; most headers in the app are title-only.
+            if !(Trailing.self is EmptyView.Type) {
+                HStack { trailing; Spacer(minLength: 0) }
+            }
+        }
+    }
+
+    private var titleBlock: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title).typo(.sectionTitle)
+            if let subtitle {
+                Text(subtitle)
+                    .typo(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
     }
 }
 

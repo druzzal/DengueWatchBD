@@ -349,6 +349,15 @@ final class DengueStore {
     var areasByCases: [Area] { areas.sorted { $0.seasonCases > $1.seasonCases } }
     var areasByRisk: [Area] { areas.sorted { $0.incidencePer100k > $1.incidencePer100k } }
 
+    /// The home screen's national snapshot, with "unknown" kept distinct from
+    /// "zero". See `NationalSnapshot`.
+    var snapshot: NationalSnapshot {
+        NationalSnapshot.from(headline: headline,
+                              national: national,
+                              areas: areas,
+                              lastUpdated: lastUpdated)
+    }
+
     var hotspots: [Area] { areasByRisk.filter { $0.risk >= .high } }
 
     /// The hotspots to arm geofences against, or `nil` when there is no area

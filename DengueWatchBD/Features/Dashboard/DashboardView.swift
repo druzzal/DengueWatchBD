@@ -136,10 +136,10 @@ struct DashboardView: View {
     @ViewBuilder
     private var loadedContent: some View {
         riskSection
+        activitySection
         whatChangedSection
         myHealthSection
         topAreasSection
-        activitySection
         trendSection
         mapSection
         provenanceSection
@@ -396,38 +396,67 @@ struct DashboardView: View {
         }
     }
 
+    /// The brief's "Today in Bangladesh": the national snapshot, led by the
+    /// freshest figure DGHS publishes rather than by the season total.
+    ///
+    /// Every tile here can be absent. A tile with nothing behind it is left
+    /// out rather than shown as zero — see `NationalSnapshot` for why that
+    /// distinction is not pedantry.
     private var activitySection: some View {
-        VStack(alignment: .leading, spacing: Space.row) {
-            SectionHeader(loc.t("activity.title"), subtitle: loc.t("activity.subtitle")) {
+        let snapshot = store.snapshot
+        return VStack(alignment: .leading, spacing: Space.row) {
+            SectionHeader(activityTitle, subtitle: activitySubtitle) {
                 SourceBadge(kind: .official, detail: "DGHS")
             }
 
             LazyVGrid(columns: statColumns, spacing: Space.row) {
-                StatCard(label: loc.t("dash.stat.cases"),
-                         value: loc.num(store.seasonCases),
-                         caption: store.national.first.map { loc.t("activity.since", loc.dayMonth($0.date)) },
-                         accent: Palette.cases,
-                         series: store.nationalRecent(30).map { Double($0.cases) })
-                StatCard(label: loc.t("activity.thisWeek"),
-                         value: loc.num(store.last7Cases),
-                         change: store.weeklyCaseChange,
-                         caption: loc.t("dash.stat.vsLastWeek"),
-                         accent: Palette.cases,
-                         series: store.nationalRecent(14).map { Double($0.cases) })
-                // Replaces the old hospital-census card. This feed carries no
-                // bed occupancy, and the 24-hour count is what DGHS leads its
-                // daily release with anyway — the freshest figure on the screen.
-                StatCard(label: loc.t("dash.stat.last24"),
-                         value: loc.num(store.cases24h),
-                         caption: loc.t("dash.stat.last24Deaths", loc.num(store.deaths24h)),
-                         accent: Palette.admitted,
-                         series: store.nationalRecent(14).map { Double($0.cases) })
-                StatCard(label: loc.t("activity.hotspots"),
-                         value: loc.num(store.hotspots.count),
-                         caption: loc.t("activity.hotspotsCaption"),
-                         accent: Palette.deaths)
+                if let cases24 = snapshot.last24Cases {
+                    StatCard(label: loc.t("dash.stat.last24"),
+                             value: loc.num(cases24),
+                             // Omitted rather than "0 deaths" when the figure
+                             // never arrived: that reads as good news.
+                             caption: snapshot.last24Deaths.map {
+                                 loc.t("dash.stat.last24Deaths", loc.num($0))
+                             },
+                             accent: Palette.admitted,
+                             series: store.nationalRecent(14).map { Double($0.cases) })
+                }
+                if let week = snapshot.weekCases {
+                    StatCard(label: loc.t("activity.thisWeek"),
+                             value: loc.num(week),
+                             change: snapshot.weeklyChange,
+                             caption: snapshot.weeklyChange == nil ? nil : loc.t("dash.stat.vsLastWeek"),
+                             accent: Palette.cases,
+                             series: store.nationalRecent(14).map { Double($0.cases) })
+                }
+                if let hotspots = snapshot.highRiskAreas {
+                    StatCard(label: loc.t("activity.hotspots"),
+                             value: loc.num(hotspots),
+                             // The feed's reporting areas, not the country's 64
+                             // districts. The app has no district breakdown, so
+                             // it cannot use a district denominator.
+                             caption: loc.t("activity.hotspotsCaption", loc.num(snapshot.reportingAreas)),
+                             accent: Palette.deaths)
+                }
+                if let season = snapshot.seasonCases {
+                    StatCard(label: loc.t("dash.stat.cases"),
+                             value: loc.num(season),
+                             caption: snapshot.seasonStart.map { loc.t("activity.since", loc.dayMonth($0)) },
+                             accent: Palette.cases,
+                             series: store.nationalRecent(30).map { Double($0.cases) })
+                }
             }
         }
+    }
+
+    /// "Today" only when the figures are actually from today. Ten-day-old
+    /// numbers under a "Today" heading would be the app misreporting DGHS.
+    private var activityTitle: String {
+        store.isStale ? loc.t("activity.title.stale") : loc.t("activity.title")
+    }
+
+    private var activitySubtitle: String? {
+        store.lastUpdated.map { loc.t("activity.reported", loc.dayMonth($0)) }
     }
 
     private var trendSection: some View {
