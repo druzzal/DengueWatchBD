@@ -429,6 +429,26 @@ struct DashboardView: View {
                              accent: Palette.cases,
                              series: store.nationalRecent(14).map { Double($0.cases) })
                 }
+                if let season = snapshot.seasonCases {
+                    StatCard(label: loc.t("dash.stat.cases"),
+                             value: loc.num(season),
+                             caption: snapshot.seasonStart.map { loc.t("activity.since", loc.dayMonth($0)) },
+                             accent: Palette.cases,
+                             series: store.nationalRecent(30).map { Double($0.cases) })
+                }
+                if let deaths = snapshot.seasonDeaths {
+                    // Beside the season case count, which is the figure it
+                    // belongs next to.
+                    StatCard(label: loc.t("dash.stat.seasonDeaths"),
+                             value: loc.num(deaths),
+                             caption: snapshot.seasonStart.map { loc.t("activity.since", loc.dayMonth($0)) },
+                             accent: Palette.deaths,
+                             // The seven-day average, as DeathsCard plots it.
+                             // Raw daily deaths are single digits and would be
+                             // noise at this size, not a trend.
+                             series: Array(Series.movingAverage(store.national.map(\.deaths),
+                                                                window: 7).suffix(30)))
+                }
                 if let hotspots = snapshot.highRiskAreas {
                     StatCard(label: loc.t("activity.hotspots"),
                              value: loc.num(hotspots),
@@ -437,13 +457,6 @@ struct DashboardView: View {
                              // it cannot use a district denominator.
                              caption: loc.t("activity.hotspotsCaption", loc.num(snapshot.reportingAreas)),
                              accent: Palette.deaths)
-                }
-                if let season = snapshot.seasonCases {
-                    StatCard(label: loc.t("dash.stat.cases"),
-                             value: loc.num(season),
-                             caption: snapshot.seasonStart.map { loc.t("activity.since", loc.dayMonth($0)) },
-                             accent: Palette.cases,
-                             series: store.nationalRecent(30).map { Double($0.cases) })
                 }
             }
         }

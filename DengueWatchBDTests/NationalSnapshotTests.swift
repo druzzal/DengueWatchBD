@@ -88,6 +88,24 @@ final class NationalSnapshotTests: XCTestCase {
         XCTAssertEqual(result.last24Deaths, 0)
     }
 
+    func testAMissingSeasonDeathsFigureIsNotZeroDeaths() {
+        XCTAssertNil(snapshot().seasonDeaths)
+        XCTAssertNil(snapshot(headline: headline(ytdCases: 41032)).seasonDeaths,
+                     "a headline that omits deaths has not reported none")
+    }
+
+    func testSeasonDeathsPrefersTheHeadlineThenSumsTheSeries() {
+        XCTAssertEqual(snapshot(headline: headline(ytdDeaths: 113)).seasonDeaths, 113)
+        // The daily series carries a row only for days a death occurred, so
+        // summing it gives the season total.
+        let counts = [10, 20, 30]
+        XCTAssertEqual(snapshot(national: series(counts, deaths: [1, 0, 2])).seasonDeaths, 3)
+    }
+
+    func testAReportedZeroSeasonDeathsIsKept() {
+        XCTAssertEqual(snapshot(headline: headline(ytdDeaths: 0)).seasonDeaths, 0)
+    }
+
     // MARK: - Where each figure comes from
 
     func testTheHeadlineOutranksTheSeries() {

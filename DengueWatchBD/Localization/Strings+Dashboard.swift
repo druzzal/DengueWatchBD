@@ -41,6 +41,7 @@ extension Strings {
         "dash.about.a11y": "About this data",
 
         "dash.stat.cases": "Cases this season",
+        "dash.stat.seasonDeaths": "Deaths this season",
         "dash.stat.vsLastWeek": "vs last week",
         "dash.delta.a11y": "%@ versus the previous week",
 
@@ -108,6 +109,7 @@ extension Strings {
         "dash.about.a11y": "এই তথ্য সম্পর্কে",
 
         "dash.stat.cases": "এ মৌসুমে আক্রান্ত",
+        "dash.stat.seasonDeaths": "এ মৌসুমে মৃত্যু",
         "dash.stat.vsLastWeek": "গত সপ্তাহের তুলনায়",
         "dash.delta.a11y": "গত সপ্তাহের তুলনায় %@",
 

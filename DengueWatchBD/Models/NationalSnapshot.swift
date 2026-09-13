@@ -15,6 +15,9 @@ import Foundation
 struct NationalSnapshot: Equatable {
     /// Cases since the start of the season.
     let seasonCases: Int?
+    /// Deaths since the start of the season. The daily deaths series carries a
+    /// row only for days a death occurred, so summing it is a season total.
+    let seasonDeaths: Int?
     let seasonStart: Date?
 
     /// The last seven days, and how that compares with the seven before it.
@@ -40,11 +43,11 @@ struct NationalSnapshot: Equatable {
     let reportedFor: Date?
 
     var hasAnything: Bool {
-        seasonCases != nil || weekCases != nil || last24Cases != nil || highRiskAreas != nil
+        seasonCases != nil || seasonDeaths != nil || weekCases != nil || last24Cases != nil || highRiskAreas != nil
     }
 
     static let empty = NationalSnapshot(
-        seasonCases: nil, seasonStart: nil, weekCases: nil, weeklyChange: nil,
+        seasonCases: nil, seasonDeaths: nil, seasonStart: nil, weekCases: nil, weeklyChange: nil,
         last24Cases: nil, last24Deaths: nil, highRiskAreas: nil,
         reportingAreas: 0, reportedFor: nil)
 }
@@ -65,6 +68,7 @@ extension NationalSnapshot {
         // headline leaves out. Summing an empty series gives 0, which would be
         // a figure we never received dressed up as a figure of none.
         let season = headline?.ytdCases ?? (national.isEmpty ? nil : Series.sum(national.map(\.cases)))
+        let seasonDeaths = headline?.ytdDeaths ?? (national.isEmpty ? nil : Series.sum(national.map(\.deaths)))
 
         let last7 = national.isEmpty ? nil : Series.sum(national.suffix(7).map(\.cases))
         let previous7 = Series.sum(national.dropLast(7).suffix(7).map(\.cases))
@@ -75,6 +79,7 @@ extension NationalSnapshot {
 
         return NationalSnapshot(
             seasonCases: season,
+            seasonDeaths: seasonDeaths,
             seasonStart: national.first?.date,
             weekCases: last7,
             weeklyChange: change,
