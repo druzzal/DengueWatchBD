@@ -14,7 +14,7 @@ enum Strings {
 
     static let english: [String: String] = {
         var table = enCommon
-        for chunk in [enDashboard, enMap, enCheck, enPrevent, enCare, enAbout, enRedesign] {
+        for chunk in [enDashboard, enMap, enCheck, enPrevent, enCare, enAbout, enRedesign, enWHO] {
             table.merge(chunk) { _, new in new }
         }
         return table
@@ -22,7 +22,7 @@ enum Strings {
 
     static let bangla: [String: String] = {
         var table = bnCommon
-        for chunk in [bnDashboard, bnMap, bnCheck, bnPrevent, bnCare, bnAbout, bnRedesign] {
+        for chunk in [bnDashboard, bnMap, bnCheck, bnPrevent, bnCare, bnAbout, bnRedesign, bnWHO] {
             table.merge(chunk) { _, new in new }
         }
         return table

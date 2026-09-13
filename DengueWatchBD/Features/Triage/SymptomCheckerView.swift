@@ -79,7 +79,12 @@ struct SymptomCheckerView: View {
                         log.add(CaseLogEntry(symptomIDs: Array(selected),
                                              outcomeRawValue: outcome.rawValue,
                                              areaCode: preferences.homeAreaCode,
-                                             note: note))
+                                             note: note,
+                                             feverDaysAgo: hasFeverDate ? daysSinceFever : nil,
+                                             isPregnant: context.isPregnant,
+                                             isUnderFiveOrOverSixty: context.isUnderFiveOrOverSixty,
+                                             hasChronicCondition: context.hasChronicCondition,
+                                             hadDengueBefore: context.hadDengueBefore))
                     }
                 )
             }

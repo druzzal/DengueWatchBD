@@ -33,6 +33,7 @@ struct MyHealthView: View {
                         ScreenTitle(text: loc.t("tab.health"))
                     }
                     todayCard
+                    feverTimelineCard
                     carePlanCard
                     vitalsCard
                     labCard
@@ -115,47 +116,55 @@ struct MyHealthView: View {
 
     // MARK: - Care plan
 
-    /// The advice from the last symptom check, and — beside it, never folded
-    /// into it — any recent reading far enough out to be worth showing someone.
+    /// WHO's management group for what the reader recorded, with the readings
+    /// folded in.
     ///
-    /// The outcome is the triage engine's existing advice about what to do. It
-    /// is not a stage, and it is not reasoned from the lab results.
+    /// The plan is still driven by what they reported about themselves. Vital
+    /// signs can only raise the group, never lower it: a blood pressure inside
+    /// its range is not evidence that someone reporting warning signs is fine,
+    /// and must never be allowed to read as if it were.
     @ViewBuilder
     private var carePlanCard: some View {
         if let latest = caseLog.entries.first {
-            let urgent = latest.outcome >= .seeDoctorToday
-            CardSection(loc.t("care.plan.title"),
-                        subtitle: loc.t("care.plan.subtitle")) {
-                VStack(alignment: .leading, spacing: Space.row) {
-                    HStack(alignment: .top, spacing: Space.row) {
-                        Image(systemName: latest.outcome.symbolName)
-                            .font(.title3)
-                            .foregroundStyle(urgent ? Palette.riskInk(.high) : Color.secondary)
-                            .frame(width: 26)
-                            .accessibilityHidden(true)
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(loc.t(latest.outcome.headlineKey))
-                                .typo(.subheadline)
-                                .foregroundStyle(urgent ? Palette.riskInk(.high) : Color.primary)
-                                .fixedSize(horizontal: false, vertical: true)
-                            Text(loc.t(latest.outcome.summaryKey))
-                                .typo(.caption)
-                                .foregroundStyle(Color.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                    }
+            WHOCarePlanCard(plan: whoPlan(for: latest)) { showingCheck = true }
+        }
+    }
 
-                    let context = carePlanContext
-                    if context.hasAnything {
-                        InlineNote(symbol: "exclamationmark.triangle.fill",
-                                   detail: loc.t("care.plan.readings", readingNames(context)),
-                                   tint: Palette.riskInk(.high))
-                    }
-                    SecondaryActionButton(title: loc.t("care.plan.recheck"),
-                                          systemImage: "stethoscope") { showingCheck = true }
-                    InlineNote(symbol: "info.circle", detail: loc.t("care.plan.note"))
-                }
-            }
+    private func whoPlan(for entry: CaseLogEntry) -> WHOCarePlan {
+        WHOCarePlan.evaluate(symptoms: Set(entry.symptomIDs),
+                             vitals: recentVitals,
+                             context: entry.triageContext,
+                             feverDaysAgo: currentFeverDaysAgo(entry))
+    }
+
+    /// Readings only count towards the plan while they still describe now.
+    /// A blood pressure from last week says nothing about this afternoon.
+    private var recentVitals: VitalsEntry? {
+        guard let latest = vitals.latest else { return nil }
+        let age = Date().timeIntervalSince(latest.date)
+        return age <= CarePlanContext.recencyWindow ? latest : nil
+    }
+
+    /// Days of fever as of today, not as of the day the check was run — the
+    /// illness moves on even when the reader does not open the app.
+    private func currentFeverDaysAgo(_ entry: CaseLogEntry) -> Int? {
+        guard let started = entry.feverStarted else { return nil }
+        let calendar = Calendar.current
+        return calendar.dateComponents([.day],
+                                       from: calendar.startOfDay(for: started),
+                                       to: calendar.startOfDay(for: Date())).day
+    }
+
+    // MARK: - Fever timeline
+
+    @ViewBuilder
+    private var feverTimelineCard: some View {
+        if let entry = caseLog.entries.first,
+           let started = entry.feverStarted,
+           let daysAgo = currentFeverDaysAgo(entry) {
+            FeverTimelineCard(currentDay: daysAgo + 1,
+                              temperatures: vitals.series(for: .temperature),
+                              feverStarted: started)
         }
     }
 

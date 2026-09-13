@@ -10,6 +10,39 @@ struct CaseLogEntry: Identifiable, Codable, Hashable {
     var areaCode: String?
     var note: String = ""
 
+    /// Days since the fever began, zero-based, as the checker records it.
+    /// Nil when there was no fever to date from.
+    ///
+    /// Persisted so the fever timeline and the WHO plan survive the check that
+    /// produced them — without it, the day of illness is known for one screen
+    /// and then forgotten, which is the one number dengue care turns on.
+    /// Optional, so entries written before this existed still decode.
+    var feverDaysAgo: Int?
+
+    /// The co-existing conditions WHO singles out, as ticked at the time.
+    /// They decide the WHO management group, so the plan cannot be rebuilt
+    /// without them.
+    var isPregnant = false
+    var isUnderFiveOrOverSixty = false
+    var hasChronicCondition = false
+    var hadDengueBefore = false
+
+    var triageContext: TriageEngine.Context {
+        TriageEngine.Context(feverDaysAgo: feverDaysAgo,
+                             isPregnant: isPregnant,
+                             isUnderFiveOrOverSixty: isUnderFiveOrOverSixty,
+                             hasChronicCondition: hasChronicCondition,
+                             hadDengueBefore: hadDengueBefore)
+    }
+
+    /// The day the fever began, for the timeline.
+    var feverStarted: Date? {
+        feverDaysAgo.flatMap {
+            Calendar.current.date(byAdding: .day, value: -$0,
+                                  to: Calendar.current.startOfDay(for: date))
+        }
+    }
+
     var outcome: TriageOutcome { TriageOutcome(rawValue: outcomeRawValue) ?? .selfCare }
 }
 
