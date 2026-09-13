@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7a0c1f"/>
+      <stop offset="100%" stop-color="#1a0508"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="30%" cy="20%" r="60%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect x="0" y="0" width="1024" height="1024" fill="url(#bg)"/>
+  <circle cx="300" cy="230" r="420" fill="url(#glow)"/>
+
+  <g transform="translate(0,-75) scale(1.06)" transform-origin="512 512">
+  <circle cx="512" cy="560" r="250" fill="none" stroke="#2dd4bf" stroke-width="4" opacity="0.22"/>
+  <circle cx="512" cy="560" r="180" fill="none" stroke="#2dd4bf" stroke-width="4" opacity="0.3"/>
+  <path d="M672.7,368.5 A250,250 0 0 1 703.5,720.7" fill="none" stroke="#2dd4bf" stroke-width="10" stroke-linecap="round" opacity="0.85"/>
+
+  <g transform="rotate(-8 512 560)">
+    <path d="M540,520 C620,470 660,400 630,340 C600,400 560,460 540,520 Z" fill="#faf6f0" opacity="0.85"/>
+    <path d="M484,520 C404,470 364,400 394,340 C424,400 464,460 484,520 Z" fill="#faf6f0" opacity="0.85"/>
+    <line x1="535" y1="560" x2="640" y2="600" stroke="#faf6f0" stroke-width="7" stroke-linecap="round" opacity="0.9"/>
+    <line x1="535" y1="600" x2="660" y2="660" stroke="#faf6f0" stroke-width="7" stroke-linecap="round" opacity="0.9"/>
+    <line x1="535" y1="640" x2="650" y2="720" stroke="#faf6f0" stroke-width="7" stroke-linecap="round" opacity="0.9"/>
+    <line x1="489" y1="560" x2="384" y2="600" stroke="#faf6f0" stroke-width="7" stroke-linecap="round" opacity="0.9"/>
+    <line x1="489" y1="600" x2="364" y2="660" stroke="#faf6f0" stroke-width="7" stroke-linecap="round" opacity="0.9"/>
+    <line x1="489" y1="640" x2="374" y2="720" stroke="#faf6f0" stroke-width="7" stroke-linecap="round" opacity="0.9"/>
+    <ellipse cx="512" cy="580" rx="40" ry="135" fill="#faf6f0"/>
+    <circle cx="512" cy="440" r="38" fill="#faf6f0"/>
+    <line x1="512" y1="404" x2="474" y2="340" stroke="#faf6f0" stroke-width="9" stroke-linecap="round"/>
+    <circle cx="615" cy="345" r="20" fill="#2dd4bf" stroke="#1a0508" stroke-width="4"/>
+  </g>
+  </g>
+</svg>
