@@ -2,6 +2,9 @@ import Foundation
 
 extension Strings {
     static let enCheck: [String: String] = [
+        "care.plan.readings": "Some readings you recorded in the last few days are well outside the usual range: %@. Show them to a doctor along with how you feel. This app does not read them for you.",
+        "care.plan.recheck": "Check symptoms again",
+
         "result.temperatureMovedNote": "Recording your temperature? Use Vital signs in My health, where it is charted with your other readings.",
 
         "status.normal": "In the usual range",
@@ -59,7 +62,7 @@ extension Strings {
         "health.today.title": "Today",
         "health.today.subtitle": "Keeping a daily record makes a pattern visible.",
         "health.today.symptoms": "Record today's symptoms",
-        "health.today.vitals": "Record today's readings",
+        "health.today.vitals": "Record today's vital signs",
         "health.today.done": "Done",
         "health.today.todo": "Not yet",
         "health.latest.title": "Latest assessment",
@@ -222,6 +225,9 @@ extension Strings {
     ]
 
     static let bnCheck: [String: String] = [
+        "care.plan.readings": "গত কয়েক দিনে লেখা কিছু পরিমাপ স্বাভাবিক সীমার অনেক বাইরে: %@। আপনার শারীরিক অবস্থার সঙ্গে এগুলোও চিকিৎসককে দেখান। এই অ্যাপ আপনার হয়ে এগুলো ব্যাখ্যা করে না।",
+        "care.plan.recheck": "আবার উপসর্গ পরীক্ষা করুন",
+
         "result.temperatureMovedNote": "তাপমাত্রা লিখতে চান? আমার স্বাস্থ্য-এর জীবনচিহ্ন ব্যবহার করুন, সেখানে অন্য পরিমাপের সঙ্গে এটি গ্রাফে দেখা যায়।",
 
         "status.normal": "স্বাভাবিক সীমার মধ্যে",
@@ -279,7 +285,7 @@ extension Strings {
         "health.today.title": "আজ",
         "health.today.subtitle": "প্রতিদিন লিখে রাখলে ধরনটা বোঝা যায়।",
         "health.today.symptoms": "আজকের উপসর্গ লিখুন",
-        "health.today.vitals": "আজকের পরিমাপ লিখুন",
+        "health.today.vitals": "আজকের জীবনচিহ্ন লিখুন",
         "health.today.done": "হয়েছে",
         "health.today.todo": "এখনো হয়নি",
         "health.latest.title": "সর্বশেষ মূল্যায়ন",

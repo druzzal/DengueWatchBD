@@ -105,12 +105,15 @@ struct InlineNote: View {
     var symbol: String = "info.circle"
     var title: String?
     var detail: String
+    /// Nil keeps the quiet grey of a footnote. A tint marks the note as
+    /// something to act on — never louder than the thing it refers to.
+    var tint: Color?
 
     var body: some View {
         HStack(alignment: .top, spacing: Space.tight + 2) {
             Image(systemName: symbol)
                 .typo(.caption)
-                .foregroundStyle(Palette.mutedInk)
+                .foregroundStyle(tint ?? Palette.mutedInk)
                 .padding(.top, 1)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 3) {
@@ -125,7 +128,7 @@ struct InlineNote: View {
         }
         .padding(Space.row)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Palette.mutedInk.opacity(0.07),
+        .background((tint ?? Palette.mutedInk).opacity(tint == nil ? 0.07 : 0.12),
                     in: RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
         .accessibilityElement(children: .combine)
     }

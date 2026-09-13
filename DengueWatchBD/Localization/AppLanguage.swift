@@ -115,6 +115,16 @@ struct NumberStyle: Sendable, Equatable {
         return digits("\(day), \(time)")
     }
 
+    /// Joins names the way the chosen language joins them, not the way the
+    /// device does. The in-app language toggle is independent of the system
+    /// locale, so `ListFormatter.localizedString(byJoining:)` drops an English
+    /// "and" into the middle of a Bengali sentence.
+    func list(_ items: [String]) -> String {
+        let formatter = ListFormatter()
+        formatter.locale = locale
+        return formatter.string(from: items) ?? items.joined(separator: ", ")
+    }
+
     func relative(_ date: Date) -> String {
         let formatter = RelativeDateTimeFormatter()
         formatter.locale = locale

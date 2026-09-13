@@ -165,6 +165,23 @@ struct MyHealthView: View {
         return unit.fromCelsius(range.lowerBound)...unit.fromCelsius(range.upperBound)
     }
 
+    /// Recent readings worth mentioning beside the advice. Empty when there is
+    /// nothing recent and far enough out to raise.
+    private var carePlanContext: CarePlanContext {
+        CarePlanContext.from(
+            vitals: vitals.entries.flatMap { entry in
+                VitalKind.allCases.compactMap { kind in
+                    entry.value(for: kind).map { (kind: kind, value: $0, date: entry.date) }
+                }
+            },
+            labs: labs.reports.flatMap { report in
+                LabMeasure.allCases.compactMap { measure in
+                    report.value(for: measure).map { (measure: measure, value: $0, date: report.date) }
+                }
+            }
+        )
+    }
+
     // MARK: - Care plan
 
     /// What to do now, taken from the triage outcome the engine already
@@ -196,10 +213,28 @@ struct MyHealthView: View {
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                     }
+                    let context = carePlanContext
+                    if context.hasAnything {
+                        // Raised beside the advice, never folded into it: the
+                        // outcome above still comes from symptoms alone.
+                        InlineNote(symbol: "exclamationmark.triangle.fill",
+                                   detail: loc.t("care.plan.readings", readingNames(context)),
+                                   tint: Palette.riskInk(.high))
+                        SecondaryActionButton(title: loc.t("care.plan.recheck"),
+                                              systemImage: "stethoscope") { showingCheck = true }
+                    }
                     InlineNote(symbol: "info.circle", detail: loc.t("care.plan.note"))
                 }
             }
         }
+    }
+
+    /// The measures by name, so the line says which readings rather than
+    /// leaving the reader to hunt for them.
+    private func readingNames(_ context: CarePlanContext) -> String {
+        let names = context.notableVitals.map { loc.t($0.labelKey) }
+            + context.notableLabs.map { loc.t($0.labelKey) }
+        return loc.style.list(names)
     }
 
     private func outcomeRisk(_ outcome: TriageOutcome) -> RiskLevel {
