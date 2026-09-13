@@ -16,6 +16,12 @@ extension UIColor {
 }
 
 extension Color {
+    /// A fixed colour, the same in both appearances. Used by the Broadsheet
+    /// tokens, which describe a printed page and have no dark variant.
+    init(hex: String) { self.init(uiColor: UIColor(hex: hex)) }
+}
+
+extension Color {
     /// A colour with separately chosen light and dark steps. Dark mode is a
     /// selected palette, never an automatic flip of the light one.
     init(light: String, dark: String) {

@@ -63,4 +63,10 @@ enum TemperatureUnit: String, CaseIterable, Identifiable, Sendable {
     func display(celsius: Double) -> String {
         String(format: "%.1f%@", fromCelsius(celsius), symbol)
     }
+
+    /// The same reading in the reader's own numerals. `String(format:)` always
+    /// writes Western digits, which put "38.4" beside "৯৬/৬৪" on the same card.
+    func display(celsius: Double, style: NumberStyle) -> String {
+        style.decimal(fromCelsius(celsius), places: 1) + symbol
+    }
 }

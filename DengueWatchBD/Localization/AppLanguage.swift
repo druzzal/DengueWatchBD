@@ -95,6 +95,11 @@ struct NumberStyle: Sendable, Equatable {
         digits(date.formatted(.dateTime.day().month(.abbreviated).hour().minute().locale(locale)))
     }
 
+    /// Weekday and date, as the Broadsheet header kicker sets it: "Fri 12 Sep".
+    func weekdayDate(_ date: Date) -> String {
+        digits(date.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated).locale(locale)))
+    }
+
     /// Clock time alone, for a record that already states the day.
     func time(_ date: Date) -> String {
         digits(date.formatted(.dateTime.hour().minute().locale(locale)))

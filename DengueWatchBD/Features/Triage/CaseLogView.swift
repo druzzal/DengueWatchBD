@@ -287,7 +287,7 @@ private struct FlowReadings: View {
                 if let value = entry.value(for: kind) {
                     reading(label: loc.t(kind.labelKey),
                             value: kind == .temperature
-                                ? preferences.temperatureUnit.display(celsius: value)
+                                ? preferences.temperatureUnit.display(celsius: value, style: loc.style)
                                 : "\(loc.decimal(value, places: kind.decimals)) \(loc.t(kind.unitKey))",
                             status: kind.status(value))
                 }

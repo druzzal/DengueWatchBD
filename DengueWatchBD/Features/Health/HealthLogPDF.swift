@@ -143,7 +143,7 @@ private struct HealthLogDocument: View {
         for kind in VitalKind.allCases where !(kind == .systolic || kind == .diastolic) {
             guard let value = entry.value(for: kind) else { continue }
             let shown = kind == .temperature
-                ? unit.display(celsius: value)
+                ? unit.display(celsius: value, style: loc.style)
                 : "\(loc.decimal(value, places: kind.decimals)) \(loc.t(kind.unitKey))"
             parts.append("\(loc.t(kind.labelKey)) \(shown)")
         }

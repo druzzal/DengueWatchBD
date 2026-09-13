@@ -11,6 +11,15 @@
 	<array>
 		<string>bd.uzzal.denguewatch.refresh</string>
 	</array>
+	<!-- Source Serif 4 (SIL OFL) — the Broadsheet system's typeface. Static
+	     instances, because a variable font gives iOS only its default
+	     weight. -->
+	<key>UIAppFonts</key>
+	<array>
+		<string>SourceSerif4-Regular.ttf</string>
+		<string>SourceSerif4-Semibold.ttf</string>
+		<string>SourceSerif4-It.ttf</string>
+	</array>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>
