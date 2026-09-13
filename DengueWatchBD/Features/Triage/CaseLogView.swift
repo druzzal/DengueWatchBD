@@ -145,24 +145,24 @@ struct CaseLogView: View {
         let shortSpan = temperatureSpanInDays <= 2
         return Chart(temperatureSeries, id: \.date) { item in
             LineMark(x: .value("Date", item.date), y: .value("C", item.value))
-                .foregroundStyle(Palette.deaths)
+                .foregroundStyle(Palette.accent)
                 .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round))
                 .interpolationMethod(.monotone)
             PointMark(x: .value("Date", item.date), y: .value("C", item.value))
-                .foregroundStyle(Palette.deaths)
+                .foregroundStyle(Palette.accent)
                 .symbolSize(60)
         }
         .chartYScale(domain: .automatic(includesZero: false))
         .chartYAxis {
             AxisMarks(position: .leading) { value in
-                AxisGridLine().foregroundStyle(Palette.grid)
+                AxisGridLine().foregroundStyle(Broadsheet.neutral300)
                 AxisValueLabel {
                     if let temp = value.as(Double.self) {
                         // A fever moves in tenths. Whole degrees label a
                         // two-reading chart "39, 39, 39, 39, 39".
                         Text(style.decimal(temp, places: 1))
                             .typoStatic(.micro)
-                            .foregroundStyle(Palette.mutedInk)
+                            .foregroundStyle(Broadsheet.neutral600)
                     }
                 }
             }
@@ -176,7 +176,7 @@ struct CaseLogView: View {
                         if let date = value.as(Date.self) {
                             Text(style.dayMonth(date))
                                 .typoStatic(.micro)
-                                .foregroundStyle(Palette.mutedInk)
+                                .foregroundStyle(Broadsheet.neutral600)
                         }
                     }
                 }
@@ -196,10 +196,8 @@ private struct CaseLogRow: View {
 
     private var accent: Color {
         switch entry.outcome {
-        case .selfCare: Palette.downIsGood
-        case .testAdvised: Palette.riskTint(.moderate)
-        case .seeDoctorToday: Palette.riskTint(.high)
-        case .emergency: Palette.riskTint(.severe)
+        case .selfCare, .testAdvised: Broadsheet.neutral600
+        case .seeDoctorToday, .emergency: Broadsheet.alarm700
         }
     }
 
@@ -248,7 +246,7 @@ private struct VitalsLogRow: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
                 RoundedRectangle(cornerRadius: 2)
-                    .fill(Palette.cases)
+                    .fill(Palette.accent)
                     .frame(width: 3, height: 14)
                 Text(loc.t("vital.section"))
                     .typo(.subheadline).fontWeight(.medium)
@@ -313,7 +311,7 @@ private struct FlowReadings: View {
         VStack(alignment: .leading, spacing: 1) {
             Text(value)
                 .typo(.caption).fontWeight(.semibold).monospacedDigit()
-                .foregroundStyle(Palette.riskInk(status.risk))
+                .foregroundStyle(Broadsheet.statusInk(status))
             Text(label)
                 .typo(.micro).foregroundStyle(.secondary)
                 .lineLimit(2)
@@ -336,7 +334,7 @@ private struct LabLogRow: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
                 RoundedRectangle(cornerRadius: 2)
-                    .fill(Palette.admitted)
+                    .fill(Palette.accent)
                     .frame(width: 3, height: 14)
                 Text(loc.t("lab.section"))
                     .typo(.subheadline).fontWeight(.medium)
@@ -352,7 +350,7 @@ private struct LabLogRow: View {
                         VStack(alignment: .leading, spacing: 1) {
                             Text("\(loc.decimal(value, places: measure.decimals)) \(loc.t(measure.unitKey))")
                                 .typo(.caption).fontWeight(.semibold).monospacedDigit()
-                                .foregroundStyle(Palette.riskInk(measure.status(value).risk))
+                                .foregroundStyle(Broadsheet.statusInk(measure.status(value)))
                             Text(loc.t(measure.labelKey))
                                 .typo(.micro).foregroundStyle(.secondary).lineLimit(2)
                         }
@@ -387,11 +385,11 @@ private struct FlowTests: View {
                           ? "exclamationmark.circle.fill" : "checkmark.circle")
                         .typo(.micro)
                         .foregroundStyle(item.result == .positive
-                                         ? Palette.riskInk(.high) : Palette.mutedInk)
+                                         ? Broadsheet.alarm700 : Broadsheet.neutral600)
                     Text("\(loc.t(item.test.labelKey)) \(loc.t(item.result.labelKey))")
                         .typo(.micro)
                         .foregroundStyle(item.result == .positive
-                                         ? Palette.riskInk(.high) : .secondary)
+                                         ? Broadsheet.alarm700 : Broadsheet.neutral700)
                         .lineLimit(2)
                 }
                 .accessibilityElement(children: .combine)

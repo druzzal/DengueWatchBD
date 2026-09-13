@@ -1,8 +1,15 @@
 import SwiftUI
 
-/// The Broadsheet design system, as specified in the "My Health" design
-/// bundle: newsprint — near-black serif on paper, with the two process inks
-/// used sparingly as spot colour.
+/// The Broadsheet palette, from the "My Health" design bundle: newsprint —
+/// near-black ink on paper, with the two process inks used sparingly as spot
+/// colour.
+///
+/// Colour only, and only the clinical part of it. The tab's type, components
+/// and interaction colour are the app's own, so it reads as the same app as
+/// the surveillance screens. What Broadsheet supplies is what those screens'
+/// palette cannot: a system with exactly one alarm colour and no success
+/// colour, so a reading that needs attention is the only coloured thing on
+/// the screen.
 ///
 /// Scoped to the My Health tab. The surveillance screens keep the app's own
 /// palette, because their four-band risk scale (low → severe) is load-bearing
@@ -52,26 +59,6 @@ enum Broadsheet {
     static let alarm800 = Color(hex: "#790e3d")
     static let alarm900 = Color(hex: "#4b1528")
 
-    // MARK: - Geometry
-
-    /// "Nothing is pill-shaped and nothing is heavily rounded — this is a
-    /// print system."
-    enum Radius {
-        static let small: CGFloat = 1
-        static let card: CGFloat = 2
-        static let large: CGFloat = 4
-    }
-
-    /// Screen side padding, and the section rhythm above it.
-    enum Space {
-        static let screen: CGFloat = 22
-        static let section: CGFloat = 18
-        static let card: CGFloat = 14
-        static let grid: CGFloat = 10
-        static let row: CGFloat = 10
-        static let tight: CGFloat = 5
-    }
-
     // MARK: - Status colour
 
     /// The one place the no-green rule is enforced.
@@ -86,90 +73,9 @@ enum Broadsheet {
         }
     }
 
-    /// The kicker's tracking, which Latin wants and Bengali does not.
-    ///
-    /// Bengali is a connected script: letterspacing pulls its conjuncts apart
-    /// and makes the label harder to read, not more deliberate. Decided from
-    /// the string rather than the environment so it is safe to call anywhere,
-    /// including inside a chart builder.
-    static func kickerTracking(_ text: String) -> CGFloat {
-        let bengali = 0x0980...0x09FF
-        return text.unicodeScalars.contains { bengali.contains(Int($0.value)) } ? 0 : 2.0
-    }
-
     /// Ink for the value itself, which is heavier than its status line.
     static func valueInk(_ status: MeasureStatus?) -> Color {
         guard let status, status != .normal else { return ink }
         return alarm700
-    }
-}
-
-// MARK: - Typeface
-
-extension Broadsheet {
-    /// Source Serif 4, bundled. "No sans-serif anywhere, including UI chrome
-    /// — the serif is the chrome."
-    ///
-    /// Sized with `relativeTo:` so Dynamic Type still scales the whole scale,
-    /// which the bundle requires.
-    static func serif(_ size: CGFloat,
-                      semibold: Bool = false,
-                      italic: Bool = false,
-                      relativeTo style: Font.TextStyle = .body) -> Font {
-        let name = italic ? "SourceSerif4-It"
-            : (semibold ? "SourceSerif4-Semibold" : "SourceSerif4-Regular")
-        return .custom(name, size: size, relativeTo: style)
-    }
-
-    /// The type roles from the bundle's mobile scale.
-    enum Role {
-        case screenTitle        // 34 / 600
-        case screenTitleTwoLine // 32 / 600
-        case heroMetric         // 46 / 600
-        case cardMetric         // 27 / 600
-        case bannerHeading      // 21 / 600
-        case body               // 16 / 400
-        case bodyLarge          // 17 / 400
-        case secondary          // 13 / 400
-        case button             // 15 / 400
-        case kicker             // 10-11 / uppercase / tracked
-        case tabLabel           // 10 / 400
-    }
-}
-
-extension View {
-    /// Applies one Broadsheet type role, including the kicker's tracking.
-    @ViewBuilder
-    func broadsheet(_ role: Broadsheet.Role) -> some View {
-        switch role {
-        case .screenTitle:
-            font(Broadsheet.serif(34, semibold: true, relativeTo: .largeTitle))
-                .tracking(-0.34).lineSpacing(0)
-        case .screenTitleTwoLine:
-            font(Broadsheet.serif(32, semibold: true, relativeTo: .title))
-                .tracking(-0.32)
-        case .heroMetric:
-            font(Broadsheet.serif(46, semibold: true, relativeTo: .largeTitle))
-        case .cardMetric:
-            font(Broadsheet.serif(27, semibold: true, relativeTo: .title2))
-        case .bannerHeading:
-            font(Broadsheet.serif(21, semibold: true, relativeTo: .title3))
-        case .bodyLarge:
-            font(Broadsheet.serif(17, relativeTo: .body))
-        case .body:
-            font(Broadsheet.serif(16, relativeTo: .body))
-        case .secondary:
-            font(Broadsheet.serif(13, relativeTo: .footnote))
-        case .button:
-            font(Broadsheet.serif(15, relativeTo: .callout))
-        case .kicker:
-            // "Reads larger than its size" — uppercase and widely tracked.
-            // Prefer `Kicker`, which drops the tracking for Bengali.
-            font(Broadsheet.serif(11, relativeTo: .caption2))
-                .textCase(.uppercase)
-                .tracking(2.0)
-        case .tabLabel:
-            font(Broadsheet.serif(10, relativeTo: .caption2)).tracking(0.6)
-        }
     }
 }

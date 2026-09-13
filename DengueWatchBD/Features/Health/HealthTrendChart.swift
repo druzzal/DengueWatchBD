@@ -29,7 +29,8 @@ struct HealthTrendChart: View {
             HStack(spacing: Space.tight) {
                 Spacer(minLength: 0)
                 Label(loc.t(trend.labelKey), systemImage: trend.symbol)
-                    .broadsheet(.secondary)
+                    .typo(.micro)
+                    .fontWeight(.semibold)
                     .foregroundStyle(Broadsheet.neutral700)
                     .labelStyle(.titleAndIcon)
             }
@@ -45,7 +46,14 @@ struct HealthTrendChart: View {
                         .foregroundStyle(Broadsheet.alarm400)
                         .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 4]))
                         .annotation(position: .bottom, alignment: .leading, spacing: 2) {
-                            Kicker(text: thresholdLabel, tint: Broadsheet.alarm700)
+                            Text(thresholdLabel)
+                                .typoStatic(.micro)
+                                .foregroundStyle(Broadsheet.alarm700)
+                                // The line sits inside the plot, so the label
+                                // needs its own ground wherever a reading
+                                // happens to cross it.
+                                .padding(.horizontal, 3)
+                                .background(Broadsheet.neutral100.opacity(0.9))
                                 // The line sits inside the plot, so the label
                                 // needs its own ground wherever a reading
                                 // happens to cross it.
@@ -71,7 +79,7 @@ struct HealthTrendChart: View {
                     AxisValueLabel {
                         if let number = value.as(Double.self) {
                             Text(format(number))
-                                .font(Broadsheet.serif(10, relativeTo: .caption2))
+                                .typoStatic(.micro)
                                 .foregroundStyle(Broadsheet.neutral600)
                         }
                     }
@@ -82,7 +90,7 @@ struct HealthTrendChart: View {
             .accessibilityLabel(accessibilityDescription)
 
             Text(loc.t("trend.readings", loc.num(points.count)))
-                .broadsheet(.secondary)
+                .typo(.micro)
                 .foregroundStyle(Broadsheet.neutral600)
         }
     }
