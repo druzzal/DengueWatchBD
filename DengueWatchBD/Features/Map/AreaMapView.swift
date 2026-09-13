@@ -25,6 +25,8 @@ struct AreaMapView: View {
     @State private var searchText = ""
     @State private var showingLocationExplainer = false
     @State private var camera: MapCameraPosition = .region(.bangladesh)
+    /// Bumped on every camera change so the position marker re-reads the proxy.
+    @State private var cameraTick: UInt64 = 0
     @State private var selectedArea: Area?
     @State private var pushedArea: Area?
     /// Auto-zoom happens once per visit to the tab, never again.
@@ -122,7 +124,8 @@ struct AreaMapView: View {
             .padding(.top, 8)
             .padding(.bottom, 8)
 
-            Map(position: $camera, interactionModes: [.pan, .zoom]) {
+            MapReader { proxy in
+                Map(position: $camera, interactionModes: .all) {
                 ForEach(store.areas) { area in
                     Annotation(area.displayName(loc.language),
                                coordinate: CLLocationCoordinate2D(latitude: area.latitude,
@@ -139,10 +142,34 @@ struct AreaMapView: View {
                     .annotationTitles(.hidden)
                 }
 
-                UserAnnotation()
+            }
+            .overlay(alignment: .topLeading) {
+                // The reader's own position, drawn over the map rather than
+                // in it. As map content it sat *under* the case bubbles:
+                // MapKit z-orders annotations north-to-south, so the Dhaka
+                // North bubble — centred a few hundred metres away — covered
+                // it exactly where "am I inside this one?" matters most.
+                // `cameraTick` is what keeps it pinned while the map moves.
+                if let here = location.lastKnownLocation,
+                   let point = proxy.convert(here.coordinate, to: .local) {
+                    youAreHereMarker
+                        .position(point)
+                        .allowsHitTesting(false)
+                        .id(cameraTick)
+                }
+            }
+            .onMapCameraChange(frequency: .continuous) { _ in
+                // Re-reads the proxy as the camera moves; without it the
+                // marker would stay where the map used to be.
+                cameraTick &+= 1
             }
             .mapStyle(.standard(elevation: .flat, pointsOfInterest: .excludingAll))
-            .mapControls { MapCompass() }
+            .mapControls {
+                MapCompass()
+                MapScaleView()
+                // Only offered once there is a position to return to.
+                if location.isAuthorized { MapUserLocationButton() }
+            }
             .onAppear {
                 // Only starts if permission is already granted; otherwise the
                 // legend offers the button that asks for it.
@@ -180,6 +207,7 @@ struct AreaMapView: View {
                 .padding(.horizontal, 16)
                 .padding(.bottom, 8)
             }
+            }
         }
     }
 
@@ -203,6 +231,24 @@ struct AreaMapView: View {
             .accessibilityLabel(loc.t("map.bubble.a11y", area.displayName(loc.language),
                                       loc.num(area.seasonCases),
                                       loc.t(area.risk.labelKey)))
+    }
+
+    /// The reader's own position, drawn to stay legible on top of a case
+    /// bubble rather than under one.
+    private var youAreHereMarker: some View {
+        ZStack {
+            Circle()
+                .fill(Palette.accent.opacity(0.22))
+                .frame(width: 34, height: 34)
+            Circle()
+                .fill(.white)
+                .frame(width: 20, height: 20)
+                .shadow(color: .black.opacity(0.25), radius: 2, y: 1)
+            Circle()
+                .fill(Palette.accent)
+                .frame(width: 13, height: 13)
+        }
+        .accessibilityLabel(loc.t("map.youAreHere.a11y"))
     }
 
     /// Which area the user is standing in, if a fix has come through.
@@ -391,6 +437,11 @@ struct AreaMapView: View {
             youAreHereRow
             geofencePrompt
         }
+        // Tied to the area, not just to the location: without this the row
+        // kept naming the area the reader was in when the map opened. The
+        // position marker moved, the sentence under it did not, and the two
+        // disagreed on screen — which is worse than either alone.
+        .id(currentArea?.code)
     }
 
     // MARK: - List (also the accessible and offline path)
