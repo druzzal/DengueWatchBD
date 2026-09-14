@@ -49,12 +49,16 @@ struct CaseLogView: View {
                         ForEach(days) { day in
                             Section {
                                 ForEach(day.itemsNewestFirst) { item in
-                                    row(for: item)
-                                        .swipeActions {
-                                            Button(loc.t("common.delete"), role: .destructive) {
-                                                delete(item)
-                                            }
+                                    NavigationLink {
+                                        LogEntryDetailView(item: item)
+                                    } label: {
+                                        LogSummaryRow(item: item)
+                                    }
+                                    .swipeActions {
+                                        Button(loc.t("common.delete"), role: .destructive) {
+                                            delete(item)
                                         }
+                                    }
                                 }
                             } header: {
                                 dayHeader(day)
@@ -179,15 +183,6 @@ struct CaseLogView: View {
         HealthLogDocumentFile(days: days, loc: loc, unit: preferences.temperatureUnit)
     }
 
-    @ViewBuilder
-    private func row(for item: HealthLogDay.Item) -> some View {
-        switch item {
-        case .check(let entry): CaseLogRow(entry: entry)
-        case .vitals(let entry): VitalsLogRow(entry: entry)
-        case .lab(let report): LabLogRow(report: report)
-        }
-    }
-
     private func delete(_ item: HealthLogDay.Item) {
         switch item {
         case .check(let entry): log.delete(id: entry.id)
@@ -264,210 +259,111 @@ struct CaseLogView: View {
     }
 }
 
-private struct CaseLogRow: View {
+/// One line in the log: what kind of record it is, the figures worth seeing
+/// at a glance, and when. Everything else is a tap away.
+private struct LogSummaryRow: View {
     @Environment(LocalizationManager.self) private var loc
-    let entry: CaseLogEntry
+    @Environment(Preferences.self) private var preferences
+    let item: HealthLogDay.Item
+
+    var body: some View {
+        HStack(alignment: .top, spacing: Space.row) {
+            RoundedRectangle(cornerRadius: 2)
+                .fill(accent)
+                .frame(width: 3, height: 30)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .typo(.callout)
+                    .fontWeight(.medium)
+                    .foregroundStyle(titleTint)
+                    .lineLimit(1)
+                if let summary {
+                    Text(summary)
+                        .typo(.micro)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+            }
+            Spacer(minLength: Space.tight)
+            Text(loc.time(item.date))
+                .typo(.micro)
+                .foregroundStyle(.secondary)
+                .monospacedDigit()
+        }
+        .padding(.vertical, 3)
+        .accessibilityElement(children: .combine)
+    }
 
     private var accent: Color {
-        switch entry.outcome {
-        case .selfCare, .testAdvised: Palette.mutedInk
-        case .seeDoctorToday, .emergency: Palette.riskInk(.high)
+        switch item {
+        case .check(let entry): Palette.riskInk(outcomeRisk(entry.outcome))
+        case .vitals: Palette.accent
+        case .lab: Palette.accent
         }
     }
 
-    private var symptoms: [Symptom] {
-        TriageEngine.symptoms.filter { entry.symptomIDs.contains($0.id) }
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
-                RoundedRectangle(cornerRadius: 2).fill(accent).frame(width: 3, height: 14)
-                Text(loc.t(entry.outcome.headlineKey))
-                    .typo(.subheadline).fontWeight(.medium)
-                Spacer(minLength: 6)
-                Text(loc.time(entry.date))
-                    .typo(.micro).foregroundStyle(.secondary).monospacedDigit()
-            }
-
-            if !symptoms.isEmpty {
-                HStack(spacing: 6) {
-                    ForEach(symptoms.prefix(6)) { symptom in
-                        SymptomIllustration(symptomID: symptom.id, group: symptom.group, size: 28)
-                    }
-                    if symptoms.count > 6 {
-                        Text("+\(loc.num(symptoms.count - 6))")
-                            .typo(.micro).foregroundStyle(.secondary)
-                    }
-                }
-            }
-
-            if !entry.note.isEmpty {
-                Text(entry.note).typo(.caption).italic()
-            }
+    private var titleTint: Color {
+        if case .check(let entry) = item, entry.outcome >= .seeDoctorToday {
+            return Palette.riskInk(outcomeRisk(entry.outcome))
         }
-        .padding(.vertical, 5)
+        return .primary
     }
-}
 
-/// One set of readings, coloured the way the tiles in My health are: green
-/// while normal, orange then red as they move out of range.
-private struct VitalsLogRow: View {
-    @Environment(LocalizationManager.self) private var loc
-    let entry: VitalsEntry
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(Palette.accent)
-                    .frame(width: 3, height: 14)
-                Text(loc.t("vital.section"))
-                    .typo(.subheadline).fontWeight(.medium)
-                Spacer(minLength: 6)
-                Text(loc.time(entry.date))
-                    .typo(.micro).foregroundStyle(.secondary).monospacedDigit()
-            }
-
-            FlowReadings(entry: entry)
-
-            if !entry.note.isEmpty {
-                Text(entry.note).typo(.caption).italic()
-            }
+    private var title: String {
+        switch item {
+        case .check(let entry): loc.t(entry.outcome.headlineKey)
+        case .vitals: loc.t("vital.section")
+        case .lab: loc.t("lab.section")
         }
-        .padding(.vertical, 5)
     }
-}
 
-private struct FlowReadings: View {
-    @Environment(Preferences.self) private var preferences
-    @Environment(LocalizationManager.self) private var loc
-    let entry: VitalsEntry
+    /// The figures a reader scans for, in the order they would read them.
+    private var summary: String? {
+        switch item {
+        case .check(let entry):
+            let names = TriageEngine.symptoms
+                .filter { entry.symptomIDs.contains($0.id) }
+                .map { loc.t($0.titleKey) }
+            return names.isEmpty ? nil : loc.style.list(names)
 
-    var body: some View {
-        // Adaptive columns so a row of readings wraps instead of truncating at
-        // large Dynamic Type.
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 108), spacing: 8)],
-                  alignment: .leading, spacing: 6) {
+        case .vitals(let entry):
+            var parts: [String] = []
+            if let temperature = entry.temperature {
+                parts.append(preferences.temperatureUnit.display(celsius: temperature,
+                                                                 style: loc.style))
+            }
             if let systolic = entry.systolic, let diastolic = entry.diastolic {
-                reading(label: loc.t("vital.bloodPressure"),
-                        value: "\(loc.num(Int(systolic)))/\(loc.num(Int(diastolic)))",
-                        status: worse(VitalKind.systolic.status(systolic),
-                                      VitalKind.diastolic.status(diastolic)))
+                parts.append("\(loc.num(Int(systolic)))/\(loc.num(Int(diastolic)))")
             }
-            ForEach(VitalKind.allCases.filter(shouldShow)) { kind in
-                if let value = entry.value(for: kind) {
-                    reading(label: loc.t(kind.labelKey),
-                            value: kind == .temperature
-                                ? preferences.temperatureUnit.display(celsius: value, style: loc.style)
-                                : "\(loc.decimal(value, places: kind.decimals)) \(loc.t(kind.unitKey))",
-                            status: kind.status(value))
-                }
+            if let pulse = entry.pulse {
+                parts.append("\(loc.num(Int(pulse))) \(loc.t("vital.unit.pulse"))")
             }
+            if let oxygen = entry.oxygenSaturation {
+                parts.append("\(loc.num(Int(oxygen)))\(loc.t("vital.unit.oxygenSaturation"))")
+            }
+            return parts.isEmpty ? nil : parts.joined(separator: " · ")
+
+        case .lab(let report):
+            var parts: [String] = []
+            for measure in LabMeasure.allCases {
+                guard let value = report.value(for: measure) else { continue }
+                let shown = measure.decimals == 0
+                    ? loc.num(Int(value.rounded())) : loc.decimal(value)
+                parts.append("\(loc.t(measure.labelKey)) \(shown)")
+            }
+            for test in DengueTest.allCases where report.result(for: test) != .notDone {
+                parts.append("\(loc.t(test.labelKey)) \(loc.t(report.result(for: test).labelKey))")
+            }
+            return parts.isEmpty ? nil : parts.joined(separator: " · ")
         }
     }
 
-    /// Systolic and diastolic are shown as one blood-pressure reading above,
-    /// unless only one of the pair was recorded.
-    private func shouldShow(_ kind: VitalKind) -> Bool {
-        switch kind {
-        case .systolic: entry.diastolic == nil
-        case .diastolic: entry.systolic == nil
-        default: true
-        }
-    }
-
-    private func worse(_ a: MeasureStatus, _ b: MeasureStatus) -> MeasureStatus {
-        a.risk >= b.risk ? a : b
-    }
-
-    private func reading(label: String, value: String, status: MeasureStatus) -> some View {
-        VStack(alignment: .leading, spacing: 1) {
-            Text(value)
-                .typo(.caption).fontWeight(.semibold).monospacedDigit()
-                .foregroundStyle(Palette.riskInk(status.risk))
-            Text(label)
-                .typo(.micro).foregroundStyle(.secondary)
-                .lineLimit(2)
-        }
-    }
-}
-
-/// One lab report: the blood count coloured the way the readings are, and the
-/// dengue tests as they were reported. Recorded, never interpreted — what the
-/// values mean is the doctor's to say.
-private struct LabLogRow: View {
-    @Environment(LocalizationManager.self) private var loc
-    let report: LabReport
-
-    private var testsDone: [DengueTest] {
-        DengueTest.allCases.filter { report.result(for: $0) != .notDone }
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(Palette.accent)
-                    .frame(width: 3, height: 14)
-                Text(loc.t("lab.section"))
-                    .typo(.subheadline).fontWeight(.medium)
-                Spacer(minLength: 6)
-                Text(loc.time(report.date))
-                    .typo(.micro).foregroundStyle(.secondary).monospacedDigit()
-            }
-
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 108), spacing: 8)],
-                      alignment: .leading, spacing: 6) {
-                ForEach(LabMeasure.allCases) { measure in
-                    if let value = report.value(for: measure) {
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text("\(loc.decimal(value, places: measure.decimals)) \(loc.t(measure.unitKey))")
-                                .typo(.caption).fontWeight(.semibold).monospacedDigit()
-                                .foregroundStyle(Palette.riskInk(measure.status(value).risk))
-                            Text(loc.t(measure.labelKey))
-                                .typo(.micro).foregroundStyle(.secondary).lineLimit(2)
-                        }
-                    }
-                }
-            }
-
-            if !testsDone.isEmpty {
-                // A positive antigen or antibody test is a finding worth
-                // seeing at a glance; it is still not this app's diagnosis.
-                FlowTests(results: testsDone.map { ($0, report.result(for: $0)) })
-            }
-
-            if !report.note.isEmpty {
-                Text(report.note).typo(.caption).italic()
-            }
-        }
-        .padding(.vertical, 5)
-    }
-}
-
-private struct FlowTests: View {
-    @Environment(LocalizationManager.self) private var loc
-    let results: [(test: DengueTest, result: TestResult)]
-
-    var body: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 132), spacing: 8)],
-                  alignment: .leading, spacing: 6) {
-            ForEach(results, id: \.test) { item in
-                HStack(spacing: 5) {
-                    Image(systemName: item.result == .positive
-                          ? "exclamationmark.circle.fill" : "checkmark.circle")
-                        .typo(.micro)
-                        .foregroundStyle(item.result == .positive
-                                         ? Palette.riskInk(.high) : Palette.mutedInk)
-                    Text("\(loc.t(item.test.labelKey)) \(loc.t(item.result.labelKey))")
-                        .typo(.micro)
-                        .foregroundStyle(item.result == .positive
-                                         ? Palette.riskInk(.high) : Color.secondary)
-                        .lineLimit(2)
-                }
-                .accessibilityElement(children: .combine)
-            }
+    private func outcomeRisk(_ outcome: TriageOutcome) -> RiskLevel {
+        switch outcome {
+        case .selfCare: .low
+        case .testAdvised: .moderate
+        case .seeDoctorToday: .high
+        case .emergency: .severe
         }
     }
 }
