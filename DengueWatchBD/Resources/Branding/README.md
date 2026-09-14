@@ -1,18 +1,19 @@
 # App icon
 
-`denguewatch_icon_source.png` is the artwork as supplied: 1254×1254, with
-transparency, drawn as a rounded tile floating in transparent margins.
+`denguewatch_icon_source.png` is the artwork as supplied, and it arrived in
+exactly the shape an iOS icon wants: 1024×1024, full-bleed, with every pixel
+opaque.
 
-`AppIcon1024.png` in the asset catalogue is derived from it, and the
-derivation matters:
+`AppIcon1024.png` in the asset catalogue is that file with its alpha channel
+dropped and nothing else changed — iOS rejects an icon carrying one, even an
+unused one. No crop, no resample; the two are pixel-identical in RGB.
 
-- **Cropped inside the tile's rounded corners.** iOS applies its own corner
-  mask. Shipping the artwork's own rounding would round the icon twice and
-  leave pale wedges where the transparent corners flattened. The crop is the
-  largest square whose every edge pixel is solid — measured by probing the
-  alpha channel, not estimated — which keeps 82.8% of the tile.
-- **Scaled to 1024×1024 and flattened to RGB.** iOS rejects an app icon
-  carrying an alpha channel.
+If the artwork is ever replaced, check three things before shipping it:
 
-To regenerate after an artwork change, re-probe the corners rather than
-reusing these numbers: they are specific to this file's rounding radius.
+- **1024×1024.** Anything else has to be resampled.
+- **Full-bleed, square, no rounded corners.** iOS applies its own corner mask.
+  Artwork that carries its own rounding gets rounded twice, and the
+  transparent corners flatten to visible wedges.
+- **No transparency.** Not just "no alpha channel" — check that no pixel is
+  actually non-opaque, since a fully opaque alpha channel is harmless and can
+  simply be dropped.
