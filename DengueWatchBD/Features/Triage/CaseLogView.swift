@@ -16,6 +16,11 @@ struct CaseLogView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var showingClearConfirmation = false
+    /// Chosen for deletion while editing. Ids, not entries: the list is
+    /// rebuilt from three stores on every change, so holding the values would
+    /// go stale the moment one is removed.
+    @State private var selection: Set<UUID> = []
+    @State private var isEditing = false
 
     private var days: [HealthLogDay] {
         HealthLog.days(checks: log.entries, vitals: vitals.entries, labs: labs.reports)
@@ -36,13 +41,13 @@ struct CaseLogView: View {
                         Text(loc.t("log.empty.detail"))
                     }
                 } else {
-                    List {
+                    List(selection: $selection) {
                         if temperatureSeries.count >= 2 {
                             Section(loc.t("log.temperature")) { temperatureChart }
                         }
 
                         ForEach(days) { day in
-                            Section(dayTitle(day.date)) {
+                            Section {
                                 ForEach(day.itemsNewestFirst) { item in
                                     row(for: item)
                                         .swipeActions {
@@ -51,6 +56,8 @@ struct CaseLogView: View {
                                             }
                                         }
                                 }
+                            } header: {
+                                dayHeader(day)
                             }
                         }
 
@@ -64,14 +71,21 @@ struct CaseLogView: View {
                     }
                 }
             }
+            .environment(\.editMode, .constant(isEditing ? .active : .inactive))
             .readableColumn()
             .navigationTitle(loc.t("log.title"))
             .navigationBarTitleDisplayMode(sizeClass == .regular ? .inline : .large)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) { LanguageToggle() }
                 ToolbarItem(placement: .topBarTrailing) { exportButton }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(loc.t("common.done")) { dismiss() }
+                ToolbarItem(placement: .topBarTrailing) { editButton }
+                if isEditing {
+                    ToolbarItem(placement: .bottomBar) { deleteSelectedButton }
+                }
+                if !isEditing {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button(loc.t("common.done")) { dismiss() }
+                    }
                 }
             }
             .confirmationDialog(loc.t("log.confirmDelete"),
@@ -95,6 +109,62 @@ struct CaseLogView: View {
     /// entries — on the main actor, for a file most readers never ask for. The
     /// export is also always current this way, with no cached copy to go stale
     /// behind a later entry.
+    /// Our own control rather than `EditButton`, whose title follows the
+    /// device language and would read "Edit" on a screen the reader has set
+    /// to Bangla.
+    @ViewBuilder
+    private var editButton: some View {
+        if !days.isEmpty {
+            Button(loc.t(isEditing ? "common.done" : "common.edit")) {
+                withAnimation(Motion.interactive) {
+                    isEditing.toggle()
+                    if !isEditing { selection.removeAll() }
+                }
+            }
+        }
+    }
+
+    /// Deletes what is ticked. Disabled rather than hidden when nothing is,
+    /// so the row does not appear and vanish as the reader selects.
+    private var deleteSelectedButton: some View {
+        Button(role: .destructive) {
+            deleteSelected()
+        } label: {
+            Text(selection.isEmpty
+                 ? loc.t("common.delete")
+                 : loc.t("log.delete.selected", loc.num(selection.count)))
+        }
+        .disabled(selection.isEmpty)
+    }
+
+    /// Every entry of a day, for readers who want the day gone rather than
+    /// each line of it.
+    private func dayHeader(_ day: HealthLogDay) -> some View {
+        HStack {
+            Text(dayTitle(day.date))
+            Spacer(minLength: Space.tight)
+            if isEditing {
+                Button(loc.t("log.delete.day")) {
+                    withAnimation { deleteDay(day) }
+                }
+                .font(.caption)
+                .foregroundStyle(Palette.riskInk(.severe))
+                .textCase(nil)
+            }
+        }
+    }
+
+    private func deleteSelected() {
+        let chosen = days.flatMap(\.itemsNewestFirst).filter { selection.contains($0.id) }
+        withAnimation { chosen.forEach(delete) }
+        selection.removeAll()
+    }
+
+    private func deleteDay(_ day: HealthLogDay) {
+        day.itemsNewestFirst.forEach(delete)
+        selection.subtract(Set(day.itemsNewestFirst.map(\.id)))
+    }
+
     @ViewBuilder
     private var exportButton: some View {
         if !days.isEmpty {
