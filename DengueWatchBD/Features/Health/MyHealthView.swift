@@ -18,6 +18,7 @@ struct MyHealthView: View {
     @Environment(LabStore.self) private var labs
     @Environment(Preferences.self) private var preferences
     @Environment(LocalizationManager.self) private var loc
+    @Environment(AppRouter.self) private var router
     @Environment(\.horizontalSizeClass) private var sizeClass
 
     @State private var showingCheck = false
@@ -56,6 +57,12 @@ struct MyHealthView: View {
             }
             .sheet(isPresented: $showingLog) { CaseLogView() }
             .sheet(isPresented: $showingCheck) { SymptomCheckerView() }
+            // Home can ask for a check directly, rather than leaving the reader
+            // on this tab to find the button. Keyed on the request so it fires
+            // whether the tab was already open or is being built for it.
+            .task(id: router.pending) {
+                if router.claim(.symptomCheck) { showingCheck = true }
+            }
             .sheet(isPresented: $showingVitals) { VitalsEntryView() }
             .sheet(isPresented: $showingLab) { LabEntryView() }
         }

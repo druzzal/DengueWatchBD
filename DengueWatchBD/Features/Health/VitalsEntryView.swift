@@ -75,10 +75,19 @@ struct VitalsEntryView: View {
                 .keyboardType(.decimalPad)
                 .multilineTextAlignment(.trailing)
                 .frame(maxWidth: 90)
-            Text(kind == .temperature ? preferences.temperatureUnit.symbol : loc.t(kind.unitKey))
+                // The visible label sits beside the field rather than in it, so
+                // without this VoiceOver reaches five fields that all announce
+                // themselves as "text field" and nothing else.
+                .accessibilityLabel("\(loc.t(kind.labelKey)), \(unitLabel(kind))")
+            Text(unitLabel(kind))
                 .typo(.micro)
                 .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
         }
+    }
+
+    private func unitLabel(_ kind: VitalKind) -> String {
+        kind == .temperature ? preferences.temperatureUnit.symbol : loc.t(kind.unitKey)
     }
 
     private func binding(for kind: VitalKind) -> Binding<String> {

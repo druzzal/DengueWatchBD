@@ -156,14 +156,50 @@ private struct FlowReadings: View {
     }
 
     private func reading(label: String, value: String, status: MeasureStatus) -> some View {
+        ReadingCell(label: label, value: value, status: status)
+    }
+}
+
+/// One reading: the number, what it is, and — when it sits outside the usual
+/// range — a mark saying so.
+///
+/// The mark is not decoration. The rest of the app already grades readings in
+/// words, so that a tile still reads in greyscale and to a colour-blind reader;
+/// this screen is laid out as a grid of small cells with no room for a third
+/// line of text, so it carries the same grading as a symbol instead. Either way
+/// colour is never the only signal, which matters most for a platelet count —
+/// the one number in dengue that people scan for.
+///
+/// The wording goes to VoiceOver rather than on screen: combining the children
+/// would read the number and its name and stop, leaving a low count sounding
+/// exactly like a normal one.
+private struct ReadingCell: View {
+    @Environment(LocalizationManager.self) private var loc
+    let label: String
+    let value: String
+    let status: MeasureStatus
+
+    var body: some View {
         VStack(alignment: .leading, spacing: 1) {
-            Text(value)
-                .typo(.caption).fontWeight(.semibold).monospacedDigit()
-                .foregroundStyle(Palette.riskInk(status.risk))
+            HStack(alignment: .firstTextBaseline, spacing: 3) {
+                Text(value)
+                    .typo(.caption).fontWeight(.semibold).monospacedDigit()
+                if status != .normal {
+                    Image(systemName: status.symbol).font(.caption2)
+                }
+            }
+            // Neutral ink for a reading in its range, per the palette rule the
+            // rest of My Health follows: there is no success colour, so only
+            // the readings that need attention are coloured. Painting a normal
+            // count green would also put red and green side by side as the one
+            // thing telling them apart — the single worst pairing to rely on.
+            .foregroundStyle(status == .normal ? Color.primary : Palette.riskInk(status.risk))
             Text(label)
                 .typo(.micro).foregroundStyle(.secondary)
                 .lineLimit(2)
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(label), \(value), \(loc.t("status.\(status.rawValue)"))")
     }
 }
 
@@ -195,13 +231,10 @@ private struct LabDetail: View {
                       alignment: .leading, spacing: 6) {
                 ForEach(LabMeasure.allCases) { measure in
                     if let value = report.value(for: measure) {
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text("\(loc.decimal(value, places: measure.decimals)) \(loc.t(measure.unitKey))")
-                                .typo(.caption).fontWeight(.semibold).monospacedDigit()
-                                .foregroundStyle(Palette.riskInk(measure.status(value).risk))
-                            Text(loc.t(measure.labelKey))
-                                .typo(.micro).foregroundStyle(.secondary).lineLimit(2)
-                        }
+                        ReadingCell(
+                            label: loc.t(measure.labelKey),
+                            value: "\(loc.decimal(value, places: measure.decimals)) \(loc.t(measure.unitKey))",
+                            status: measure.status(value))
                     }
                 }
             }

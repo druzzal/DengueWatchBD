@@ -47,6 +47,14 @@ struct DashboardView: View {
 
     private var focusRisk: RiskLevel { focusArea?.risk ?? store.nationalRisk }
 
+    /// How many people the focus area's figure covers, when the area was found
+    /// from the phone rather than chosen. See `DengueRiskCard.coverage`.
+    private var focusCoverage: String? {
+        guard focusIsCurrentLocation, let focusArea else { return nil }
+        return loc.t("risk.card.covers",
+                     loc.compact(focusArea.populationThousands * 1_000))
+    }
+
     private var focusAreaName: String {
         if let focusArea {
             return focusArea.displayName(loc.language)
@@ -177,6 +185,7 @@ struct DashboardView: View {
                 incidence: focusArea?.incidencePer100k ?? nationalIncidence,
                 isNationwide: focusArea == nil,
                 isCurrentLocation: focusIsCurrentLocation,
+                coverage: focusCoverage,
                 onTap: {
                     Haptic.selection()
                     showingRiskDetail = true
@@ -407,7 +416,7 @@ struct DashboardView: View {
                             Spacer(minLength: 0)
                         }
                         SecondaryActionButton(title: loc.t("health.checkAgain"),
-                                              systemImage: "stethoscope") { router.show(.health) }
+                                              systemImage: "stethoscope") { router.show(.health, requesting: .symptomCheck) }
                     }
                 } else {
                     VStack(alignment: .leading, spacing: Space.row) {
@@ -416,7 +425,7 @@ struct DashboardView: View {
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                         SecondaryActionButton(title: loc.t("health.check"),
-                                              systemImage: "stethoscope") { router.show(.health) }
+                                              systemImage: "stethoscope") { router.show(.health, requesting: .symptomCheck) }
                     }
                 }
             }

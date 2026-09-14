@@ -22,6 +22,14 @@ struct DengueRiskCard: View {
     /// choice the reader made. Worth saying: "Dhaka North" means one thing if
     /// they picked it and another if they are standing in it.
     var isCurrentLocation = false
+    /// How many people this one figure is averaged over, already formatted.
+    ///
+    /// Shown only when the area came from the phone's position. A reader who
+    /// chose "Chattogram" knows they chose a division; a reader standing in
+    /// Cox's Bazar is shown "Chattogram" and has every reason to read it as
+    /// their town. DGHS reports ten areas for the whole country, and the card
+    /// should not imply a resolution the source does not have.
+    var coverage: String?
     var onTap: () -> Void
 
     @State private var pulsing = false
@@ -150,6 +158,12 @@ struct DengueRiskCard: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
+            if let coverage {
+                Text(coverage)
+                    .typo(.micro)
+                    .foregroundStyle(Palette.mutedInk)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 
@@ -200,6 +214,9 @@ struct DengueRiskCard: View {
             loc.t(risk.labelKey),
             locationPhrase,
         ]
+        if let coverage {
+            parts.append(coverage)
+        }
         if let incidence {
             parts.append(loc.t("risk.a11y.rate", loc.decimal(incidence)))
         }

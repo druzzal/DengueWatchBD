@@ -23,9 +23,30 @@ final class AppRouter {
 
     }
 
+    /// Something a card on one tab asks the destination tab to open.
+    ///
+    /// A request rather than a binding, because the sender has no business
+    /// owning the receiver's sheet — Home knows the reader wants to run a
+    /// symptom check, and My Health knows how to present one.
+    enum Request: Equatable {
+        case symptomCheck
+    }
+
     var selectedTab: Tab = .home
 
-    func show(_ tab: Tab) {
+    /// Cleared by whoever acts on it. Left set, it would reopen the sheet every
+    /// time the reader came back to the tab.
+    private(set) var pending: Request?
+
+    func show(_ tab: Tab, requesting request: Request? = nil) {
+        pending = request
         withAnimation(Motion.interactive) { selectedTab = tab }
+    }
+
+    /// True once, for the tab that can honour it.
+    func claim(_ request: Request) -> Bool {
+        guard pending == request else { return false }
+        pending = nil
+        return true
     }
 }

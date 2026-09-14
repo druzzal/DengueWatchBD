@@ -49,9 +49,13 @@ struct LabEntryView: View {
                                 .keyboardType(.decimalPad)
                                 .multilineTextAlignment(.trailing)
                                 .frame(maxWidth: 90)
+                                // See VitalsEntryView: the label is beside the
+                                // field, so the field itself has none to speak.
+                                .accessibilityLabel("\(loc.t(measure.labelKey)), \(loc.t(measure.unitKey))")
                             Text(loc.t(measure.unitKey))
                                 .typo(.micro)
                                 .foregroundStyle(.secondary)
+                                .accessibilityHidden(true)
                         }
                     }
                 } header: {

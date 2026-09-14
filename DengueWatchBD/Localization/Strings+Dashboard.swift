@@ -35,6 +35,9 @@ extension Strings {
         "who.share": "%@%%",
         "who.a11y": "Ages %@: %@ male, %@ female",
         "risk.card.hereNow": "%@, where you are now",
+        // DGHS reports ten areas for the whole country, so a located reading is
+        // an average over a division, not a neighbourhood.
+        "risk.card.covers": "A single figure for this whole area — about %@ people",
         "dash.stat.last24": "Last 24 hours",
         "dash.stat.last24Deaths": "%@ deaths",
         "dash.title": "DengueWatch",
@@ -104,6 +107,7 @@ extension Strings {
         "who.share": "%@%%",
         "who.a11y": "%@ বছর: %@ জন পুরুষ, %@ জন নারী",
         "risk.card.hereNow": "%@, আপনি এখন যেখানে আছেন",
+        "risk.card.covers": "পুরো এলাকার জন্য একটিই হিসাব — প্রায় %@ মানুষ",
         "dash.stat.last24": "গত ২৪ ঘণ্টা",
         "dash.stat.last24Deaths": "%@ জন মৃত্যু",
         "dash.title": "ডেঙ্গুওয়াচ",
