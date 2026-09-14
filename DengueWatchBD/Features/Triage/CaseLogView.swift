@@ -11,21 +11,22 @@ struct CaseLogView: View {
     @Environment(CaseLogStore.self) private var log
     @Environment(VitalsStore.self) private var vitals
     @Environment(LabStore.self) private var labs
+    @Environment(LogNameStore.self) private var logNames
     @Environment(LocalizationManager.self) private var loc
     @Environment(\.horizontalSizeClass) private var sizeClass
     @Environment(\.dismiss) private var dismiss
 
     @State private var showingClearConfirmation = false
-    /// Chosen for deletion while editing. Ids, not entries: the list is
-    /// rebuilt from three stores on every change, so holding the values would
-    /// go stale the moment one is removed.
-    @State private var selection: Set<UUID> = []
+    /// Days chosen for deletion while editing. Keyed by the day itself: the
+    /// list is rebuilt from three stores on every change, so holding the
+    /// values would go stale the moment one record in a day is removed.
+    @State private var selection: Set<Date> = []
     @State private var isEditing = false
     /// Oldest first when true. The log is always ordered by date; this only
     /// decides which end the reader starts from.
     @AppStorage("log.oldestFirst") private var oldestFirst = false
     /// The record being renamed, and the text as it is typed.
-    @State private var renaming: HealthLogDay.Item?
+    @State private var renaming: HealthLogDay?
     @State private var draftName = ""
 
     private var days: [HealthLogDay] {
@@ -34,9 +35,9 @@ struct CaseLogView: View {
         return oldestFirst ? ordered.reversed() : ordered
     }
 
-    /// Each record's number, counted from the oldest so it stays put.
-    private var numbers: [UUID: Int] {
-        HealthLog.numbers(checks: log.entries, vitals: vitals.entries, labs: labs.reports)
+    /// Each day's number, counted from the oldest so it stays put.
+    private var numbers: [Date: Int] {
+        HealthLog.numbers(for: days)
     }
 
     /// Temperature now comes from Vital signs, which is where it is recorded.
@@ -59,29 +60,27 @@ struct CaseLogView: View {
                             Section(loc.t("log.temperature")) { temperatureChart }
                         }
 
-                        ForEach(days) { day in
-                            Section {
-                                ForEach(day.itemsNewestFirst) { item in
-                                    NavigationLink {
-                                        LogEntryDetailView(item: item)
-                                    } label: {
-                                        LogSummaryRow(item: item, number: numbers[item.id])
-                                    }
-                                    .contextMenu {
-                                        Button(loc.t("log.rename"), systemImage: "pencil") {
-                                            draftName = item.name
-                                            renaming = item
-                                        }
-                                    }
-                                    .swipeActions {
-                                        Button(loc.t("common.delete"), role: .destructive) {
-                                            delete(item)
-                                        }
+                        Section {
+                            ForEach(days) { day in
+                                NavigationLink {
+                                    LogDayDetailView(day: day, title: title(for: day))
+                                } label: {
+                                    LogDaySummaryRow(day: day, title: title(for: day))
+                                }
+                                .swipeActions {
+                                    Button(loc.t("common.delete"), role: .destructive) {
+                                        deleteDay(day)
                                     }
                                 }
-                            } header: {
-                                dayHeader(day)
+                                .contextMenu {
+                                    Button(loc.t("log.rename"), systemImage: "pencil") {
+                                        draftName = logNames.name(for: day.date) ?? ""
+                                        renaming = day
+                                    }
+                                }
                             }
+                        } header: {
+                            Text(loc.t("log.entries"))
                         }
 
                         Section {
@@ -125,6 +124,7 @@ struct CaseLogView: View {
                     log.clear()
                     vitals.clear()
                     labs.clear()
+                    logNames.clear()
                 }
                 Button(loc.t("common.cancel"), role: .cancel) {}
             }
@@ -161,12 +161,15 @@ struct CaseLogView: View {
 
     private func commitRename() {
         guard let renaming else { return }
-        switch renaming {
-        case .check(let entry): log.rename(id: entry.id, to: draftName)
-        case .vitals(let entry): vitals.rename(id: entry.id, to: draftName)
-        case .lab(let report): labs.rename(id: report.id, to: draftName)
-        }
+        logNames.rename(day: renaming.date, to: draftName)
         self.renaming = nil
+    }
+
+    /// The reader's name for the day, or its number.
+    private func title(for day: HealthLogDay) -> String {
+        if let given = logNames.name(for: day.date) { return given }
+        guard let number = numbers[day.date] else { return dayTitle(day.date) }
+        return loc.t("log.defaultName", loc.num(number))
     }
 
     /// Our own control rather than `EditButton`, whose title follows the
@@ -188,7 +191,7 @@ struct CaseLogView: View {
     /// so the row does not appear and vanish as the reader selects.
     private var deleteSelectedButton: some View {
         Button(role: .destructive) {
-            deleteSelected()
+            deleteSelectedDays()
         } label: {
             Text(selection.isEmpty
                  ? loc.t("common.delete")
@@ -197,32 +200,22 @@ struct CaseLogView: View {
         .disabled(selection.isEmpty)
     }
 
-    /// Every entry of a day, for readers who want the day gone rather than
-    /// each line of it.
-    private func dayHeader(_ day: HealthLogDay) -> some View {
-        HStack {
-            Text(dayTitle(day.date))
-            Spacer(minLength: Space.tight)
-            if isEditing {
-                Button(loc.t("log.delete.day")) {
-                    withAnimation { deleteDay(day) }
-                }
-                .font(.caption)
-                .foregroundStyle(Palette.riskInk(.severe))
-                .textCase(nil)
-            }
-        }
-    }
 
-    private func deleteSelected() {
-        let chosen = days.flatMap(\.itemsNewestFirst).filter { selection.contains($0.id) }
-        withAnimation { chosen.forEach(delete) }
-        selection.removeAll()
-    }
+
 
     private func deleteDay(_ day: HealthLogDay) {
-        day.itemsNewestFirst.forEach(delete)
-        selection.subtract(Set(day.itemsNewestFirst.map(\.id)))
+        withAnimation {
+            day.itemsNewestFirst.forEach(delete)
+            // A name must not outlive the day it belonged to, or tomorrow's
+            // records would inherit it.
+            logNames.forget(day: day.date)
+        }
+        selection.remove(day.id)
+    }
+
+    private func deleteSelectedDays() {
+        days.filter { selection.contains($0.id) }.forEach(deleteDay)
+        selection.removeAll()
     }
 
     @ViewBuilder
@@ -315,33 +308,41 @@ struct CaseLogView: View {
     }
 }
 
-/// One line in the log: what kind of record it is, the figures worth seeing
-/// at a glance, and when. Everything else is a tap away.
-private struct LogSummaryRow: View {
+
+/// One day of the record, as a single line.
+///
+/// A day is the unit here: a temperature at nine, a blood pressure at three
+/// and a blood count from the clinic are one day of an illness, not three
+/// unrelated events. The line says what the day holds; the detail holds it.
+private struct LogDaySummaryRow: View {
     @Environment(LocalizationManager.self) private var loc
     @Environment(Preferences.self) private var preferences
-    let item: HealthLogDay.Item
-    /// Its place in the record, counted from the oldest.
-    let number: Int?
+    let day: HealthLogDay
+    let title: String
 
     var body: some View {
         HStack(alignment: .top, spacing: Space.row) {
             RoundedRectangle(cornerRadius: 2)
                 .fill(accent)
-                .frame(width: 3, height: 30)
+                .frame(width: 3, height: 34)
             VStack(alignment: .leading, spacing: 3) {
-                Text(displayName)
+                Text(title)
                     .typo(.callout)
                     .fontWeight(.medium)
-                    .foregroundStyle(titleTint)
                     .lineLimit(1)
-                Text(subtitle)
+                Text(loc.fullDate(day.date))
                     .typo(.micro)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
+                if let figures {
+                    Text(figures)
+                        .typo(.micro)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
             }
             Spacer(minLength: Space.tight)
-            Text(loc.time(item.date))
+            Text(loc.num(day.itemsNewestFirst.count))
                 .typo(.micro)
                 .foregroundStyle(.secondary)
                 .monospacedDigit()
@@ -350,90 +351,33 @@ private struct LogSummaryRow: View {
         .accessibilityElement(children: .combine)
     }
 
+    /// Red when the day carries an urgent outcome, so a bad day is visible
+    /// without opening it.
     private var accent: Color {
-        switch item {
-        case .check(let entry): Palette.riskInk(outcomeRisk(entry.outcome))
-        case .vitals: Palette.accent
-        case .lab: Palette.accent
+        let worst = day.checks.map(\.outcome).max()
+        switch worst {
+        case .emergency: return Palette.riskInk(.severe)
+        case .seeDoctorToday: return Palette.riskInk(.high)
+        case .testAdvised: return Palette.riskInk(.moderate)
+        default: return Palette.accent
         }
     }
 
-    private var titleTint: Color {
-        if case .check(let entry) = item, entry.outcome >= .seeDoctorToday {
-            return Palette.riskInk(outcomeRisk(entry.outcome))
+    /// The day at a glance: its highest temperature, its latest blood
+    /// pressure, and whether a lab result landed.
+    private var figures: String? {
+        var parts: [String] = []
+        let temperatures = day.vitals.compactMap(\.temperature)
+        if let peak = temperatures.max() {
+            parts.append(preferences.temperatureUnit.display(celsius: peak, style: loc.style))
         }
-        return .primary
-    }
-
-    /// The reader's own name for the record, or its number.
-    private var displayName: String {
-        let given = item.name.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !given.isEmpty { return given }
-        guard let number else { return kind }
-        return loc.t("log.defaultName", loc.num(number))
-    }
-
-    /// What it is, and the figures worth scanning, under the name.
-    private var subtitle: String {
-        guard let summary else { return kind }
-        return "\(kind) · \(summary)"
-    }
-
-    private var kind: String {
-        switch item {
-        case .check(let entry): loc.t(entry.outcome.headlineKey)
-        case .vitals: loc.t("vital.section")
-        case .lab: loc.t("lab.section")
+        if let latest = day.vitals.first(where: { $0.systolic != nil && $0.diastolic != nil }),
+           let systolic = latest.systolic, let diastolic = latest.diastolic {
+            parts.append("\(loc.num(Int(systolic)))/\(loc.num(Int(diastolic)))")
         }
-    }
-
-    /// The figures a reader scans for, in the order they would read them.
-    private var summary: String? {
-        switch item {
-        case .check(let entry):
-            let names = TriageEngine.symptoms
-                .filter { entry.symptomIDs.contains($0.id) }
-                .map { loc.t($0.titleKey) }
-            return names.isEmpty ? nil : loc.style.list(names)
-
-        case .vitals(let entry):
-            var parts: [String] = []
-            if let temperature = entry.temperature {
-                parts.append(preferences.temperatureUnit.display(celsius: temperature,
-                                                                 style: loc.style))
-            }
-            if let systolic = entry.systolic, let diastolic = entry.diastolic {
-                parts.append("\(loc.num(Int(systolic)))/\(loc.num(Int(diastolic)))")
-            }
-            if let pulse = entry.pulse {
-                parts.append("\(loc.num(Int(pulse))) \(loc.t("vital.unit.pulse"))")
-            }
-            if let oxygen = entry.oxygenSaturation {
-                parts.append("\(loc.num(Int(oxygen)))\(loc.t("vital.unit.oxygenSaturation"))")
-            }
-            return parts.isEmpty ? nil : parts.joined(separator: " · ")
-
-        case .lab(let report):
-            var parts: [String] = []
-            for measure in LabMeasure.allCases {
-                guard let value = report.value(for: measure) else { continue }
-                let shown = measure.decimals == 0
-                    ? loc.num(Int(value.rounded())) : loc.decimal(value)
-                parts.append("\(loc.t(measure.labelKey)) \(shown)")
-            }
-            for test in DengueTest.allCases where report.result(for: test) != .notDone {
-                parts.append("\(loc.t(test.labelKey)) \(loc.t(report.result(for: test).labelKey))")
-            }
-            return parts.isEmpty ? nil : parts.joined(separator: " · ")
+        if let platelets = day.labs.compactMap({ $0.platelets }).min() {
+            parts.append("\(loc.t("lab.platelets")) \(loc.num(Int(platelets)))")
         }
-    }
-
-    private func outcomeRisk(_ outcome: TriageOutcome) -> RiskLevel {
-        switch outcome {
-        case .selfCare: .low
-        case .testAdvised: .moderate
-        case .seeDoctorToday: .high
-        case .emergency: .severe
-        }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 }

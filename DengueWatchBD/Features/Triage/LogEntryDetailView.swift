@@ -11,16 +11,21 @@ struct LogEntryDetailView: View {
     @Environment(LocalizationManager.self) private var loc
     let item: HealthLogDay.Item
 
+    /// The record itself, without the screen around it, so the day view can
+    /// stack several of them without a second implementation.
+    @ViewBuilder
+    static func content(for item: HealthLogDay.Item) -> some View {
+        switch item {
+        case .check(let entry): CheckDetail(entry: entry)
+        case .vitals(let entry): VitalsDetail(entry: entry)
+        case .lab(let report): LabDetail(report: report)
+        }
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Space.stack) {
-                Card {
-                    switch item {
-                    case .check(let entry): CheckDetail(entry: entry)
-                    case .vitals(let entry): VitalsDetail(entry: entry)
-                    case .lab(let report): LabDetail(report: report)
-                    }
-                }
+                Card { Self.content(for: item) }
                 InlineNote(symbol: "lock", detail: loc.t("log.privacyFooter"))
             }
             .padding(.horizontal, Space.screen)
@@ -179,7 +184,7 @@ private struct LabDetail: View {
                 RoundedRectangle(cornerRadius: 2)
                     .fill(Palette.accent)
                     .frame(width: 3, height: 14)
-                Text(loc.t("lab.section"))
+                Text(loc.t("lab.report"))
                     .typo(.subheadline).fontWeight(.medium)
                 Spacer(minLength: 6)
                 Text(loc.time(report.date))

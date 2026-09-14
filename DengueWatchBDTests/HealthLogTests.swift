@@ -35,46 +35,53 @@ final class HealthLogTests: XCTestCase {
 
     // MARK: - Numbering
 
-    /// Numbers count from the oldest record, so a record keeps its number when
-    /// a newer one arrives. Numbering the list as displayed would make "Log 3"
-    /// a different afternoon every day.
-    func testNumbersCountFromTheOldest() {
-        let first = vitals(at(10, 9)), second = vitals(at(11, 9)), third = vitals(at(12, 9))
-        let numbers = HealthLog.numbers(checks: [], vitals: [third, first, second], labs: [])
-        XCTAssertEqual(numbers[first.id], 1)
-        XCTAssertEqual(numbers[second.id], 2)
-        XCTAssertEqual(numbers[third.id], 3)
+    private func numbers(checks: [CaseLogEntry] = [],
+                         vitals: [VitalsEntry] = [],
+                         labs: [LabReport] = []) -> [Date: Int] {
+        HealthLog.numbers(for: days(checks: checks, vitals: vitals, labs: labs))
     }
 
-    func testANewerRecordDoesNotRenumberTheOlderOnes() {
-        let old = vitals(at(10, 9))
-        let before = HealthLog.numbers(checks: [], vitals: [old], labs: [])
-        let after = HealthLog.numbers(checks: [], vitals: [old, vitals(at(12, 9))], labs: [])
-        XCTAssertEqual(before[old.id], after[old.id], "adding a reading must not move an older one")
+    /// Numbers count from the oldest day, so a day keeps its number when a
+    /// newer one arrives. Numbering the list as displayed would make "Log 3"
+    /// a different day every morning.
+    func testNumbersCountFromTheOldestDay() {
+        let result = numbers(vitals: [vitals(at(12, 9)), vitals(at(10, 9)), vitals(at(11, 9))])
+        XCTAssertEqual(result[at(10, 0)], 1)
+        XCTAssertEqual(result[at(11, 0)], 2)
+        XCTAssertEqual(result[at(12, 0)], 3)
     }
 
-    /// The three kinds share one sequence: they are all records in one log.
+    func testANewerDayDoesNotRenumberTheOlderOnes() {
+        let before = numbers(vitals: [vitals(at(10, 9))])
+        let after = numbers(vitals: [vitals(at(10, 9)), vitals(at(12, 9))])
+        XCTAssertEqual(before[at(10, 0)], after[at(10, 0)],
+                       "recording another day must not move an older one")
+    }
+
+    /// Everything recorded on one day is one log, so a second reading that
+    /// afternoon must not claim a number of its own.
+    func testASecondRecordOnTheSameDayDoesNotTakeANewNumber() {
+        let result = numbers(checks: [check(at(10, 8))],
+                             vitals: [vitals(at(10, 9)), vitals(at(10, 21))],
+                             labs: [lab(at(10, 12))])
+        XCTAssertEqual(result.count, 1, "four records, one day, one number")
+        XCTAssertEqual(result[at(10, 0)], 1)
+    }
+
+    /// The three kinds share one sequence of days: they are all records in
+    /// one log, not three parallel logs.
     func testEveryKindSharesTheSameSequence() {
-        let check = check(at(10, 8)), reading = vitals(at(10, 9)), report = lab(at(10, 10))
-        let numbers = HealthLog.numbers(checks: [check], vitals: [reading], labs: [report])
-        XCTAssertEqual(numbers[check.id], 1)
-        XCTAssertEqual(numbers[reading.id], 2)
-        XCTAssertEqual(numbers[report.id], 3)
-        XCTAssertEqual(Set(numbers.values).count, 3, "no two records share a number")
-    }
-
-    /// Two records saved in the same second must not swap places between
-    /// renders, or the numbers would flicker as the screen redraws.
-    func testRecordsAtTheSameInstantAreOrderedStably() {
-        let moment = at(10, 9)
-        let a = vitals(moment), b = vitals(moment)
-        let first = HealthLog.numbers(checks: [], vitals: [a, b], labs: [])
-        let second = HealthLog.numbers(checks: [], vitals: [b, a], labs: [])
-        XCTAssertEqual(first, second)
+        let result = numbers(checks: [check(at(10, 8))],
+                             vitals: [vitals(at(11, 9))],
+                             labs: [lab(at(12, 10))])
+        XCTAssertEqual(result[at(10, 0)], 1)
+        XCTAssertEqual(result[at(11, 0)], 2)
+        XCTAssertEqual(result[at(12, 0)], 3)
+        XCTAssertEqual(Set(result.values).count, 3, "no two days share a number")
     }
 
     func testNothingRecordedIsNumberedNothing() {
-        XCTAssertTrue(HealthLog.numbers(checks: [], vitals: [], labs: []).isEmpty)
+        XCTAssertTrue(numbers().isEmpty)
     }
 
     func testNothingRecordedIsNoDays() {

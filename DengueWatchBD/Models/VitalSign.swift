@@ -73,8 +73,6 @@ struct VitalsEntry: Identifiable, Codable, Hashable {
     var diastolic: Double?
     var oxygenSaturation: Double?
     var note: String = ""
-    /// What the reader calls this record; empty falls back to its number.
-    var name: String = ""
 
     func value(for kind: VitalKind) -> Double? {
         switch kind {

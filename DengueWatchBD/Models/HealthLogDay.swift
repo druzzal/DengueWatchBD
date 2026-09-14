@@ -39,14 +39,6 @@ struct HealthLogDay: Identifiable, Equatable {
             }
         }
 
-        /// The name the reader gave this record, or empty if they have not.
-        var name: String {
-            switch self {
-            case .check(let entry): entry.name
-            case .vitals(let entry): entry.name
-            case .lab(let report): report.name
-            }
-        }
 
         var date: Date {
             switch self {
@@ -60,27 +52,18 @@ struct HealthLogDay: Identifiable, Equatable {
 
 enum HealthLog {
 
-    /// Numbers every record in the order it was made, oldest first.
+    /// Numbers each day of the record, oldest first.
     ///
-    /// Counting from the oldest is what keeps a number attached to a record:
+    /// Counting from the oldest day is what keeps a number attached to a day:
     /// numbering the list as displayed would renumber everything each time a
-    /// new reading arrived, so "Log 3" would mean a different afternoon every
-    /// day. Deleting an earlier record does shift the ones after it, which is
-    /// the price of numbering at all — a reader who cares gives it a name.
-    static func numbers(checks: [CaseLogEntry],
-                        vitals: [VitalsEntry],
-                        labs: [LabReport]) -> [UUID: Int] {
-        let all: [(id: UUID, date: Date)] =
-            checks.map { ($0.id, $0.date) }
-            + vitals.map { ($0.id, $0.date) }
-            + labs.map { ($0.id, $0.date) }
-        // Ties break on the id so the numbering is the same on every render.
-        let ordered = all.sorted {
-            $0.date == $1.date ? $0.id.uuidString < $1.id.uuidString : $0.date < $1.date
-        }
+    /// reading arrived, so "Log 3" would mean a different day every day.
+    static func numbers(for days: [HealthLogDay]) -> [Date: Int] {
+        let ordered = days.map(\.date).sorted()
         return Dictionary(uniqueKeysWithValues:
-            ordered.enumerated().map { ($0.element.id, $0.offset + 1) })
+            ordered.enumerated().map { ($0.element, $0.offset + 1) })
     }
+
+
 
     /// Groups both stores by calendar day, newest day first.
     ///

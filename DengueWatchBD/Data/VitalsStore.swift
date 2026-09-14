@@ -42,13 +42,6 @@ final class VitalsStore {
         save()
     }
 
-    /// Rename one record. Trimmed, and an empty name puts it back to its
-    /// number rather than leaving it blank.
-    func rename(id: UUID, to name: String) {
-        guard let index = entries.firstIndex(where: { $0.id == id }) else { return }
-        entries[index].name = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        save()
-    }
 
     func clear() {
         entries.removeAll()

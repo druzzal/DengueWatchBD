@@ -5,6 +5,7 @@ struct RootView: View {
     @State private var caseLog = CaseLogStore()
     @State private var vitals = VitalsStore()
     @State private var labs = LabStore()
+    @State private var logNames = LogNameStore()
     @State private var preferences = Preferences()
     @State private var localization = LocalizationManager()
     // Owned by the process, not the view — see AppDelegate.
@@ -41,6 +42,7 @@ struct RootView: View {
         .environment(caseLog)
         .environment(vitals)
         .environment(labs)
+        .environment(logNames)
         .environment(preferences)
         .environment(localization)
         .environment(location)

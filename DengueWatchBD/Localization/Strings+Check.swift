@@ -27,6 +27,8 @@ extension Strings {
 
         // Lab reports
         "lab.section": "Lab reports",
+        // One report on its own, as a card heading in the day's record.
+        "lab.report": "Lab report",
         "lab.none": "No reports yet.",
         "lab.add": "Add a report",
         "lab.save": "Save report",
@@ -222,6 +224,7 @@ extension Strings {
         "log.temperature": "Your temperature",
         "log.export": "Export as PDF",
         "log.defaultName": "Log %@",
+        "log.entries": "Days recorded",
         "log.rename": "Rename",
         "log.rename.placeholder": "Name this record",
         "log.rename.detail": "Give this record a name you will recognise. Leave it empty to go back to its number.",
@@ -267,6 +270,7 @@ extension Strings {
 
         // ল্যাব রিপোর্ট
         "lab.section": "ল্যাব রিপোর্ট",
+        "lab.report": "ল্যাব রিপোর্ট",
         "lab.none": "এখনো কোনো রিপোর্ট নেই।",
         "lab.add": "রিপোর্ট যোগ করুন",
         "lab.save": "রিপোর্ট সংরক্ষণ করুন",
@@ -462,6 +466,7 @@ extension Strings {
         "log.temperature": "আপনার তাপমাত্রা",
         "log.export": "পিডিএফ তৈরি করুন",
         "log.defaultName": "লগ %@",
+        "log.entries": "যেসব দিনের হিসাব আছে",
         "log.rename": "নাম বদলান",
         "log.rename.placeholder": "এই হিসাবের নাম দিন",
         "log.rename.detail": "চিনতে সুবিধা হয় এমন একটি নাম দিন। খালি রাখলে আবার নম্বর দেখাবে।",

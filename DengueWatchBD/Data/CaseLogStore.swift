@@ -9,9 +9,6 @@ struct CaseLogEntry: Identifiable, Codable, Hashable {
     var outcomeRawValue: Int = TriageOutcome.selfCare.rawValue
     var areaCode: String?
     var note: String = ""
-    /// What the reader calls this record. Empty means it is shown by its
-    /// number instead — see `HealthLog.numbers`.
-    var name: String = ""
 
     /// Days since the fever began, zero-based, as the checker records it.
     /// Nil when there was no fever to date from.
@@ -83,13 +80,6 @@ final class CaseLogStore {
         save()
     }
 
-    /// Rename one record. Trimmed, and an empty name puts it back to its
-    /// number rather than leaving it blank.
-    func rename(id: UUID, to name: String) {
-        guard let index = entries.firstIndex(where: { $0.id == id }) else { return }
-        entries[index].name = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        save()
-    }
 
     func clear() {
         entries.removeAll()
