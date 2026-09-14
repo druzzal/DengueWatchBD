@@ -31,7 +31,7 @@ struct CareView: View {
                 ToolbarItem(placement: .topBarLeading) { LanguageToggle() }
             }
             .task {
-                if location.isAuthorized { location.requestOneFix() }
+                location.requestOneFix()
             }
         }
     }

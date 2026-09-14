@@ -106,10 +106,12 @@ struct DashboardView: View {
                 await store.refresh()
             }
             .task {
-                // Already allowed: ask for a fix now, so the hero opens on the
-                // local reading instead of the national one. Never prompts —
-                // the permission card below does that, with an explanation.
-                if location.isAuthorized { location.requestOneFix() }
+                // Ask for a fix. If permission has not been given yet this
+                // records the want rather than prompting — the card below does
+                // the asking, with an explanation — and the fix is delivered
+                // the moment access is granted, without the reader having to
+                // leave the tab and come back.
+                location.requestOneFix()
             }
             .navigationDestination(for: Area.self) { AreaDetailView(area: $0) }
             .sheet(isPresented: $showingAbout) { AboutDataView() }

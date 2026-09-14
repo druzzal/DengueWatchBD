@@ -30,6 +30,15 @@ final class LocationManager: NSObject {
 
     private let manager = CLLocationManager()
 
+    /// Set when a fix was asked for before there was permission to take one.
+    ///
+    /// The permission card asks in the same breath as it requests access, and
+    /// at that instant authorisation is still undetermined — so the request
+    /// was dropped and the reader sat looking at the national reading until
+    /// they left the tab and came back. Remembering the intent is what makes
+    /// "Allow location" do something immediately.
+    private var fixWanted = false
+
     override init() {
         authorization = manager.authorizationStatus
         super.init()
@@ -80,7 +89,11 @@ final class LocationManager: NSObject {
     /// open — the most expensive way to learn something that changes when you
     /// travel between districts.
     func requestOneFix() {
-        guard isAuthorized else { return }
+        guard isAuthorized else {
+            fixWanted = true
+            return
+        }
+        fixWanted = false
         manager.requestLocation()
     }
 
@@ -179,6 +192,11 @@ extension LocationManager: CLLocationManagerDelegate {
             // for. Until this, enabling alerts armed nothing until relaunch.
             if !wasBackground, self.hasBackgroundAuthorization {
                 self.rearmFromSnapshot()
+            }
+            // And deliver the fix somebody asked for before they had the right
+            // to one — the usual path through the permission card.
+            if self.fixWanted, self.isAuthorized {
+                self.requestOneFix()
             }
         }
     }
