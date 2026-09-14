@@ -58,6 +58,28 @@ final class LocalizationHygieneTests: XCTestCase {
         XCTAssertGreaterThan(swiftFiles().count, 40)
     }
 
+    /// Every key the code asks for must exist.
+    ///
+    /// `loc.t` falls back to the key itself when it is missing, so a typo or a
+    /// forgotten entry ships as a button labelled "common.save" rather than as
+    /// a crash or a build error. That is exactly how `common.save` reached a
+    /// rename dialog: the code compiled, the tests passed, and the string was
+    /// simply not there.
+    func testEveryKeyTheCodeAsksForExists() throws {
+        let pattern = try NSRegularExpression(pattern: #"\bt\(\s*"([a-z][\w.]+)""#)
+        var missing: Set<String> = []
+        for file in swiftFiles() where !file.pathComponents.contains("Localization") {
+            guard let source = try? String(contentsOf: file, encoding: .utf8) else { continue }
+            let range = NSRange(source.startIndex..., in: source)
+            for match in pattern.matches(in: source, range: range) {
+                guard let keyRange = Range(match.range(at: 1), in: source) else { continue }
+                let key = String(source[keyRange])
+                if Strings.english[key] == nil { missing.insert(key) }
+            }
+        }
+        XCTAssertTrue(missing.isEmpty, "used in code but never defined: \(missing.sorted())")
+    }
+
     /// DGHS has a Bengali name, and the app uses it. Transliterating the
     /// English acronym in one string and not the rest reads as two different
     /// sources to someone reading in Bangla.

@@ -41,6 +41,14 @@ final class LabStore {
         save()
     }
 
+    /// Rename one record. Trimmed, and an empty name puts it back to its
+    /// number rather than leaving it blank.
+    func rename(id: UUID, to name: String) {
+        guard let index = reports.firstIndex(where: { $0.id == id }) else { return }
+        reports[index].name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        save()
+    }
+
     func clear() {
         reports.removeAll()
         save()

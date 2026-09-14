@@ -97,6 +97,8 @@ struct LabReport: Identifiable, Codable, Hashable {
     var igm: TestResult = .notDone
     var igg: TestResult = .notDone
     var note: String = ""
+    /// What the reader calls this record; empty falls back to its number.
+    var name: String = ""
 
     func value(for measure: LabMeasure) -> Double? {
         switch measure {

@@ -21,9 +21,22 @@ struct CaseLogView: View {
     /// go stale the moment one is removed.
     @State private var selection: Set<UUID> = []
     @State private var isEditing = false
+    /// Oldest first when true. The log is always ordered by date; this only
+    /// decides which end the reader starts from.
+    @AppStorage("log.oldestFirst") private var oldestFirst = false
+    /// The record being renamed, and the text as it is typed.
+    @State private var renaming: HealthLogDay.Item?
+    @State private var draftName = ""
 
     private var days: [HealthLogDay] {
-        HealthLog.days(checks: log.entries, vitals: vitals.entries, labs: labs.reports)
+        let ordered = HealthLog.days(checks: log.entries, vitals: vitals.entries,
+                                     labs: labs.reports)
+        return oldestFirst ? ordered.reversed() : ordered
+    }
+
+    /// Each record's number, counted from the oldest so it stays put.
+    private var numbers: [UUID: Int] {
+        HealthLog.numbers(checks: log.entries, vitals: vitals.entries, labs: labs.reports)
     }
 
     /// Temperature now comes from Vital signs, which is where it is recorded.
@@ -52,7 +65,13 @@ struct CaseLogView: View {
                                     NavigationLink {
                                         LogEntryDetailView(item: item)
                                     } label: {
-                                        LogSummaryRow(item: item)
+                                        LogSummaryRow(item: item, number: numbers[item.id])
+                                    }
+                                    .contextMenu {
+                                        Button(loc.t("log.rename"), systemImage: "pencil") {
+                                            draftName = item.name
+                                            renaming = item
+                                        }
                                     }
                                     .swipeActions {
                                         Button(loc.t("common.delete"), role: .destructive) {
@@ -83,6 +102,7 @@ struct CaseLogView: View {
                 ToolbarItem(placement: .topBarLeading) { LanguageToggle() }
                 ToolbarItem(placement: .topBarTrailing) { exportButton }
                 ToolbarItem(placement: .topBarTrailing) { editButton }
+                ToolbarItem(placement: .topBarLeading) { sortMenu }
                 if isEditing {
                     ToolbarItem(placement: .bottomBar) { deleteSelectedButton }
                 }
@@ -91,6 +111,13 @@ struct CaseLogView: View {
                         Button(loc.t("common.done")) { dismiss() }
                     }
                 }
+            }
+            .alert(loc.t("log.rename"), isPresented: renamingBinding) {
+                TextField(loc.t("log.rename.placeholder"), text: $draftName)
+                Button(loc.t("common.save")) { commitRename() }
+                Button(loc.t("common.cancel"), role: .cancel) { renaming = nil }
+            } message: {
+                Text(loc.t("log.rename.detail"))
             }
             .confirmationDialog(loc.t("log.confirmDelete"),
                                 isPresented: $showingClearConfirmation, titleVisibility: .visible) {
@@ -113,6 +140,35 @@ struct CaseLogView: View {
     /// entries — on the main actor, for a file most readers never ask for. The
     /// export is also always current this way, with no cached copy to go stale
     /// behind a later entry.
+    /// Which end of the record to start from. The order itself is never in
+    /// question — it is the date — only the direction.
+    private var sortMenu: some View {
+        Menu {
+            Picker("", selection: $oldestFirst) {
+                Text(loc.t("log.sort.newest")).tag(false)
+                Text(loc.t("log.sort.oldest")).tag(true)
+            }
+            .pickerStyle(.inline)
+        } label: {
+            Image(systemName: "arrow.up.arrow.down")
+        }
+        .accessibilityLabel(loc.t("log.sort"))
+    }
+
+    private var renamingBinding: Binding<Bool> {
+        Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })
+    }
+
+    private func commitRename() {
+        guard let renaming else { return }
+        switch renaming {
+        case .check(let entry): log.rename(id: entry.id, to: draftName)
+        case .vitals(let entry): vitals.rename(id: entry.id, to: draftName)
+        case .lab(let report): labs.rename(id: report.id, to: draftName)
+        }
+        self.renaming = nil
+    }
+
     /// Our own control rather than `EditButton`, whose title follows the
     /// device language and would read "Edit" on a screen the reader has set
     /// to Bangla.
@@ -265,6 +321,8 @@ private struct LogSummaryRow: View {
     @Environment(LocalizationManager.self) private var loc
     @Environment(Preferences.self) private var preferences
     let item: HealthLogDay.Item
+    /// Its place in the record, counted from the oldest.
+    let number: Int?
 
     var body: some View {
         HStack(alignment: .top, spacing: Space.row) {
@@ -272,17 +330,15 @@ private struct LogSummaryRow: View {
                 .fill(accent)
                 .frame(width: 3, height: 30)
             VStack(alignment: .leading, spacing: 3) {
-                Text(title)
+                Text(displayName)
                     .typo(.callout)
                     .fontWeight(.medium)
                     .foregroundStyle(titleTint)
                     .lineLimit(1)
-                if let summary {
-                    Text(summary)
-                        .typo(.micro)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
+                Text(subtitle)
+                    .typo(.micro)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
             }
             Spacer(minLength: Space.tight)
             Text(loc.time(item.date))
@@ -309,7 +365,21 @@ private struct LogSummaryRow: View {
         return .primary
     }
 
-    private var title: String {
+    /// The reader's own name for the record, or its number.
+    private var displayName: String {
+        let given = item.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !given.isEmpty { return given }
+        guard let number else { return kind }
+        return loc.t("log.defaultName", loc.num(number))
+    }
+
+    /// What it is, and the figures worth scanning, under the name.
+    private var subtitle: String {
+        guard let summary else { return kind }
+        return "\(kind) · \(summary)"
+    }
+
+    private var kind: String {
         switch item {
         case .check(let entry): loc.t(entry.outcome.headlineKey)
         case .vitals: loc.t("vital.section")
