@@ -206,13 +206,16 @@ extension LocationManager: CLLocationManagerDelegate {
 
     nonisolated func locationManager(_ manager: CLLocationManager,
                                      didEnterRegion region: CLRegion) {
+        // Read the identifier here: a String crosses to the main actor safely,
+        // where the CLRegion itself does not.
+        let code = region.identifier
         Task { @MainActor in
             // Raised from the persisted snapshot rather than from the store, so
             // this works on a cold background launch where nothing else is up.
-            if let watched = WatchedAreaStore.area(code: region.identifier) {
+            if let watched = WatchedAreaStore.area(code: code) {
                 await NotificationManager.shared.raiseGeofenceAlert(area: watched)
             }
-            self.onRegionEntry?(region.identifier)
+            self.onRegionEntry?(code)
         }
     }
 }

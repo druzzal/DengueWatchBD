@@ -418,12 +418,12 @@ enum FeedDate {
         return formatter
     }()
 
-    private static let isoFormatter: ISO8601DateFormatter = {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withFullDate]
-        formatter.timeZone = TimeZone(identifier: "Asia/Dhaka") ?? .gmt
-        return formatter
-    }()
+    /// A value type rather than a shared `ISO8601DateFormatter`: that class
+    /// holds mutable state, and one instance shared across actors is a data
+    /// race waiting for the day two parses overlap.
+    private static let isoStyle = Date.ISO8601FormatStyle(
+        timeZone: TimeZone(identifier: "Asia/Dhaka") ?? .gmt
+    ).year().month().day()
 
     /// `01-Jan-26` → that day.
     static func day(from label: String) -> Date? {
@@ -432,6 +432,6 @@ enum FeedDate {
 
     /// `2026-09-05` → that day.
     static func iso(from label: String) -> Date? {
-        isoFormatter.date(from: label)
+        try? Date(label, strategy: isoStyle)
     }
 }

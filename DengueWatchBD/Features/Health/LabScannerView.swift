@@ -23,8 +23,14 @@ struct LabScannerView: UIViewControllerRepresentable {
     func updateUIViewController(_ controller: VNDocumentCameraViewController, context: Context) {}
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
+    /// VisionKit delivers its delegate callbacks on the main thread, so the
+    /// coordinator is isolated to it. The protocol itself predates concurrency
+    /// annotations, hence `@preconcurrency`: it keeps the isolation and adds a
+    /// runtime check that the callback really did arrive on the main actor,
+    /// rather than asserting it and hoping.
+    @MainActor
 
-    final class Coordinator: NSObject, VNDocumentCameraViewControllerDelegate {
+    final class Coordinator: NSObject, @preconcurrency VNDocumentCameraViewControllerDelegate {
         private let parent: LabScannerView
 
         init(_ parent: LabScannerView) { self.parent = parent }

@@ -23,9 +23,19 @@ enum BackgroundRefresh {
     /// Registered during launch, before the app finishes launching, as
     /// BGTaskScheduler requires.
     static func register() {
-        BGTaskScheduler.shared.register(forTaskWithIdentifier: identifier, using: nil) { task in
+        // Delivered on the main queue: BGAppRefreshTask is not Sendable, and
+        // asking for it here means the task never crosses an isolation
+        // boundary on its way to the handler.
+        BGTaskScheduler.shared.register(forTaskWithIdentifier: identifier, using: .main) { task in
             guard let task = task as? BGAppRefreshTask else { return }
-            handle(task)
+            // `using: .main` above is the guarantee: BGTaskScheduler delivers
+            // this on the main queue, so the task is already where the handler
+            // needs it. The compiler cannot read that from the API, so the
+            // assumption is named here rather than left implicit — if the
+            // registration queue ever changes, this comment is the thing that
+            // has to change with it.
+            nonisolated(unsafe) let delivered = task
+            MainActor.assumeIsolated { handle(delivered) }
         }
     }
 
@@ -37,6 +47,7 @@ enum BackgroundRefresh {
         try? BGTaskScheduler.shared.submit(request)
     }
 
+    @MainActor
     private static func handle(_ task: BGAppRefreshTask) {
         // Always queue the next one first: if this run is killed, the chain
         // continues rather than stopping silently.
@@ -48,8 +59,9 @@ enum BackgroundRefresh {
         }
 
         task.expirationHandler = {
+            // iOS calls this when it is taking back the time; cancelling is
+            // all that is needed, and the work task reports completion.
             work.cancel()
-            task.setTaskCompleted(success: false)
         }
     }
 
