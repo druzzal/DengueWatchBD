@@ -1,16 +1,18 @@
 # App icon
 
-`AppIcon1024.png` in the asset catalogue is a copy of
-`denguewatch_icon_crimson.png`, supplied as artwork. It is already what iOS
-needs: 1024×1024, RGB, no alpha channel — iOS rejects an app icon that
-carries one.
+`denguewatch_icon_source.png` is the artwork as supplied: 1254×1254, with
+transparency, drawn as a rounded tile floating in transparent margins.
 
-`denguewatch_icon_crimson.svg` is the vector the PNG was drawn from, kept for
-future edits.
+`AppIcon1024.png` in the asset catalogue is derived from it, and the
+derivation matters:
 
-A note for anyone regenerating the PNG from the SVG: the artwork group uses
-`transform-origin`, and renderers differ on it — it is a CSS property rather
-than an SVG 1.1 attribute. Writing that transform out as explicit translates
-produces a visibly different composition from the supplied PNG, so it is the
-wrong thing to do here. Render the SVG as written, and compare the result
-against this PNG before shipping it.
+- **Cropped inside the tile's rounded corners.** iOS applies its own corner
+  mask. Shipping the artwork's own rounding would round the icon twice and
+  leave pale wedges where the transparent corners flattened. The crop is the
+  largest square whose every edge pixel is solid — measured by probing the
+  alpha channel, not estimated — which keeps 82.8% of the tile.
+- **Scaled to 1024×1024 and flattened to RGB.** iOS rejects an app icon
+  carrying an alpha channel.
+
+To regenerate after an artwork change, re-probe the corners rather than
+reusing these numbers: they are specific to this file's rounding radius.
