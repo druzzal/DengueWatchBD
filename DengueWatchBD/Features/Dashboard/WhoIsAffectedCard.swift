@@ -49,7 +49,7 @@ struct WhoIsAffectedCard: View {
 
     private func row(_ band: AgeBand) -> some View {
         HStack(spacing: Space.tight) {
-            Text(band.label)
+            Text(band.label(loc.style))
                 .typo(.micro)
                 .monospacedDigit()
                 .foregroundStyle(.secondary)
@@ -74,7 +74,7 @@ struct WhoIsAffectedCard: View {
                 .frame(width: 46, alignment: .trailing)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(loc.t("who.a11y", band.label,
+        .accessibilityLabel(loc.t("who.a11y", band.label(loc.style),
                                   loc.num(band.male), loc.num(band.female)))
     }
 

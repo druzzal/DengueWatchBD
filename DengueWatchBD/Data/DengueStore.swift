@@ -210,24 +210,50 @@ final class DengueStore {
             ($0.title ?? "").localizedCaseInsensitiveContains(fragment)
         }) else { return [] }
 
-        return table.rows.compactMap { row in
-            guard let label = row["Age Group"]?.text, Self.isAgeBand(label) else { return nil }
-            return AgeBand(label: label,
-                           male: row["Male"]?.number ?? 0,
-                           female: row["Female"]?.number ?? 0)
+        // Merged by range and then put in age order. DGHS spells one band two
+        // ways — "06-10" and "6-10" — which arrive as separate rows, and their
+        // sheet is sorted as text, so the unpadded spelling lands between
+        // "56-60" and "61-65". Summing the pair is right rather than merely
+        // tidy: they are the same ten-year-olds, and showing one row of 2,101
+        // beside another of 1 invites the reader to treat the second as a
+        // distinct group.
+        var merged: [Range: (male: Int, female: Int)] = [:]
+        for row in table.rows {
+            guard let text = row["Age Group"]?.text, let range = Self.ageRange(text) else { continue }
+            let male = row["Male"]?.number ?? 0
+            let female = row["Female"]?.number ?? 0
+            merged[range, default: (0, 0)].male += male
+            merged[range, default: (0, 0)].female += female
         }
+        return merged
+            .map { AgeBand(lowerAge: $0.key.low, upperAge: $0.key.high,
+                           male: $0.value.male, female: $0.value.female) }
+            .sorted { $0.lowerAge < $1.lowerAge }
     }
 
+    /// An age band's span, for merging spellings of the same one.
+    private struct Range: Hashable {
+        let low: Int
+        /// Nil for the open-ended top band.
+        let high: Int?
+    }
+
+    /// The span a label covers, or nil when the label is not an age band.
+    ///
     /// DGHS's age tables occasionally carry a row where a date was typed into
-    /// the age column ("42309" — an Excel serial) or left blank. Those are
-    /// dropped rather than rendered as an age band.
-    private static func isAgeBand(_ label: String) -> Bool {
-        if label == "80+" { return true }
-        let parts = label.split(separator: "-")
+    /// the age column ("42309" — an Excel serial, from a spreadsheet reading
+    /// "6-10" as the sixth of October) or left blank. Those are dropped rather
+    /// than rendered as an age band.
+    private static func ageRange(_ label: String) -> Range? {
+        let trimmed = label.trimmingCharacters(in: .whitespaces)
+        if trimmed.hasSuffix("+"), let low = Int(trimmed.dropLast()) {
+            return Range(low: low, high: nil)
+        }
+        let parts = trimmed.split(separator: "-")
         guard parts.count == 2,
               let low = Int(parts[0]), let high = Int(parts[1]),
-              low <= high, high <= 120 else { return false }
-        return true
+              low <= high, high <= 120 else { return nil }
+        return Range(low: low, high: high)
     }
 
     private static func sexSplit(_ chart: FeedChart?) -> SexSplit? {

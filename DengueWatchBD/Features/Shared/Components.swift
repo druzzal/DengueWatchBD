@@ -77,36 +77,72 @@ struct Card<Content: View>: View {
 }
 
 struct CardSection<Content: View>: View {
+    @Environment(LocalizationManager.self) private var loc
+
     var title: String
     var subtitle: String?
     var accessory: AnyView?
+    /// When bound, the header becomes a control that shows and hides the body.
+    /// Cards that are always open pass nothing and behave as before.
+    var isExpanded: Binding<Bool>?
     @ViewBuilder var content: Content
 
     init(_ title: String, subtitle: String? = nil, accessory: AnyView? = nil,
+         isExpanded: Binding<Bool>? = nil,
          @ViewBuilder content: () -> Content) {
         self.title = title
         self.subtitle = subtitle
         self.accessory = accessory
+        self.isExpanded = isExpanded
         self.content = content()
     }
+
+    private var isOpen: Bool { isExpanded?.wrappedValue ?? true }
 
     var body: some View {
         Card {
             VStack(alignment: .leading, spacing: Space.row) {
-                HStack(alignment: .firstTextBaseline, spacing: Space.tight) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(title).typo(.headline)
-                        if let subtitle {
-                            Text(subtitle)
-                                .typo(.caption)
-                                .foregroundStyle(.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
+                if let isExpanded {
+                    Button {
+                        withAnimation(.snappy(duration: 0.22)) {
+                            isExpanded.wrappedValue.toggle()
                         }
+                    } label: {
+                        header.contentShape(Rectangle())
                     }
-                    Spacer(minLength: Space.hair)
-                    accessory
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(title)
+                    .accessibilityValue(loc.t(isOpen ? "common.expanded" : "common.collapsed"))
+                } else {
+                    header
                 }
-                content
+                if isOpen { content }
+            }
+        }
+    }
+
+    private var header: some View {
+        HStack(alignment: .firstTextBaseline, spacing: Space.tight) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .typo(.headline)
+                    .foregroundStyle(.primary)
+                    .multilineTextAlignment(.leading)
+                if let subtitle {
+                    Text(subtitle)
+                        .typo(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            Spacer(minLength: Space.hair)
+            accessory
+            if isExpanded != nil {
+                Image(systemName: "chevron.down")
+                    .typo(.caption)
+                    .foregroundStyle(.tertiary)
+                    .rotationEffect(.degrees(isOpen ? 0 : -90))
             }
         }
     }

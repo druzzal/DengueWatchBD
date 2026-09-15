@@ -118,31 +118,40 @@ struct PreventionView: View {
     /// skimming must not come away remembering the myth as the message. The
     /// myth is set in the muted colour and the fact in the primary one.
     private var mythCard: some View {
-        CardSection(loc.t("myth.section"), subtitle: loc.t("myth.section.subtitle")) {
+        CardSection(loc.t("myth.section"), subtitle: loc.t("myth.section.subtitle"),
+                    isExpanded: expandedBinding(for: "myths")) {
             VStack(spacing: 0) {
                 ForEach(Array(MythFact.all.enumerated()), id: \.element.id) { index, item in
-                    VStack(alignment: .leading, spacing: Space.tight) {
-                        HStack(alignment: .top, spacing: Space.tight) {
+                    // A grid rather than two rows of fixed-width labels. The
+                    // labels used to sit in a 54pt frame, which "MYTH" already
+                    // overflowed in English — so it hung further left than
+                    // "FACT" and the two never lined up. Bengali is worse:
+                    // "ভ্রান্ত ধারণা" beside "সত্য" is nowhere near 54pt. A grid
+                    // column takes the width of the widest label in whatever
+                    // language is on screen, and both rows then share an edge.
+                    Grid(alignment: .topLeading, horizontalSpacing: Space.tight,
+                         verticalSpacing: Space.tight) {
+                        GridRow {
                             Text(loc.t("myth.label").uppercased())
                                 .typo(.micro)
                                 .fontWeight(.bold)
                                 .foregroundStyle(Palette.riskTint(.high))
-                                .frame(width: 54, alignment: .leading)
                             Text(loc.t(item.mythKey))
                                 .typo(.callout)
                                 .foregroundStyle(.secondary)
                                 .strikethrough(true, color: Palette.riskTint(.high).opacity(0.5))
                                 .fixedSize(horizontal: false, vertical: true)
+                                .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        HStack(alignment: .top, spacing: Space.tight) {
+                        GridRow {
                             Text(loc.t("myth.fact.label").uppercased())
                                 .typo(.micro)
                                 .fontWeight(.bold)
                                 .foregroundStyle(Palette.riskTint(.low))
-                                .frame(width: 54, alignment: .leading)
                             Text(loc.t(item.factKey))
                                 .typo(.callout)
                                 .fixedSize(horizontal: false, vertical: true)
+                                .frame(maxWidth: .infinity, alignment: .leading)
                         }
                     }
                     .padding(.vertical, Space.row)
@@ -202,6 +211,15 @@ struct PreventionView: View {
         }
     }
 
+    /// Open/closed state for a card, over the same set the topic cards use, so
+    /// there is one place a section's disclosure lives.
+    private func expandedBinding(for id: String) -> Binding<Bool> {
+        Binding(get: { expanded.contains(id) },
+                set: { isOpen in
+                    if isOpen { expanded.insert(id) } else { expanded.remove(id) }
+                })
+    }
+
     private func topicCard(_ topic: PreventionTopic) -> some View {
         let isOpen = expanded.contains(topic.id)
         return Card {
@@ -236,6 +254,8 @@ struct PreventionView: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel(loc.t(topic.titleKey))
+                .accessibilityValue(loc.t(isOpen ? "common.expanded" : "common.collapsed"))
 
                 if isOpen {
                     VStack(alignment: .leading, spacing: 10) {

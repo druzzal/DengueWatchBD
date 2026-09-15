@@ -277,13 +277,30 @@ struct YearSummary: Identifiable, Hashable {
 }
 
 /// One age band, split by sex. The feed publishes this for cases and deaths.
+///
+/// Held as a range rather than as the label DGHS printed, because the source
+/// sheet spells the same band two ways ("06-10" and "6-10") and sorts its rows
+/// as text — which puts "6-10" between "56-60" and "61-65". A range can be
+/// merged and ordered; a string can only be shown.
 struct AgeBand: Identifiable, Hashable {
-    let label: String
+    /// Inclusive.
+    let lowerAge: Int
+    /// Inclusive. Nil for the open-ended top band, which DGHS prints as "80+".
+    let upperAge: Int?
     let male: Int
     let female: Int
 
-    var id: String { label }
+    var id: Int { lowerAge }
     var total: Int { male + female }
+
+    /// The band written out, in the reader's digits.
+    ///
+    /// Built here rather than carried from the feed so that Bengali gets
+    /// Bengali numerals — the source only ever publishes Western ones.
+    func label(_ style: NumberStyle) -> String {
+        guard let upperAge else { return "\(style.num(lowerAge))+" }
+        return "\(style.num(lowerAge))–\(style.num(upperAge))"
+    }
 }
 
 struct SexSplit: Hashable {

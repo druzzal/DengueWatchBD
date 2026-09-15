@@ -4,6 +4,10 @@ extension Strings {
     static let enCommon: [String: String] = [
         "common.unknown": "unknown",
         "common.done": "Done",
+        // Spoken by VoiceOver on a section header that opens and closes, so the
+        // reader knows whether tapping will reveal or hide what is under it.
+        "common.expanded": "Expanded",
+        "common.collapsed": "Collapsed",
         "common.cancel": "Cancel",
         "common.save": "Save",
         "common.delete": "Delete",
@@ -44,6 +48,8 @@ extension Strings {
     static let bnCommon: [String: String] = [
         "common.unknown": "অজানা",
         "common.done": "সম্পন্ন",
+        "common.expanded": "খোলা",
+        "common.collapsed": "বন্ধ",
         "common.cancel": "বাতিল",
         "common.save": "সংরক্ষণ",
         "common.delete": "মুছুন",

@@ -41,8 +41,11 @@ final class FeedDecodingTests: XCTestCase {
            {"title":"Age group distribution of affected cases from 1 January to till date in 2026",
             "headers":["Age Group","Male","Female","Total"],
             "rows":[{"Age Group":"0-5","Male":30,"Female":20,"Total":50},
+                    {"Age Group":"06-10","Male":40,"Female":30,"Total":70},
                     {"Age Group":"42309","Male":1,"Female":1,"Total":2},
                     {"Age Group":"","Male":1,"Female":0,"Total":1},
+                    {"Age Group":"56-60","Male":5,"Female":5,"Total":10},
+                    {"Age Group":"6-10","Male":1,"Female":0,"Total":1},
                     {"Age Group":"80+","Male":2,"Female":1,"Total":3},
                     {"Age Group":"Grand Total","Male":34,"Female":22,"Total":56}]}
          ]}
@@ -160,14 +163,59 @@ final class FeedDecodingTests: XCTestCase {
     }
 
     /// DGHS's age tables carry rows where a date was typed into the age column
-    /// ("42309", an Excel serial) and blank rows. Neither is an age band.
+    /// ("42309", an Excel serial from a spreadsheet reading "6-10" as the sixth
+    /// of October) and blank rows. Neither is an age band.
     @MainActor
     func testAgeBandsDropSourceGlitches() async throws {
         let store = DengueStore()
         await store.apply(document: try decoded(), source: .bundled)
 
-        XCTAssertEqual(store.ageBandsCases.map(\.label), ["0-5", "80+"])
+        XCTAssertFalse(store.ageBandsCases.contains { $0.lowerAge > 120 },
+                       "an Excel serial is not an age")
         XCTAssertEqual(store.ageBandsCases.first?.total, 50)
+    }
+
+    /// DGHS spells one band two ways — "06-10" and "6-10" — and both arrive as
+    /// separate rows. They are the same ten-year-olds, and a row of 1 beside a
+    /// row of 70 reads as a distinct group rather than as a typo.
+    @MainActor
+    func testTheTwoSpellingsOfOneBandBecomeOneRow() async throws {
+        let store = DengueStore()
+        await store.apply(document: try decoded(), source: .bundled)
+
+        let bands = store.ageBandsCases.filter { $0.lowerAge == 6 }
+        XCTAssertEqual(bands.count, 1, "06-10 and 6-10 are one band")
+        XCTAssertEqual(bands.first?.male, 41, "40 + 1")
+        XCTAssertEqual(bands.first?.female, 30)
+    }
+
+    /// The source sheet is sorted as text, which puts "6-10" between "56-60"
+    /// and "61-65". Age bands have to read in age order.
+    @MainActor
+    func testAgeBandsReadInAgeOrder() async throws {
+        let store = DengueStore()
+        await store.apply(document: try decoded(), source: .bundled)
+
+        XCTAssertEqual(store.ageBandsCases.map(\.lowerAge), [0, 6, 56, 80])
+    }
+
+    @MainActor
+    func testTheOpenEndedTopBandHasNoUpperAge() async throws {
+        let store = DengueStore()
+        await store.apply(document: try decoded(), source: .bundled)
+
+        let top = store.ageBandsCases.last
+        XCTAssertEqual(top?.lowerAge, 80)
+        XCTAssertNil(top?.upperAge, "80+ has no top")
+        XCTAssertEqual(top?.label(NumberStyle(language: .english)), "80+")
+    }
+
+    /// The source only ever publishes Western numerals; a Bengali reader should
+    /// not meet them in the middle of a Bengali screen.
+    func testAgeBandLabelsUseTheReadersDigits() {
+        let band = AgeBand(lowerAge: 6, upperAge: 10, male: 1, female: 1)
+        XCTAssertEqual(band.label(NumberStyle(language: .english)), "6–10")
+        XCTAssertEqual(band.label(NumberStyle(language: .bangla)), "৬–১০")
     }
 
     @MainActor
