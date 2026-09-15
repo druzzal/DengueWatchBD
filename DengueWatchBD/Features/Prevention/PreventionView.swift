@@ -8,6 +8,7 @@ struct PreventionView: View {
     @State private var expanded: Set<String> = ["breeding"]
     @State private var checklist = PreventionChecklist()
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.scenePhase) private var scenePhase
 
     private var currentMonthIndex: Int { Calendar.current.component(.month, from: Date()) - 1 }
 
@@ -110,6 +111,14 @@ struct PreventionView: View {
             }
         }
         .onAppear { checklist.refreshIfDayChanged() }
+        // onAppear alone leaves one real gap: a phone locked overnight on this
+        // tab comes back to the same view without appearing again, so
+        // yesterday's ticks would still read as today's. "5 of 5 done" when
+        // nothing has been done today is a false all-clear, in the one part of
+        // the app that is about not getting bitten.
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { checklist.refreshIfDayChanged() }
+        }
     }
 
     /// Beliefs that cost people time, paired with what is actually true.
