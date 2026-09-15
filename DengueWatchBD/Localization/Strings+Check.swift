@@ -17,11 +17,17 @@ extension Strings {
         "measure.invalid.range": "Enter a value between %@ and %@, or leave this empty.",
         "lab.scan": "Scan a report",
         "lab.upload": "Upload a report",
+        // A photo someone took lives in Photos; a report a lab sent lives in
+        // Files. Asked, because the file picker opens on Recents and gives no
+        // hint that the photo route exists.
+        "lab.upload.source": "Where is the report?",
+        "lab.upload.photos": "Photo gallery",
+        "lab.upload.files": "Files",
         "lab.upload.reading": "Reading the report\u{2026}",
         "lab.upload.unreadable": "That file could not be read. Try a clearer photo, or type the values instead.",
         // Covers both buttons: the promise that it happens on this phone, and
         // the instruction to check the numbers, apply to either route in.
-        "lab.scan.note": "Both read the values on this phone and fill them in below \u{2014} with the camera, or from a photo or PDF in your files. Check every number against your report before saving.",
+        "lab.scan.note": "Both read the values on this phone and fill them in below \u{2014} with the camera, from your photo gallery, or from a photo or PDF in Files. Check every number against your report before saving.",
         "lab.scan.nothing": "Nothing could be read from that scan. Type the values instead.",
 
         "trend.rising": "Rising",
@@ -267,9 +273,12 @@ extension Strings {
         "measure.invalid.range": "%@ থেকে %@-এর মধ্যে একটি মান লিখুন, না হলে খালি রাখুন।",
         "lab.scan": "রিপোর্ট স্ক্যান করুন",
         "lab.upload": "রিপোর্ট আপলোড করুন",
+        "lab.upload.source": "রিপোর্টটি কোথায় আছে?",
+        "lab.upload.photos": "ছবির গ্যালারি",
+        "lab.upload.files": "ফাইল",
         "lab.upload.reading": "রিপোর্ট পড়া হচ্ছে\u{2026}",
         "lab.upload.unreadable": "ফাইলটি পড়া যায়নি। আরেকটু স্পষ্ট ছবি দিন, অথবা হাতে লিখুন।",
-        "lab.scan.note": "দুটোই এই ফোনেই রিপোর্ট পড়ে নিচে বসিয়ে দেয় \u{2014} ক্যামেরা দিয়ে, বা ফাইলে রাখা ছবি বা PDF থেকে। সংরক্ষণের আগে প্রতিটি সংখ্যা নিজের রিপোর্টের সঙ্গে মিলিয়ে নিন।",
+        "lab.scan.note": "দুটোই এই ফোনেই রিপোর্ট পড়ে নিচে বসিয়ে দেয় \u{2014} ক্যামেরা দিয়ে, ছবির গ্যালারি থেকে, বা ফাইলে রাখা ছবি বা PDF থেকে। সংরক্ষণের আগে প্রতিটি সংখ্যা নিজের রিপোর্টের সঙ্গে মিলিয়ে নিন।",
         "lab.scan.nothing": "স্ক্যান থেকে কিছু পড়া যায়নি। হাতে লিখুন।",
 
         "trend.rising": "বাড়ছে",

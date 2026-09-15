@@ -1,4 +1,5 @@
 import SwiftUI
+import PhotosUI
 import UniformTypeIdentifiers
 
 /// Recording one lab report.
@@ -16,7 +17,10 @@ struct LabEntryView: View {
     @State private var note = ""
     @State private var showingScanner = false
     @State private var scanFoundNothing = false
+    @State private var showingSourceChoice = false
     @State private var showingImporter = false
+    @State private var showingPhotoPicker = false
+    @State private var photoItem: PhotosPickerItem?
     @State private var isReadingFile = false
     @State private var fileUnreadable = false
 
@@ -37,7 +41,7 @@ struct LabEntryView: View {
                     // file itself.
                     Button {
                         fileUnreadable = false
-                        showingImporter = true
+                        showingSourceChoice = true
                     } label: {
                         if isReadingFile {
                             HStack(spacing: Space.tight) {
@@ -109,6 +113,25 @@ struct LabEntryView: View {
                 )
                 .ignoresSafeArea()
             }
+            // Asked rather than assumed. A report is either a photo someone
+            // took, which lives in Photos, or a file a diagnostic centre sent,
+            // which lives in Files — and the Files picker opening on Recents
+            // gives no hint that the photo route exists at all.
+            .confirmationDialog(loc.t("lab.upload.source"),
+                                isPresented: $showingSourceChoice,
+                                titleVisibility: .visible) {
+                Button(loc.t("lab.upload.photos")) { showingPhotoPicker = true }
+                Button(loc.t("lab.upload.files")) { showingImporter = true }
+                Button(loc.t("common.cancel"), role: .cancel) {}
+            }
+            // Images only: Photos holds no PDFs, and offering the filter would
+            // promise something the library cannot return.
+            .photosPicker(isPresented: $showingPhotoPicker,
+                          selection: $photoItem, matching: .images)
+            .onChange(of: photoItem) { _, item in
+                guard let item else { return }
+                Task { await read(item) }
+            }
             .fileImporter(isPresented: $showingImporter,
                           allowedContentTypes: [.jpeg, .png, .heic, .heif, .pdf]) { result in
                 guard case .success(let url) = result else { return }
@@ -136,6 +159,26 @@ struct LabEntryView: View {
         }
     }
 
+    /// Reads a picture chosen from the photo library.
+    ///
+    /// No security scope and no file URL: the picker hands the bytes over
+    /// directly, out of process, which is also why this needs no photo-library
+    /// permission and never sees the rest of the library.
+    private func read(_ item: PhotosPickerItem) async {
+        isReadingFile = true
+        defer {
+            isReadingFile = false
+            // Cleared so choosing the same picture twice still reads it.
+            photoItem = nil
+        }
+
+        guard let data = try? await item.loadTransferable(type: Data.self), !data.isEmpty else {
+            fileUnreadable = true
+            return
+        }
+        await extract(from: data)
+    }
+
     /// Reads a picked file and fills the form from it.
     ///
     /// The file lives outside the app's container, so it has to be opened
@@ -154,6 +197,12 @@ struct LabEntryView: View {
             fileUnreadable = true
             return
         }
+        await extract(from: data)
+    }
+
+    /// The half both routes share: read the bytes off the main actor, and put
+    /// whatever was found into the form for the reader to check.
+    private func extract(from data: Data) async {
         let text = await Task.detached(priority: .userInitiated) {
             LabDocumentReader.text(from: data)
         }.value
