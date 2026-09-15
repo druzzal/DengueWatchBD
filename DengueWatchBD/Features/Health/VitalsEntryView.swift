@@ -56,7 +56,7 @@ struct VitalsEntryView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(loc.t("vital.save")) { save() }
-                        .disabled(entry.isEmpty)
+                        .disabled(entry.isEmpty || hasInvalidField)
                 }
             }
         }
@@ -68,21 +68,52 @@ struct VitalsEntryView: View {
     }
 
     private func field(_ kind: VitalKind) -> some View {
-        HStack {
-            Text(loc.t(kind.labelKey))
-            Spacer(minLength: Space.row)
-            TextField("", text: binding(for: kind))
-                .keyboardType(.decimalPad)
-                .multilineTextAlignment(.trailing)
-                .frame(maxWidth: 90)
-                // The visible label sits beside the field rather than in it, so
-                // without this VoiceOver reaches five fields that all announce
-                // themselves as "text field" and nothing else.
-                .accessibilityLabel("\(loc.t(kind.labelKey)), \(unitLabel(kind))")
-            Text(unitLabel(kind))
-                .typo(.micro)
-                .foregroundStyle(.secondary)
-                .accessibilityHidden(true)
+        let reading = reading(kind)
+        return VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(loc.t(kind.labelKey))
+                Spacer(minLength: Space.row)
+                TextField("", text: binding(for: kind))
+                    .keyboardType(.decimalPad)
+                    .multilineTextAlignment(.trailing)
+                    .frame(maxWidth: 90)
+                    // The visible label sits beside the field rather than in it,
+                    // so without this VoiceOver reaches five fields that all
+                    // announce themselves as "text field" and nothing else.
+                    .accessibilityLabel("\(loc.t(kind.labelKey)), \(unitLabel(kind))")
+                    .foregroundStyle(reading.isProblem ? Palette.riskInk(.severe) : .primary)
+                Text(unitLabel(kind))
+                    .typo(.micro)
+                    .foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
+            }
+            if let message = message(for: reading) {
+                Text(message)
+                    .typo(.micro)
+                    .foregroundStyle(Palette.riskInk(.severe))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        // Said as one thing, so the problem is read out with the field it
+        // belongs to rather than as a stray line after it.
+        .accessibilityElement(children: .combine)
+    }
+
+    private func reading(_ kind: VitalKind) -> VitalsInput.Reading {
+        VitalsInput.read(text[kind] ?? "", as: kind, unit: preferences.temperatureUnit)
+    }
+
+    /// What to say about a field that will not be saved as typed.
+    private func message(for reading: VitalsInput.Reading) -> String? {
+        switch reading {
+        case .empty, .value:
+            return nil
+        case .notANumber:
+            return loc.t("vital.invalid.number")
+        case .outOfRange(let range):
+            return loc.t("vital.invalid.range",
+                         loc.decimal(range.lowerBound, places: 0),
+                         loc.decimal(range.upperBound, places: 0))
         }
     }
 
@@ -94,35 +125,34 @@ struct VitalsEntryView: View {
         Binding(get: { text[kind] ?? "" }, set: { text[kind] = $0 })
     }
 
-    /// Parses what was typed. Values that are not numbers, or are outside what
-    /// a person could record, are dropped rather than saved — but the range is
-    /// wide, because an alarming reading is exactly the one worth keeping.
+    /// True while any field holds something that will not save as typed.
+    /// Saving is blocked rather than the field being quietly dropped.
+    private var hasInvalidField: Bool {
+        VitalKind.allCases.contains { reading($0).isProblem }
+    }
+
+    /// What would be saved. Only fields that read cleanly reach it — and the
+    /// save button is unavailable whenever one does not, so nothing is ever
+    /// silently left out of a record the reader believes they completed.
     private var entry: VitalsEntry {
         var result = VitalsEntry(note: note)
         for kind in VitalKind.allCases {
-            let raw = (text[kind] ?? "").trimmingCharacters(in: .whitespaces)
-                .replacingOccurrences(of: ",", with: ".")
-            guard let typed = Double(raw) else { continue }
-
-            if kind == .temperature {
-                // Stored in Celsius like everything else, converted on the way in.
-                guard let celsius = preferences.temperatureUnit.celsiusValue(from: raw) else { continue }
-                result.temperature = celsius
-            } else {
-                guard kind.enterableRange.contains(typed) else { continue }
-                switch kind {
-                case .pulse: result.pulse = typed
-                case .systolic: result.systolic = typed
-                case .diastolic: result.diastolic = typed
-                case .oxygenSaturation: result.oxygenSaturation = typed
-                case .temperature: break
-                }
+            guard let value = reading(kind).storedValue else { continue }
+            switch kind {
+            case .temperature: result.temperature = value    // already Celsius
+            case .pulse: result.pulse = value
+            case .systolic: result.systolic = value
+            case .diastolic: result.diastolic = value
+            case .oxygenSaturation: result.oxygenSaturation = value
             }
         }
         return result
     }
 
     private func save() {
+        // Belt and braces: the button is disabled in this state, but a record
+        // must not be able to arrive half-dropped by some later refactor.
+        guard !hasInvalidField else { return }
         vitals.add(entry)
         Haptic.selection()
         dismiss()

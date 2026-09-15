@@ -11,6 +11,10 @@ extension Strings {
         "status.outside": "Outside the usual range",
         "status.farOutside": "Well outside the usual range",
 
+        // Shown under a vital-sign field that will not save as typed. The
+        // range is quoted in the unit on screen, not the unit on disk.
+        "vital.invalid.number": "Enter a number, or leave this empty.",
+        "vital.invalid.range": "Enter a value between %@ and %@, or leave this empty.",
         "lab.scan": "Scan a report",
         "lab.upload": "Upload a report",
         "lab.upload.reading": "Reading the report\u{2026}",
@@ -259,6 +263,8 @@ extension Strings {
         "status.outside": "স্বাভাবিক সীমার বাইরে",
         "status.farOutside": "স্বাভাবিক সীমার অনেক বাইরে",
 
+        "vital.invalid.number": "একটি সংখ্যা লিখুন, না হলে খালি রাখুন।",
+        "vital.invalid.range": "%@ থেকে %@-এর মধ্যে একটি মান লিখুন, না হলে খালি রাখুন।",
         "lab.scan": "রিপোর্ট স্ক্যান করুন",
         "lab.upload": "রিপোর্ট আপলোড করুন",
         "lab.upload.reading": "রিপোর্ট পড়া হচ্ছে\u{2026}",
