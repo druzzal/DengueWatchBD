@@ -101,7 +101,7 @@ enum MapsLauncher {
     /// Opens Maps searching for a place by name — used for the curated list,
     /// where no coordinate is stored on purpose.
     static func search(query: String) -> URL? {
-        var components = URLComponents(string: "http://maps.apple.com/")
+        var components = URLComponents(string: "https://maps.apple.com/")
         components?.queryItems = [URLQueryItem(name: "q", value: query)]
         return components?.url
     }
