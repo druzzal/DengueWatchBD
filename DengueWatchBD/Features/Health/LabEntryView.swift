@@ -72,21 +72,7 @@ struct LabEntryView: View {
 
                 Section {
                     ForEach(LabMeasure.allCases) { measure in
-                        HStack {
-                            Text(loc.t(measure.labelKey))
-                            Spacer(minLength: Space.row)
-                            TextField("", text: binding(for: measure))
-                                .keyboardType(.decimalPad)
-                                .multilineTextAlignment(.trailing)
-                                .frame(maxWidth: 90)
-                                // See VitalsEntryView: the label is beside the
-                                // field, so the field itself has none to speak.
-                                .accessibilityLabel("\(loc.t(measure.labelKey)), \(loc.t(measure.unitKey))")
-                            Text(loc.t(measure.unitKey))
-                                .typo(.micro)
-                                .foregroundStyle(.secondary)
-                                .accessibilityHidden(true)
-                        }
+                        field(measure)
                     }
                 } header: {
                     Text(loc.t("lab.counts"))
@@ -136,11 +122,15 @@ struct LabEntryView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(loc.t("lab.save")) {
+                        // Belt and braces, as in VitalsEntryView: the button is
+                        // disabled in this state, but a report must not be able
+                        // to arrive half-dropped by some later refactor.
+                        guard !hasInvalidField else { return }
                         labs.add(report)
                         Haptic.selection()
                         dismiss()
                     }
-                    .disabled(report.isEmpty)
+                    .disabled(report.isEmpty || hasInvalidField)
                 }
             }
         }
@@ -208,17 +198,51 @@ struct LabEntryView: View {
         Binding(get: { results[test] ?? .notDone }, set: { results[test] = $0 })
     }
 
+    private func field(_ measure: LabMeasure) -> some View {
+        let reading = reading(measure)
+        return VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(loc.t(measure.labelKey))
+                Spacer(minLength: Space.row)
+                TextField("", text: binding(for: measure))
+                    .keyboardType(.decimalPad)
+                    .multilineTextAlignment(.trailing)
+                    .frame(maxWidth: 90)
+                    // See VitalsEntryView: the label is beside the field, so
+                    // the field itself has none to speak.
+                    .accessibilityLabel("\(loc.t(measure.labelKey)), \(loc.t(measure.unitKey))")
+                    .foregroundStyle(reading.isProblem ? Palette.riskInk(.severe) : .primary)
+                Text(loc.t(measure.unitKey))
+                    .typo(.micro)
+                    .foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
+            }
+            InvalidReadingNote(reading: reading)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private func reading(_ measure: LabMeasure) -> MeasureInput.Reading {
+        MeasureInput.read(text[measure] ?? "", as: measure)
+    }
+
+    /// True while any count holds something that will not save as typed.
+    private var hasInvalidField: Bool {
+        LabMeasure.allCases.contains { reading($0).isProblem }
+    }
+
+    /// What would be saved. Only counts that read cleanly reach it, and saving
+    /// is blocked whenever one does not — a platelet count quietly dropped is
+    /// a platelet count the reader believes is in their record.
     private var report: LabReport {
         var result = LabReport(date: reportDate, note: note)
         for measure in LabMeasure.allCases {
-            let raw = (text[measure] ?? "").trimmingCharacters(in: .whitespaces)
-                .replacingOccurrences(of: ",", with: ".")
-            guard let typed = Double(raw), measure.enterableRange.contains(typed) else { continue }
+            guard let value = reading(measure).storedValue else { continue }
             switch measure {
-            case .platelets: result.platelets = typed
-            case .haematocrit: result.haematocrit = typed
-            case .whiteCells: result.whiteCells = typed
-            case .haemoglobin: result.haemoglobin = typed
+            case .platelets: result.platelets = value
+            case .haematocrit: result.haematocrit = value
+            case .whiteCells: result.whiteCells = value
+            case .haemoglobin: result.haemoglobin = value
             }
         }
         result.ns1 = results[.ns1] ?? .notDone

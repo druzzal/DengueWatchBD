@@ -87,34 +87,15 @@ struct VitalsEntryView: View {
                     .foregroundStyle(.secondary)
                     .accessibilityHidden(true)
             }
-            if let message = message(for: reading) {
-                Text(message)
-                    .typo(.micro)
-                    .foregroundStyle(Palette.riskInk(.severe))
-                    .fixedSize(horizontal: false, vertical: true)
-            }
+            InvalidReadingNote(reading: reading)
         }
         // Said as one thing, so the problem is read out with the field it
         // belongs to rather than as a stray line after it.
         .accessibilityElement(children: .combine)
     }
 
-    private func reading(_ kind: VitalKind) -> VitalsInput.Reading {
-        VitalsInput.read(text[kind] ?? "", as: kind, unit: preferences.temperatureUnit)
-    }
-
-    /// What to say about a field that will not be saved as typed.
-    private func message(for reading: VitalsInput.Reading) -> String? {
-        switch reading {
-        case .empty, .value:
-            return nil
-        case .notANumber:
-            return loc.t("vital.invalid.number")
-        case .outOfRange(let range):
-            return loc.t("vital.invalid.range",
-                         loc.decimal(range.lowerBound, places: 0),
-                         loc.decimal(range.upperBound, places: 0))
-        }
+    private func reading(_ kind: VitalKind) -> MeasureInput.Reading {
+        MeasureInput.read(text[kind] ?? "", as: kind, unit: preferences.temperatureUnit)
     }
 
     private func unitLabel(_ kind: VitalKind) -> String {

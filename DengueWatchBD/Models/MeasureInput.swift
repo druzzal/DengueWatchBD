@@ -1,6 +1,6 @@
 import Foundation
 
-/// Checking what someone typed into a vital-sign field.
+/// Checking what someone typed into a reading field.
 ///
 /// Kept out of the form so the rules can be tested directly, and because they
 /// are the rules that decide whether a reading becomes part of somebody's
@@ -12,7 +12,7 @@ import Foundation
 /// reading was recorded. Refusing is safer than forgetting — a reader who is
 /// stopped will look at the number again, and a reader who is not will believe
 /// they wrote down a fever they did not.
-enum VitalsInput {
+enum MeasureInput {
 
     /// What a field currently holds.
     enum Reading: Equatable {
@@ -40,30 +40,38 @@ enum VitalsInput {
         }
     }
 
-    /// Reads one field.
+    /// Reads one vital-sign field.
     ///
+    /// Temperature is typed in whichever unit is selected, so both the check
+    /// and the range quoted back have to be in that unit — 39.5 is an ordinary
+    /// fever in Celsius and far too cold to be a person in Fahrenheit.
+    static func read(_ text: String, as kind: VitalKind, unit: TemperatureUnit) -> Reading {
+        if kind == .temperature {
+            return read(text, within: unit.plausibleRange, converting: unit.toCelsius)
+        }
+        return read(text, within: kind.enterableRange)
+    }
+
+    /// Reads one blood-count field.
+    ///
+    /// Same rules as a vital sign, and for the same reason: a platelet count
+    /// silently dropped is a platelet count the reader believes they recorded.
+    static func read(_ text: String, as measure: LabMeasure) -> Reading {
+        read(text, within: measure.enterableRange)
+    }
+
     /// A comma is accepted as a decimal separator: Bangladeshi keyboards and
     /// habits produce both, and rejecting "38,5" as "not a number" would be
     /// pedantry rather than safety.
-    static func read(_ text: String, as kind: VitalKind, unit: TemperatureUnit) -> Reading {
+    private static func read(_ text: String,
+                             within range: ClosedRange<Double>,
+                             converting: (Double) -> Double = { $0 }) -> Reading {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return .empty }
 
         let normalised = trimmed.replacingOccurrences(of: ",", with: ".")
         guard let typed = Double(normalised), typed.isFinite else { return .notANumber }
-
-        // Temperature is typed in whichever unit is selected, so both the check
-        // and the range quoted back have to be in that unit.
-        if kind == .temperature {
-            guard unit.plausibleRange.contains(typed) else {
-                return .outOfRange(unit.plausibleRange)
-            }
-            return .value(unit.toCelsius(typed))
-        }
-
-        guard kind.enterableRange.contains(typed) else {
-            return .outOfRange(kind.enterableRange)
-        }
-        return .value(typed)
+        guard range.contains(typed) else { return .outOfRange(range) }
+        return .value(converting(typed))
     }
 }

@@ -238,3 +238,43 @@ struct NoticeLine: View {
         .accessibilityElement(children: .combine)
     }
 }
+
+/// The line under a reading field that will not save as typed.
+///
+/// Shared by the vital-sign and blood-count forms so the two refuse in the
+/// same words. Renders nothing at all when the field is empty or good, so it
+/// can sit in either form unconditionally.
+struct InvalidReadingNote: View {
+    @Environment(LocalizationManager.self) private var loc
+
+    let reading: MeasureInput.Reading
+
+    var body: some View {
+        if let message {
+            Text(message)
+                .typo(.micro)
+                .foregroundStyle(Palette.riskInk(.severe))
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var message: String? {
+        switch reading {
+        case .empty, .value:
+            return nil
+        case .notANumber:
+            return loc.t("measure.invalid.number")
+        case .outOfRange(let range):
+            return loc.t("measure.invalid.range",
+                         bound(range.lowerBound), bound(range.upperBound))
+        }
+    }
+
+    /// A decimal place only where the bound has one. White cells start at 0.1,
+    /// and rounding that to "0" would quote back a range that includes a value
+    /// the field refuses.
+    private func bound(_ value: Double) -> String {
+        loc.decimal(value, places: value == value.rounded() ? 0 : 1)
+    }
+}
+

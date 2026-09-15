@@ -7,11 +7,11 @@ import XCTest
 /// refused — never silently dropped. Dropping is the dangerous outcome: a
 /// reader who types 395 for 39.5 and is not stopped saves an entry with no
 /// temperature in it and every reason to believe they recorded a fever.
-final class VitalsInputTests: XCTestCase {
+final class MeasureInputTests: XCTestCase {
 
     private func read(_ text: String, _ kind: VitalKind,
-                      _ unit: TemperatureUnit = .celsius) -> VitalsInput.Reading {
-        VitalsInput.read(text, as: kind, unit: unit)
+                      _ unit: TemperatureUnit = .celsius) -> MeasureInput.Reading {
+        MeasureInput.read(text, as: kind, unit: unit)
     }
 
     // MARK: - Nothing typed
@@ -148,6 +148,71 @@ final class VitalsInputTests: XCTestCase {
         XCTAssertTrue(read("900", .pulse).isProblem)
         XCTAssertFalse(read("", .pulse).isProblem)
         XCTAssertFalse(read("72", .pulse).isProblem)
+    }
+
+    // MARK: - Blood counts
+
+    private func read(_ text: String, _ measure: LabMeasure) -> MeasureInput.Reading {
+        MeasureInput.read(text, as: measure)
+    }
+
+    func testAnEmptyCountIsNotAProblem() {
+        XCTAssertEqual(read("", .platelets), .empty)
+    }
+
+    func testLettersInACountAreRefused() {
+        XCTAssertEqual(read("low", .platelets), .notANumber)
+    }
+
+    /// The slip this is really for. A lab prints 96,000 and the reader types
+    /// the whole thing into a field that wants thousands. Dropped silently,
+    /// the report saves with no platelet count at all — the one number in
+    /// dengue that a reader would most believe they had written down.
+    func testAPlateletCountTypedInFullIsRefusedRatherThanDropped() {
+        guard case .outOfRange = read("96000", .platelets) else {
+            return XCTFail("96000 must be refused, not quietly discarded")
+        }
+    }
+
+    func testAFallingPlateletCountIsAccepted() {
+        // Low is the point. Validation must not refuse the alarming readings.
+        XCTAssertEqual(read("12", .platelets), .value(12))
+        XCTAssertEqual(read("96", .platelets), .value(96))
+    }
+
+    func testHaematocritOutsideWhatBloodDoesIsRefused() {
+        guard case .outOfRange = read("95", .haematocrit) else {
+            return XCTFail("a haematocrit of 95% is not a measurement")
+        }
+    }
+
+    func testDecimalCountsAreKept() {
+        XCTAssertEqual(read("3.4", .whiteCells), .value(3.4))
+        XCTAssertEqual(read("13.2", .haemoglobin), .value(13.2))
+    }
+
+    /// White cells start at 0.1, so the refusal message has to quote a decimal.
+    /// Rounded to whole numbers it would offer a range starting at 0, which the
+    /// field itself refuses.
+    func testTheWhiteCellRangeKeepsItsDecimalBound() {
+        guard case .outOfRange(let range) = read("0.05", .whiteCells) else {
+            return XCTFail("0.05 is below the enterable range")
+        }
+        XCTAssertEqual(range.lowerBound, 0.1, accuracy: 0.0001)
+        XCTAssertNotEqual(range.lowerBound, range.lowerBound.rounded(),
+                          "this bound must not be a whole number, or the test proves nothing")
+    }
+
+    func testACommaWorksInACountToo() {
+        XCTAssertEqual(read("13,2", .haemoglobin), .value(13.2))
+    }
+
+    func testEveryCountRefusesSomething() {
+        for measure in LabMeasure.allCases {
+            XCTAssertTrue(read("banana", measure).isProblem, "\(measure) accepted letters")
+            XCTAssertTrue(read("99999", measure).isProblem, "\(measure) accepted 99999")
+            XCTAssertTrue(read("-1", measure).isProblem, "\(measure) accepted a negative")
+        }
     }
 
     func testEveryKindRefusesSomething() {
