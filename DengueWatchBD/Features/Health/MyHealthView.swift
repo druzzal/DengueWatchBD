@@ -20,6 +20,7 @@ struct MyHealthView: View {
     @Environment(LocalizationManager.self) private var loc
     @Environment(AppRouter.self) private var router
     @Environment(\.horizontalSizeClass) private var sizeClass
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     @State private var showingCheck = false
     @State private var showingVitals = false
@@ -96,22 +97,46 @@ struct MyHealthView: View {
 
     private func todayRow(title: String, symbol: String,
                           done: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: Space.row) {
-                Image(systemName: done ? "checkmark.circle.fill" : symbol)
-                    .font(.system(size: 20))
-                    // Done is not an alarm and not a success colour: in this
-                    // palette only what needs attention is coloured.
-                    .foregroundStyle(done ? Palette.mutedInk : Palette.accent)
-                    .frame(width: 26)
-                Text(title).typo(.callout)
-                Spacer(minLength: 0)
-                Text(loc.t(done ? "health.today.done" : "health.today.todo"))
-                    .typo(.micro)
-                    .foregroundStyle(Color.secondary)
-                Image(systemName: "chevron.right")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(Palette.mutedInk)
+        let leading = HStack(spacing: Space.row) {
+            Image(systemName: done ? "checkmark.circle.fill" : symbol)
+                .font(.system(size: 20))
+                // Done is not an alarm and not a success colour: in this
+                // palette only what needs attention is coloured.
+                .foregroundStyle(done ? Palette.mutedInk : Palette.accent)
+                .frame(width: 26)
+            Text(title)
+                .typo(.callout)
+                .fixedSize(horizontal: false, vertical: true)
+                .multilineTextAlignment(.leading)
+        }
+        let status = HStack(spacing: 4) {
+            Text(loc.t(done ? "health.today.done" : "health.today.todo"))
+                .typo(.micro)
+                .foregroundStyle(Color.secondary)
+            Image(systemName: "chevron.right")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(Palette.mutedInk)
+        }
+
+        return Button(action: action) {
+            Group {
+                // Side by side, "Not yet ›" keeps its width and the title gives
+                // ground, which at an accessibility size broke "Record today's
+                // symptoms" into four hyphenated lines. Stacked, the title gets
+                // the whole width.
+                if typeSize.isAccessibilitySize {
+                    VStack(alignment: .leading, spacing: 6) {
+                        leading
+                        status
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    HStack(spacing: Space.row) {
+                        leading
+                        Spacer(minLength: 0)
+                        status
+                    }
+                }
             }
             .frame(minHeight: Hit.minimum)
             .contentShape(Rectangle())

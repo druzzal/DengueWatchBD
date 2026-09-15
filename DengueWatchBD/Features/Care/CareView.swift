@@ -5,6 +5,7 @@ import CoreLocation
 struct CareView: View {
     @Environment(LocalizationManager.self) private var loc
     @Environment(\.horizontalSizeClass) private var sizeClass
+    @Environment(\.dynamicTypeSize) private var typeSize
     @Environment(LocationManager.self) private var location
 
     @State private var search = NearbyHospitalSearch()
@@ -42,37 +43,7 @@ struct CareView: View {
         CardSection(loc.t("care.sos.title")) {
             VStack(spacing: 0) {
                 ForEach(Array(EmergencyNumber.all.enumerated()), id: \.element.id) { index, number in
-                    HStack(alignment: .center, spacing: 12) {
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(loc.t(number.nameKey))
-                                .typo(.subheadline).fontWeight(.semibold)
-                            Text(loc.t(number.detailKey))
-                                .typo(.caption)
-                                .foregroundStyle(.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                        Spacer(minLength: 8)
-                        if let url = URL(string: "tel://\(number.dial)") {
-                            Link(destination: url) {
-                                Label(loc.t("care.call"), systemImage: "phone.fill")
-                                    .typo(.caption).fontWeight(.semibold)
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 7)
-                                    .frame(minHeight: Hit.minimum - 14)
-                                    .background {
-                                        if number.isEmergency {
-                                            Capsule().fill(Palette.riskTint(.severe))
-                                        } else {
-                                            Capsule().fill(Palette.accent.opacity(0.12))
-                                                .overlay(Capsule().strokeBorder(
-                                                    Palette.accent.opacity(0.35), lineWidth: 1))
-                                        }
-                                    }
-                                    .foregroundStyle(number.isEmergency ? .white : Palette.accent)
-                            }
-                        }
-                    }
-                    .padding(.vertical, 11)
+                    emergencyRow(number)
 
                     if index < EmergencyNumber.all.count - 1 {
                         Divider().overlay(Palette.hairline)
@@ -82,6 +53,66 @@ struct CareView: View {
             Text(loc.t("care.sos.footer"))
                 .typo(.micro).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    /// One emergency number, with the button beside the name or under it.
+    ///
+    /// Side by side, the button holds its width while the name gives ground, so
+    /// at an accessibility type size "999 — National Emergency Service" came
+    /// apart into five hyphenated lines beside a full-size Call. The people who
+    /// set that type size are disproportionately the people who most need to
+    /// read an emergency number, so the row stacks instead.
+    @ViewBuilder
+    private func emergencyRow(_ number: EmergencyNumber) -> some View {
+        let details = VStack(alignment: .leading, spacing: 3) {
+            Text(loc.t(number.nameKey))
+                .typo(.subheadline).fontWeight(.semibold)
+                .fixedSize(horizontal: false, vertical: true)
+            Text(loc.t(number.detailKey))
+                .typo(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+
+        Group {
+            if typeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: 10) {
+                    details
+                    callLink(number)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                HStack(alignment: .center, spacing: 12) {
+                    details
+                    Spacer(minLength: 8)
+                    callLink(number)
+                }
+            }
+        }
+        .padding(.vertical, 11)
+    }
+
+    @ViewBuilder
+    private func callLink(_ number: EmergencyNumber) -> some View {
+        if let url = URL(string: "tel://\(number.dial)") {
+            Link(destination: url) {
+                Label(loc.t("care.call"), systemImage: "phone.fill")
+                    .typo(.caption).fontWeight(.semibold)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .frame(minHeight: Hit.minimum - 14)
+                    .background {
+                        if number.isEmergency {
+                            Capsule().fill(Palette.riskTint(.severe))
+                        } else {
+                            Capsule().fill(Palette.accent.opacity(0.12))
+                                .overlay(Capsule().strokeBorder(
+                                    Palette.accent.opacity(0.35), lineWidth: 1))
+                        }
+                    }
+                    .foregroundStyle(number.isEmergency ? .white : Palette.accent)
+            }
         }
     }
 

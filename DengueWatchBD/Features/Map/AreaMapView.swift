@@ -302,16 +302,7 @@ struct AreaMapView: View {
             }
             Divider().overlay(Palette.hairline)
         } else if location.lastKnownLocation != nil {
-            HStack(spacing: 7) {
-                Image(systemName: "location.slash")
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(.secondary)
-                Text(loc.t("map.you.outside"))
-                    .typo(.micro)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                Spacer(minLength: 0)
-            }
+            NoticeLine(symbol: "location.slash", text: loc.t("map.you.outside"))
         } else if location.isAuthorized {
             HStack(spacing: 7) {
                 ProgressView().controlSize(.mini)
@@ -358,15 +349,9 @@ struct AreaMapView: View {
                              action: loc.t("geo.permission"),
                              symbol: "exclamationmark.triangle") { location.requestAlways() }
             } else {
-                HStack(spacing: Space.hair + 2) {
-                    Image(systemName: "bell.badge.fill")
-                        .font(.system(size: 10, weight: .semibold))
-                    Text(loc.t("geo.monitoring", loc.num(location.monitoredAreaCodes.count)))
-                        .typo(.micro)
-                    Spacer(minLength: 0)
-                }
-                .foregroundStyle(.secondary)
-                .accessibilityElement(children: .combine)
+                NoticeLine(symbol: "bell.badge.fill",
+                           text: loc.t("geo.monitoring",
+                                       loc.num(location.monitoredAreaCodes.count)))
             }
             Divider().overlay(Palette.hairline)
         }

@@ -54,15 +54,18 @@ struct DengueRiskCard: View {
                 header
                 riskWord
                 RiskMeter(risk: risk, height: 7)
-                // Capped at large text sizes: unbounded, the advice pushed the
-                // trend and the timestamp off-screen entirely. The full wording
-                // is one tap away in the detail sheet, which the chevron and
-                // the accessibility hint both advertise.
+                // Never truncated. This was capped to three lines at large text
+                // sizes, to stop the advice pushing the trend and the timestamp
+                // down — but the card sits in a scroll view, so "pushed off
+                // screen" only ever meant "scroll", while the cap cost the
+                // reader the end of the sentence: "Use repellent and chec…".
+                // Losing the actionable half of a line of health advice is a
+                // worse trade than a taller card, and it fell hardest on the
+                // readers who set a large type size in the first place.
                 Text(loc.t(risk.guidanceKey))
                     .typo(.callout)
                     .foregroundStyle(.primary.opacity(0.85))
-                    .lineLimit(typeSize.isAccessibilitySize ? 3 : nil)
-                    .fixedSize(horizontal: false, vertical: typeSize.isAccessibilitySize ? false : true)
+                    .fixedSize(horizontal: false, vertical: true)
                 footer
             }
             .padding(Space.card + 4)

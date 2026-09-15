@@ -109,11 +109,20 @@ struct InlineNote: View {
     /// something to act on — never louder than the thing it refers to.
     var tint: Color?
 
+    /// The symbol sits in a column of its own width rather than its glyph's.
+    ///
+    /// SF Symbols are not one width: a triangle, a droplet and an info circle
+    /// each start the text in a different place, and the care plan stacks four
+    /// of these notes with four different symbols. Scaled, so the column still
+    /// holds at the largest type sizes.
+    @ScaledMetric(relativeTo: .caption) private var symbolWidth: CGFloat = 17
+
     var body: some View {
         HStack(alignment: .top, spacing: Space.tight + 2) {
             Image(systemName: symbol)
                 .typo(.caption)
                 .foregroundStyle(tint ?? Palette.mutedInk)
+                .frame(width: symbolWidth)
                 .padding(.top, 1)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 3) {
@@ -199,5 +208,33 @@ struct FacilityRow: View {
             }
         }
         .padding(.vertical, Space.row)
+    }
+}
+
+/// A line of small print with a symbol in front of it.
+///
+/// Shared so that a stack of them lines up. Written out by hand, each line
+/// chose its own spacing and let the glyph set the text's left edge, so a bell
+/// and a crossed-out location arrow began their sentences in two different
+/// places.
+struct NoticeLine: View {
+    @ScaledMetric(relativeTo: .caption) private var symbolWidth: CGFloat = 14
+
+    let symbol: String
+    let text: String
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: Space.hair + 2) {
+            Image(systemName: symbol)
+                .font(.system(size: 10, weight: .semibold))
+                .frame(width: symbolWidth)
+                .accessibilityHidden(true)
+            Text(text)
+                .typo(.micro)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+        }
+        .foregroundStyle(.secondary)
+        .accessibilityElement(children: .combine)
     }
 }
