@@ -124,7 +124,7 @@ struct LabEntryView: View {
                 .ignoresSafeArea()
             }
             .fileImporter(isPresented: $showingImporter,
-                          allowedContentTypes: [.jpeg, .pdf]) { result in
+                          allowedContentTypes: [.jpeg, .png, .heic, .heif, .pdf]) { result in
                 guard case .success(let url) = result else { return }
                 Task { await read(url) }
             }
@@ -164,11 +164,8 @@ struct LabEntryView: View {
             fileUnreadable = true
             return
         }
-        let kind: LabDocumentReader.Kind =
-            url.pathExtension.lowercased() == "pdf" ? .pdf : .image
-
         let text = await Task.detached(priority: .userInitiated) {
-            LabDocumentReader.text(from: data, kind: kind)
+            LabDocumentReader.text(from: data)
         }.value
 
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {

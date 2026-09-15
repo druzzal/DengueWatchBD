@@ -17,7 +17,7 @@ extension Strings {
         "lab.upload.unreadable": "That file could not be read. Try a clearer photo, or type the values instead.",
         // Covers both buttons: the promise that it happens on this phone, and
         // the instruction to check the numbers, apply to either route in.
-        "lab.scan.note": "Both read the values on this phone and fill them in below \u{2014} from the camera, or from a JPG or PDF in your files. Check every number against your report before saving.",
+        "lab.scan.note": "Both read the values on this phone and fill them in below \u{2014} with the camera, or from a photo or PDF in your files. Check every number against your report before saving.",
         "lab.scan.nothing": "Nothing could be read from that scan. Type the values instead.",
 
         "trend.rising": "Rising",
@@ -263,7 +263,7 @@ extension Strings {
         "lab.upload": "রিপোর্ট আপলোড করুন",
         "lab.upload.reading": "রিপোর্ট পড়া হচ্ছে\u{2026}",
         "lab.upload.unreadable": "ফাইলটি পড়া যায়নি। আরেকটু স্পষ্ট ছবি দিন, অথবা হাতে লিখুন।",
-        "lab.scan.note": "দুটোই এই ফোনেই রিপোর্ট পড়ে নিচে বসিয়ে দেয় \u{2014} ছবি তুলে, বা ফাইল থেকে JPG বা PDF নিয়ে। সংরক্ষণের আগে প্রতিটি সংখ্যা নিজের রিপোর্টের সঙ্গে মিলিয়ে নিন।",
+        "lab.scan.note": "দুটোই এই ফোনেই রিপোর্ট পড়ে নিচে বসিয়ে দেয় \u{2014} ক্যামেরা দিয়ে, বা ফাইলে রাখা ছবি বা PDF থেকে। সংরক্ষণের আগে প্রতিটি সংখ্যা নিজের রিপোর্টের সঙ্গে মিলিয়ে নিন।",
         "lab.scan.nothing": "স্ক্যান থেকে কিছু পড়া যায়নি। হাতে লিখুন।",
 
         "trend.rising": "বাড়ছে",

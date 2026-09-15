@@ -1,6 +1,8 @@
 import XCTest
 import PDFKit
 import UIKit
+import UniformTypeIdentifiers
+import ImageIO
 @testable import DengueWatchBD
 
 /// Reading a lab report out of a file the reader picked.
@@ -135,6 +137,60 @@ final class LabDocumentReaderTests: XCTestCase {
     /// the picker hands over whatever the reader chose.
     func testRubbishImageDataReadsAsNothing() {
         XCTAssertTrue(LabDocumentReader.text(from: Data([0x00, 0x01, 0x02]), kind: .image).isEmpty)
+    }
+
+    // MARK: - Telling a PDF from a picture
+
+    /// Decided by content, so a file whose name says nothing — or says the
+    /// wrong thing — still goes to the right decoder. A PDF handed to the
+    /// image decoder decodes to nothing and reaches the reader as "could not
+    /// be read", which would be a lie about a perfectly good report.
+    func testARealPDFIsRecognisedWhateverItIsCalled() {
+        let pdf = UIGraphicsPDFRenderer(bounds: CGRect(x: 0, y: 0, width: 200, height: 200))
+            .pdfData { $0.beginPage() }
+        XCTAssertEqual(LabDocumentReader.kind(of: pdf), .pdf)
+    }
+
+    func testEveryPictureFormatIsReadAsAPicture() throws {
+        let size = CGSize(width: 40, height: 40)
+        let image = UIGraphicsImageRenderer(size: size).image { context in
+            UIColor.red.setFill()
+            context.fill(CGRect(origin: .zero, size: size))
+        }
+        let jpeg = try XCTUnwrap(image.jpegData(compressionQuality: 0.9))
+        let png = try XCTUnwrap(image.pngData())
+
+        XCTAssertEqual(LabDocumentReader.kind(of: jpeg), .image)
+        XCTAssertEqual(LabDocumentReader.kind(of: png), .image)
+    }
+
+    /// HEIC is what an iPhone camera writes by default, so a report the reader
+    /// photographed and saved to Files arrives in this format rather than JPEG.
+    func testHEICIsReadAsAPicture() throws {
+        let size = CGSize(width: 40, height: 40)
+        let image = UIGraphicsImageRenderer(size: size).image { context in
+            UIColor.blue.setFill()
+            context.fill(CGRect(origin: .zero, size: size))
+        }
+        let heic = try XCTUnwrap(heicData(from: image))
+
+        XCTAssertEqual(LabDocumentReader.kind(of: heic), .image)
+        // And it has to actually decode, not merely be routed correctly.
+        XCTAssertNotNil(UIImage(data: heic), "HEIC did not decode")
+    }
+
+    private func heicData(from image: UIImage) -> Data? {
+        guard let cgImage = image.cgImage else { return nil }
+        let data = NSMutableData()
+        guard let destination = CGImageDestinationCreateWithData(
+            data, UTType.heic.identifier as CFString, 1, nil) else { return nil }
+        CGImageDestinationAddImage(destination, cgImage, nil)
+        guard CGImageDestinationFinalize(destination) else { return nil }
+        return data as Data
+    }
+
+    func testEmptyDataIsNotMistakenForAPDF() {
+        XCTAssertEqual(LabDocumentReader.kind(of: Data()), .image)
     }
 
     func testEmptyDataReadsAsNothing() {

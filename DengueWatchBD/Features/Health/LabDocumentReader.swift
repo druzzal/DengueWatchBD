@@ -14,12 +14,28 @@ import Vision
 /// run off the main actor and be tested without a camera or a file picker.
 enum LabDocumentReader {
 
-    /// What the reader picked. JPEG and PDF are the two things a Bangladeshi
-    /// lab actually hands out: a photo of the printed sheet, or the PDF their
-    /// portal emails.
-    enum Kind {
+    /// What the reader picked: a picture of a report, or a PDF of one.
+    enum Kind: Equatable {
         case image
         case pdf
+    }
+
+    /// Which of the two the bytes are.
+    ///
+    /// Read from the content, not from the file's name. An extension can be
+    /// absent, upper-cased or simply wrong, and a PDF saved as "report" would
+    /// otherwise go to the image decoder, decode to nothing, and be reported
+    /// to the reader as unreadable when it was fine. Everything that is not a
+    /// PDF is handed to the image decoder, which is what actually decides
+    /// whether a JPEG, PNG or HEIC can be read — so no format needs naming
+    /// here, and a new one needs no change.
+    static func kind(of data: Data) -> Kind {
+        data.starts(with: Array("%PDF-".utf8)) ? .pdf : .image
+    }
+
+    /// Text from whatever the reader picked, deciding for itself what it is.
+    static func text(from data: Data) -> String {
+        text(from: data, kind: kind(of: data))
     }
 
     static func text(from data: Data, kind: Kind) -> String {
