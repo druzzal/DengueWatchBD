@@ -1,5 +1,4 @@
 import SwiftUI
-import Vision
 import VisionKit
 
 /// Photographs a lab report and reads the text off it, on this device.
@@ -59,21 +58,11 @@ struct LabScannerView: UIViewControllerRepresentable {
             parent.onCancel()
         }
 
+        /// Shared with the upload path, so a photographed report and an
+        /// uploaded one are read by exactly the same Vision settings.
         private static func recognisedText(in image: UIImage) -> String {
             guard let cgImage = image.cgImage else { return "" }
-            let request = VNRecognizeTextRequest()
-            // Accurate over fast: this is read once, and a misread digit costs
-            // far more than a second of waiting.
-            request.recognitionLevel = .accurate
-            request.usesLanguageCorrection = false   // it would "correct" numbers
-            request.recognitionLanguages = ["en-US"]
-
-            let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
-            try? handler.perform([request])
-
-            return (request.results ?? [])
-                .compactMap { $0.topCandidates(1).first?.string }
-                .joined(separator: "\n")
+            return LabDocumentReader.recognisedText(in: cgImage)
         }
     }
 }

@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// Recording one lab report.
 ///
@@ -15,6 +16,9 @@ struct LabEntryView: View {
     @State private var note = ""
     @State private var showingScanner = false
     @State private var scanFoundNothing = false
+    @State private var showingImporter = false
+    @State private var isReadingFile = false
+    @State private var fileUnreadable = false
 
     var body: some View {
         NavigationStack {
@@ -24,6 +28,32 @@ struct LabEntryView: View {
                         showingScanner = true
                     } label: {
                         Label(loc.t("lab.scan"), systemImage: "doc.text.viewfinder")
+                    }
+                    .disabled(isReadingFile)
+
+                    // For the report that arrived as a file rather than on
+                    // paper — diagnostic centres increasingly email a PDF, and
+                    // photographing a screen reads far worse than reading the
+                    // file itself.
+                    Button {
+                        fileUnreadable = false
+                        showingImporter = true
+                    } label: {
+                        if isReadingFile {
+                            HStack(spacing: Space.tight) {
+                                ProgressView().controlSize(.small)
+                                Text(loc.t("lab.upload.reading"))
+                            }
+                        } else {
+                            Label(loc.t("lab.upload"), systemImage: "doc.badge.plus")
+                        }
+                    }
+                    .disabled(isReadingFile)
+
+                    if fileUnreadable {
+                        Text(loc.t("lab.upload.unreadable"))
+                            .typo(.micro)
+                            .foregroundStyle(Palette.riskTint(.high))
                     }
                     if scanFoundNothing {
                         Text(loc.t("lab.scan.nothing"))
@@ -93,6 +123,11 @@ struct LabEntryView: View {
                 )
                 .ignoresSafeArea()
             }
+            .fileImporter(isPresented: $showingImporter,
+                          allowedContentTypes: [.jpeg, .pdf]) { result in
+                guard case .success(let url) = result else { return }
+                Task { await read(url) }
+            }
             .navigationTitle(loc.t("lab.add"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -109,6 +144,38 @@ struct LabEntryView: View {
                 }
             }
         }
+    }
+
+    /// Reads a picked file and fills the form from it.
+    ///
+    /// The file lives outside the app's container, so it has to be opened
+    /// inside a security-scoped access — without it the read returns nothing
+    /// and the reader would be told the file was unreadable, which is a lie.
+    /// The work runs off the main actor: a multi-page PDF takes long enough
+    /// that doing it here would freeze the form.
+    private func read(_ url: URL) async {
+        isReadingFile = true
+        defer { isReadingFile = false }
+
+        let scoped = url.startAccessingSecurityScopedResource()
+        defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+
+        guard let data = try? Data(contentsOf: url), !data.isEmpty else {
+            fileUnreadable = true
+            return
+        }
+        let kind: LabDocumentReader.Kind =
+            url.pathExtension.lowercased() == "pdf" ? .pdf : .image
+
+        let text = await Task.detached(priority: .userInitiated) {
+            LabDocumentReader.text(from: data, kind: kind)
+        }.value
+
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            fileUnreadable = true
+            return
+        }
+        apply(LabReportParser.draft(from: text))
     }
 
     /// Fills the form from a scan, leaving anything already typed alone.
