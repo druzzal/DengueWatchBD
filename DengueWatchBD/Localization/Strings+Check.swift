@@ -307,9 +307,11 @@ extension Strings {
         "lab.haematocrit": "হেমাটোক্রিট",
         "lab.whiteCells": "শ্বেত রক্তকণিকা",
         "lab.haemoglobin": "হিমোগ্লোবিন",
-        "lab.unit.platelets": "×১০³/µL",
+        // Same rule: the "10" here is part of the symbol, not a number being
+        // read, so it stays Latin like the µL beside it.
+        "lab.unit.platelets": "×10³/µL",
         "lab.unit.haematocrit": "%",
-        "lab.unit.whiteCells": "×১০³/µL",
+        "lab.unit.whiteCells": "×10³/µL",
         "lab.unit.haemoglobin": "g/dL",
         "lab.typicalRange": "সাধারণত %@–%@",
         "lab.outsideTypical": "সাধারণ সীমার বাইরে",
@@ -349,9 +351,13 @@ extension Strings {
         "vital.diastolic": "ডায়াস্টোলিক",
         "vital.oxygenSaturation": "অক্সিজেনের মাত্রা",
         "vital.unit.temperature": "",
-        "vital.unit.pulse": "বিপিএম",
-        "vital.unit.systolic": "মিমিএইচজি",
-        "vital.unit.diastolic": "মিমিএইচজি",
+        // Unit symbols stay in Latin. A Bangladeshi cuff, thermometer and lab
+        // slip all print "mmHg" and "bpm"; spelling them out in Bengali
+        // letters makes a doctor read a transliteration back into the symbol
+        // they already know, and matches nothing the reader is holding.
+        "vital.unit.pulse": "bpm",
+        "vital.unit.systolic": "mmHg",
+        "vital.unit.diastolic": "mmHg",
         "vital.unit.oxygenSaturation": "%",
         "vital.bloodPressure": "রক্তচাপ",
         "vital.section": "জীবনচিহ্ন",

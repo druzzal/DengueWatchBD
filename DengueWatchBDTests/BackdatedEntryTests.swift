@@ -90,6 +90,30 @@ final class BackdatedEntryTests: XCTestCase {
         XCTAssertEqual(labs.latest?.date, at(14, 20))
     }
 
+    // MARK: - Symptom checks
+
+    /// "The latest check" decides the care plan, the day of illness the fever
+    /// timeline counts from, and what My Health and Home report. Read from a
+    /// file whose order did not match its dates, every one of them described a
+    /// check the reader had already replaced.
+    func testTheLatestCheckIsTheNewestOneWhateverOrderTheFileIsIn() throws {
+        let filename = "case-\(UUID().uuidString).json"
+        let directory = FileManager.default
+            .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        let url = directory.appendingPathComponent(filename)
+        addTeardownBlock { try? FileManager.default.removeItem(at: url) }
+
+        // Oldest written first, which is the wrong way round for this store.
+        let old = CaseLogEntry(date: at(12, 8), symptomIDs: ["fever"], outcomeRawValue: 1)
+        let recent = CaseLogEntry(date: at(14, 8), symptomIDs: ["fever"], outcomeRawValue: 3)
+        try JSONEncoder().encode([old, recent]).write(to: url)
+
+        let store = CaseLogStore(filename: filename)
+        XCTAssertEqual(store.entries.first?.date, at(14, 8),
+                       "the newest check, not the first line of the file")
+        XCTAssertEqual(store.entries.map(\.date), [at(14, 8), at(12, 8)])
+    }
+
     // MARK: - The merged log
 
     /// A back-dated reading belongs to the day it was taken, not the day it

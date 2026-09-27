@@ -87,9 +87,19 @@ final class CaseLogStore {
     }
 
 
+    /// Newest first, like the other two stores.
+    ///
+    /// Sorted here rather than trusted from the file. `entries.first` is "the
+    /// latest check", and it decides the care plan, the day of illness the
+    /// fever timeline counts from, and what My Health and Home report as the
+    /// last assessment. A file whose order does not match its dates — written
+    /// by an older build, or restored from anywhere — would make every one of
+    /// those describe a check the reader has since replaced.
     private func load() {
-        guard let data = try? Data(contentsOf: fileURL) else { return }
-        entries = (try? JSONDecoder().decode([CaseLogEntry].self, from: data)) ?? []
+        guard let data = try? Data(contentsOf: fileURL),
+              let decoded = try? JSONDecoder().decode([CaseLogEntry].self, from: data)
+        else { return }
+        entries = decoded.sorted { $0.date > $1.date }
     }
 
     private func save() {
