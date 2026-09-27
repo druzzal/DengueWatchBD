@@ -12,11 +12,22 @@ struct VitalsEntryView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var text: [VitalKind: String] = [:]
+    @State private var takenAt = Date()
     @State private var note = ""
 
     var body: some View {
         NavigationStack {
             Form {
+                // Readings are often written down after the fact — a fever
+                // taken at three in the morning and entered at nine. Stamping
+                // them "now" would put the spike on the wrong day and in the
+                // wrong place on the chart, so the reader says when.
+                Section {
+                    DatePicker(loc.t("vital.takenAt"), selection: $takenAt,
+                               in: recordableRange,
+                               displayedComponents: [.date, .hourAndMinute])
+                }
+
                 Section {
                     field(.temperature)
                     Picker(loc.t("temp.unit.label"), selection: temperatureUnit) {
@@ -60,6 +71,16 @@ struct VitalsEntryView: View {
                 }
             }
         }
+    }
+
+    /// Any time up to now, back as far as a year.
+    ///
+    /// The future is excluded because a reading that has not been taken yet is
+    /// not a reading; the year back is generous on purpose, since someone
+    /// entering an old fever into a new record is doing something reasonable.
+    private var recordableRange: ClosedRange<Date> {
+        let now = Date()
+        return now.addingTimeInterval(-365 * 86_400)...now
     }
 
     private var temperatureUnit: Binding<TemperatureUnit> {
@@ -116,7 +137,7 @@ struct VitalsEntryView: View {
     /// save button is unavailable whenever one does not, so nothing is ever
     /// silently left out of a record the reader believes they completed.
     private var entry: VitalsEntry {
-        var result = VitalsEntry(note: note)
+        var result = VitalsEntry(date: takenAt, note: note)
         for kind in VitalKind.allCases {
             guard let value = reading(kind).storedValue else { continue }
             switch kind {

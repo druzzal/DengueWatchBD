@@ -69,9 +69,14 @@ struct LabEntryView: View {
                 }
 
                 Section {
+                    // Date and time both: two reports from one day are
+                    // ordinary during dengue — a morning count and an evening
+                    // one — and a date alone leaves the log unable to say
+                    // which came first, which is the whole point of watching
+                    // a platelet count fall.
                     DatePicker(loc.t("lab.reportDate"), selection: $reportDate,
-                               in: Date().addingTimeInterval(-365 * 86_400)...Date(),
-                               displayedComponents: .date)
+                               in: recordableRange,
+                               displayedComponents: [.date, .hourAndMinute])
                 }
 
                 Section {
@@ -241,6 +246,12 @@ struct LabEntryView: View {
 
     private func binding(for measure: LabMeasure) -> Binding<String> {
         Binding(get: { text[measure] ?? "" }, set: { text[measure] = $0 })
+    }
+
+    /// Any time up to now, back as far as a year. See VitalsEntryView.
+    private var recordableRange: ClosedRange<Date> {
+        let now = Date()
+        return now.addingTimeInterval(-365 * 86_400)...now
     }
 
     private func resultBinding(for test: DengueTest) -> Binding<TestResult> {

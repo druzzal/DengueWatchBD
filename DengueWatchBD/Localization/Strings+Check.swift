@@ -74,6 +74,9 @@ extension Strings {
         "lab.timing.igg": "Rises later, and may reflect a past infection.",
         "lab.timingNote": "These describe when each test is usually informative. What a result means for you is a question for your doctor.",
         "lab.reportDate": "Report date",
+        // On the vital-signs form: when the reading was taken, which is often
+        // not when it is being written down.
+        "vital.takenAt": "Taken at",
         "lab.reported": "Reported %@",
 
         "health.today.title": "Today",
@@ -327,6 +330,7 @@ extension Strings {
         "lab.timing.igg": "পরে বাড়ে, এবং আগের সংক্রমণও বোঝাতে পারে।",
         "lab.timingNote": "এগুলো বলে কোন পরীক্ষা কখন কার্যকর। আপনার ফল কী বোঝায় তা চিকিৎসকের প্রশ্ন।",
         "lab.reportDate": "রিপোর্টের তারিখ",
+        "vital.takenAt": "পরিমাপের সময়",
         "lab.reported": "%@ রিপোর্ট",
 
         "health.today.title": "আজ",
