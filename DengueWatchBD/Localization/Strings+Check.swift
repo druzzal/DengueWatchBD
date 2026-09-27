@@ -321,9 +321,13 @@ extension Strings {
         "lab.flag.ok": "স্বাভাবিক",
         "lab.counts": "রক্তের হিসাব",
         "lab.serology": "ডেঙ্গু পরীক্ষা",
-        "lab.test.ns1": "এনএস১ অ্যান্টিজেন",
-        "lab.test.igm": "আইজিএম অ্যান্টিবডি",
-        "lab.test.igg": "আইজিজি অ্যান্টিবডি",
+        // The abbreviation stays as the lab slip prints it, like mmHg and bpm.
+        // Spelled out in Bengali letters it had to be decoded back into the
+        // thing the reader was holding. "অ্যান্টিজেন" and "অ্যান্টিবডি" are
+        // words rather than symbols, and stay.
+        "lab.test.ns1": "NS1 অ্যান্টিজেন",
+        "lab.test.igm": "IgM অ্যান্টিবডি",
+        "lab.test.igg": "IgG অ্যান্টিবডি",
         "lab.result.notDone": "করা হয়নি",
         "lab.result.negative": "নেগেটিভ",
         "lab.result.positive": "পজিটিভ",

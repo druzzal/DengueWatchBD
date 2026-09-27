@@ -9,15 +9,19 @@ final class PreventionChecklistTests: XCTestCase {
     private var defaults: UserDefaults!
     private var suiteName: String!
 
-    override func setUp() {
-        super.setUp()
+    // The async overrides rather than the plain ones: XCTest's setUp() and
+    // tearDown() are nonisolated, so reaching these @MainActor properties from
+    // them warned under strict concurrency. The async forms inherit the
+    // class's isolation and say the same thing without the warning.
+    override func setUp() async throws {
+        try await super.setUp()
         suiteName = "checklist.tests.\(UUID().uuidString)"
         defaults = UserDefaults(suiteName: suiteName)
     }
 
-    override func tearDown() {
+    override func tearDown() async throws {
         defaults.removePersistentDomain(forName: suiteName)
-        super.tearDown()
+        try await super.tearDown()
     }
 
     private func day(_ year: Int, _ month: Int, _ dayOfMonth: Int) -> Date {
