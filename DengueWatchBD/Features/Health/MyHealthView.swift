@@ -20,7 +20,6 @@ struct MyHealthView: View {
     @Environment(LocalizationManager.self) private var loc
     @Environment(AppRouter.self) private var router
     @Environment(\.horizontalSizeClass) private var sizeClass
-    @Environment(\.dynamicTypeSize) private var typeSize
 
     @State private var showingCheck = false
     @State private var showingVitals = false
@@ -35,7 +34,6 @@ struct MyHealthView: View {
                         ScreenTitle(text: loc.t("tab.health"))
                     }
                     symptomCheckCard
-                    todayCard
                     feverTimelineCard
                     carePlanCard
                     vitalsCard
@@ -114,74 +112,6 @@ struct MyHealthView: View {
                     systemImage: "stethoscope") { showingCheck = true }
             }
         }
-    }
-
-    // MARK: - Today
-
-    /// What has and has not been recorded today, so the card answers "am I up
-    /// to date" without the reader counting entries themselves.
-    private var todayCard: some View {
-        let vitalsToday = vitals.latest.map {
-            Calendar.current.isDateInToday($0.date)
-        } ?? false
-
-        return CardSection(loc.t("health.today.title"),
-                           subtitle: loc.t("health.today.subtitle")) {
-            todayRow(title: loc.t("health.today.vitals"),
-                     symbol: "heart.text.square",
-                     done: vitalsToday) { showingVitals = true }
-        }
-    }
-
-    private func todayRow(title: String, symbol: String,
-                          done: Bool, action: @escaping () -> Void) -> some View {
-        let leading = HStack(spacing: Space.row) {
-            Image(systemName: done ? "checkmark.circle.fill" : symbol)
-                .font(.system(size: 20))
-                // Done is not an alarm and not a success colour: in this
-                // palette only what needs attention is coloured.
-                .foregroundStyle(done ? Palette.mutedInk : Palette.accent)
-                .frame(width: 26)
-            Text(title)
-                .typo(.callout)
-                .fixedSize(horizontal: false, vertical: true)
-                .multilineTextAlignment(.leading)
-        }
-        let status = HStack(spacing: 4) {
-            Text(loc.t(done ? "health.today.done" : "health.today.todo"))
-                .typo(.micro)
-                .foregroundStyle(Color.secondary)
-            Image(systemName: "chevron.right")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(Palette.mutedInk)
-        }
-
-        return Button(action: action) {
-            Group {
-                // Side by side, "Not yet ›" keeps its width and the title gives
-                // ground, which at an accessibility size broke "Record today's
-                // symptoms" into four hyphenated lines. Stacked, the title gets
-                // the whole width.
-                if typeSize.isAccessibilitySize {
-                    VStack(alignment: .leading, spacing: 6) {
-                        leading
-                        status
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                } else {
-                    HStack(spacing: Space.row) {
-                        leading
-                        Spacer(minLength: 0)
-                        status
-                    }
-                }
-            }
-            .frame(minHeight: Hit.minimum)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(done ? [.isButton, .isSelected] : .isButton)
     }
 
     // MARK: - Care plan
