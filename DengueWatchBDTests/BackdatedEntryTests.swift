@@ -99,7 +99,6 @@ final class BackdatedEntryTests: XCTestCase {
         calendar.timeZone = TimeZone(identifier: "Asia/Dhaka")!
 
         let days = HealthLog.days(
-            checks: [],
             vitals: [VitalsEntry(date: at(14, 9), temperature: 38.0),
                      VitalsEntry(date: at(12, 9), temperature: 39.0)],
             labs: [LabReport(date: at(12, 14), platelets: 96)],

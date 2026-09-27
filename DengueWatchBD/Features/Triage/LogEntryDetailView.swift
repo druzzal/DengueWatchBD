@@ -16,7 +16,6 @@ struct LogEntryDetailView: View {
     @ViewBuilder
     static func content(for item: HealthLogDay.Item) -> some View {
         switch item {
-        case .check(let entry): CheckDetail(entry: entry)
         case .vitals(let entry): VitalsDetail(entry: entry)
         case .lab(let report): LabDetail(report: report)
         }
@@ -38,54 +37,6 @@ struct LogEntryDetailView: View {
     }
 }
 
-private struct CheckDetail: View {
-    @Environment(LocalizationManager.self) private var loc
-    let entry: CaseLogEntry
-
-    private var accent: Color {
-        switch entry.outcome {
-        case .selfCare, .testAdvised: Palette.mutedInk
-        case .seeDoctorToday, .emergency: Palette.riskInk(.high)
-        }
-    }
-
-    private var symptoms: [Symptom] {
-        TriageEngine.symptoms.filter { entry.symptomIDs.contains($0.id) }
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
-                RoundedRectangle(cornerRadius: 2).fill(accent).frame(width: 3, height: 14)
-                Text(loc.t(entry.outcome.headlineKey))
-                    .typo(.subheadline).fontWeight(.medium)
-                Spacer(minLength: 6)
-                Text(loc.time(entry.date))
-                    .typo(.micro).foregroundStyle(.secondary).monospacedDigit()
-            }
-
-            if !symptoms.isEmpty {
-                HStack(spacing: 6) {
-                    ForEach(symptoms.prefix(6)) { symptom in
-                        SymptomIllustration(symptomID: symptom.id, group: symptom.group, size: 28)
-                    }
-                    if symptoms.count > 6 {
-                        Text("+\(loc.num(symptoms.count - 6))")
-                            .typo(.micro).foregroundStyle(.secondary)
-                    }
-                }
-            }
-
-            if !entry.note.isEmpty {
-                Text(entry.note).typo(.caption).italic()
-            }
-        }
-        .padding(.vertical, 5)
-    }
-}
-
-/// One set of readings, coloured the way the tiles in My health are: green
-/// while normal, orange then red as they move out of range.
 private struct VitalsDetail: View {
     @Environment(LocalizationManager.self) private var loc
     let entry: VitalsEntry

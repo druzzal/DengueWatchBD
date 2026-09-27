@@ -14,7 +14,7 @@ final class HealthLogPDFTests: XCTestCase {
                         temperature: 38.4, pulse: 96, systolic: 112,
                         diastolic: 74, oxygenSaturation: 97)
         }
-        return HealthLog.days(checks: [], vitals: vitals, labs: [])
+        return HealthLog.days(vitals: vitals, labs: [])
     }
 
     func testAShortLogProducesOnePage() throws {

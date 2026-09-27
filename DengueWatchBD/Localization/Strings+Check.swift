@@ -241,7 +241,7 @@ extension Strings {
 
         "log.title": "My log",
         "log.empty.title": "No entries yet",
-        "log.empty.detail": "Run a symptom check, record your vital signs or add a lab report, and they appear here day by day. Having the course of an illness written down is genuinely useful to a doctor.",
+        "log.empty.detail": "Record your vital signs or add a lab report, and they appear here day by day. Having the course of an illness written down is genuinely useful to a doctor.",
         "log.temperature": "Your temperature",
         "log.export": "Export as PDF",
         "log.defaultName": "Log %@",
@@ -493,7 +493,7 @@ extension Strings {
 
         "log.title": "আমার তালিকা",
         "log.empty.title": "এখনো কিছু নেই",
-        "log.empty.detail": "উপসর্গ পরীক্ষা করুন, জীবনচিহ্ন লিখে রাখুন বা ল্যাব রিপোর্ট যোগ করুন — এখানে দিন ধরে ধরে দেখা যাবে। অসুস্থতার হিসাব লেখা থাকলে ডাক্তারের জন্য তা সত্যিই কাজে লাগে।",
+        "log.empty.detail": "জীবনচিহ্ন লিখে রাখুন বা ল্যাব রিপোর্ট যোগ করুন — এখানে দিন ধরে ধরে দেখা যাবে। অসুস্থতার হিসাব লেখা থাকলে ডাক্তারের জন্য তা সত্যিই কাজে লাগে।",
         "log.temperature": "আপনার তাপমাত্রা",
         "log.export": "পিডিএফ তৈরি করুন",
         "log.defaultName": "লগ %@",

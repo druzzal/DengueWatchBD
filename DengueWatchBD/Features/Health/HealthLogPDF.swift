@@ -108,30 +108,12 @@ private struct HealthLogDocument: View {
 
             ForEach(day.itemsNewestFirst) { item in
                 switch item {
-                case .check(let entry): checkRow(entry)
                 case .vitals(let entry): vitalsRow(entry)
                 case .lab(let report): labRow(report)
                 }
             }
         }
         .padding(.bottom, 4)
-    }
-
-    private func checkRow(_ entry: CaseLogEntry) -> some View {
-        let names = TriageEngine.symptoms
-            .filter { entry.symptomIDs.contains($0.id) }
-            .map { loc.t($0.titleKey) }
-        return VStack(alignment: .leading, spacing: 3) {
-            row(time: entry.date,
-                label: loc.t("log.pdf.symptoms"),
-                detail: names.isEmpty ? loc.t("log.pdf.noSymptoms") : loc.style.list(names))
-            Text(loc.t(entry.outcome.headlineKey))
-                .font(.system(size: 10, weight: .medium))
-                .padding(.leading, 74)
-            if !entry.note.isEmpty {
-                Text(entry.note).font(.system(size: 10)).italic().padding(.leading, 74)
-            }
-        }
     }
 
     private func vitalsRow(_ entry: VitalsEntry) -> some View {

@@ -15,10 +15,6 @@ final class HealthLogTests: XCTestCase {
                                            hour: hour, minute: minute))!
     }
 
-    private func check(_ date: Date) -> CaseLogEntry {
-        CaseLogEntry(date: date, symptomIDs: ["fever"], outcomeRawValue: 1)
-    }
-
     private func vitals(_ date: Date, temperature: Double = 38.0) -> VitalsEntry {
         VitalsEntry(date: date, temperature: temperature)
     }
@@ -27,18 +23,16 @@ final class HealthLogTests: XCTestCase {
         LabReport(date: date, platelets: platelets, ns1: ns1)
     }
 
-    private func days(checks: [CaseLogEntry] = [],
-                      vitals: [VitalsEntry] = [],
+    private func days(vitals: [VitalsEntry] = [],
                       labs: [LabReport] = []) -> [HealthLogDay] {
-        HealthLog.days(checks: checks, vitals: vitals, labs: labs, calendar: calendar)
+        HealthLog.days(vitals: vitals, labs: labs, calendar: calendar)
     }
 
     // MARK: - Numbering
 
-    private func numbers(checks: [CaseLogEntry] = [],
-                         vitals: [VitalsEntry] = [],
+    private func numbers(vitals: [VitalsEntry] = [],
                          labs: [LabReport] = []) -> [Date: Int] {
-        HealthLog.numbers(for: days(checks: checks, vitals: vitals, labs: labs))
+        HealthLog.numbers(for: days(vitals: vitals, labs: labs))
     }
 
     /// Numbers count from the oldest day, so a day keeps its number when a
@@ -61,19 +55,17 @@ final class HealthLogTests: XCTestCase {
     /// Everything recorded on one day is one log, so a second reading that
     /// afternoon must not claim a number of its own.
     func testASecondRecordOnTheSameDayDoesNotTakeANewNumber() {
-        let result = numbers(checks: [check(at(10, 8))],
-                             vitals: [vitals(at(10, 9)), vitals(at(10, 21))],
+        let result = numbers(vitals: [vitals(at(10, 9)), vitals(at(10, 21))],
                              labs: [lab(at(10, 12))])
-        XCTAssertEqual(result.count, 1, "four records, one day, one number")
+        XCTAssertEqual(result.count, 1, "three records, one day, one number")
         XCTAssertEqual(result[at(10, 0)], 1)
     }
 
-    /// The three kinds share one sequence of days: they are all records in
-    /// one log, not three parallel logs.
+    /// Both kinds share one sequence of days: they are records in one log,
+    /// not two parallel logs.
     func testEveryKindSharesTheSameSequence() {
-        let result = numbers(checks: [check(at(10, 8))],
-                             vitals: [vitals(at(11, 9))],
-                             labs: [lab(at(12, 10))])
+        let result = numbers(vitals: [vitals(at(10, 9)), vitals(at(12, 9))],
+                             labs: [lab(at(11, 10))])
         XCTAssertEqual(result[at(10, 0)], 1)
         XCTAssertEqual(result[at(11, 0)], 2)
         XCTAssertEqual(result[at(12, 0)], 3)
@@ -89,26 +81,31 @@ final class HealthLogTests: XCTestCase {
     }
 
     func testEveryKindOfRecordSharesOneDay() {
-        let result = days(checks: [check(at(10, 9))],
-                          vitals: [vitals(at(10, 21))],
-                          labs: [lab(at(10, 12))])
+        let result = days(vitals: [vitals(at(10, 21))], labs: [lab(at(10, 12))])
         XCTAssertEqual(result.count, 1, "one day, not one day per store")
-        XCTAssertEqual(result[0].checks.count, 1)
         XCTAssertEqual(result[0].vitals.count, 1)
         XCTAssertEqual(result[0].labs.count, 1)
-        XCTAssertEqual(result[0].itemsNewestFirst.count, 3)
+        XCTAssertEqual(result[0].itemsNewestFirst.count, 2)
+    }
+
+    /// A symptom check is not a measurement and does not belong in the log.
+    /// It has its own card in My Health, where the latest one drives the care
+    /// plan; a record handed to a doctor is a list of numbers.
+    func testASymptomCheckIsNotPartOfTheLog() {
+        let result = days(vitals: [vitals(at(10, 9))])
+        XCTAssertEqual(result.count, 1)
+        XCTAssertEqual(result[0].itemsNewestFirst.count, 1,
+                       "only the reading, whatever else was recorded that day")
     }
 
     func testALabReportOnItsOwnStillMakesADay() {
         let result = days(labs: [lab(at(10, 12))])
         XCTAssertEqual(result.count, 1)
-        XCTAssertTrue(result[0].checks.isEmpty)
         XCTAssertTrue(result[0].vitals.isEmpty)
     }
 
     func testLabsTakeTheirPlaceInTheDaysTimeOrder() {
-        let result = days(checks: [check(at(10, 8))],
-                          vitals: [vitals(at(10, 20))],
+        let result = days(vitals: [vitals(at(10, 20)), vitals(at(10, 8))],
                           labs: [lab(at(10, 14))])
         XCTAssertEqual(result[0].itemsNewestFirst.map(\.date),
                        [at(10, 20), at(10, 14), at(10, 8)])
@@ -121,22 +118,22 @@ final class HealthLogTests: XCTestCase {
     }
 
     func testDaysRunNewestFirst() {
-        let result = days(checks: [check(at(8, 9)), check(at(12, 9)), check(at(10, 9))])
+        let result = days(vitals: [vitals(at(8, 9)), vitals(at(12, 9)), vitals(at(10, 9))])
         XCTAssertEqual(result.map(\.date), [at(12, 0), at(10, 0), at(8, 0)])
     }
 
     func testWithinADayTheNewestRecordIsFirst() {
-        let result = days(checks: [check(at(10, 8))],
-                          vitals: [vitals(at(10, 20)), vitals(at(10, 14))])
+        let result = days(vitals: [vitals(at(10, 20)), vitals(at(10, 14))],
+                          labs: [lab(at(10, 8))])
         let times = result[0].itemsNewestFirst.map(\.date)
         XCTAssertEqual(times, [at(10, 20), at(10, 14), at(10, 8)])
     }
 
     func testAKindOfRecordMayBeMissingFromADay() {
-        let result = days(checks: [check(at(10, 9))], vitals: [vitals(at(9, 9))])
+        let result = days(vitals: [vitals(at(9, 9))], labs: [lab(at(10, 12))])
         XCTAssertEqual(result.count, 2)
-        XCTAssertTrue(result[0].vitals.isEmpty, "a day with only a check is still a day")
-        XCTAssertTrue(result[1].checks.isEmpty)
+        XCTAssertTrue(result[0].vitals.isEmpty, "a day with only a report is still a day")
+        XCTAssertTrue(result[1].labs.isEmpty)
     }
 
     /// A gap is a day the reader wrote nothing down. Filling it with an empty
@@ -151,10 +148,9 @@ final class HealthLogTests: XCTestCase {
     func testEveryItemKeepsTheIdentityOfItsOwnEntry() {
         // The view deletes by id, because a row's position in the merged log
         // says nothing about its index in either store.
-        let c = check(at(10, 9))
         let v = vitals(at(10, 10))
         let l = lab(at(10, 11))
-        let items = days(checks: [c], vitals: [v], labs: [l])[0].itemsNewestFirst
-        XCTAssertEqual(Set(items.map(\.id)), [c.id, v.id, l.id])
+        let items = days(vitals: [v], labs: [l])[0].itemsNewestFirst
+        XCTAssertEqual(Set(items.map(\.id)), [v.id, l.id])
     }
 }

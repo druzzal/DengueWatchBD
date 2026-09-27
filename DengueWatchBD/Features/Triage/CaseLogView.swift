@@ -30,7 +30,7 @@ struct CaseLogView: View {
     @State private var draftName = ""
 
     private var days: [HealthLogDay] {
-        let ordered = HealthLog.days(checks: log.entries, vitals: vitals.entries,
+        let ordered = HealthLog.days(vitals: vitals.entries,
                                      labs: labs.reports)
         return oldestFirst ? ordered.reversed() : ordered
     }
@@ -121,6 +121,11 @@ struct CaseLogView: View {
             .confirmationDialog(loc.t("log.confirmDelete"),
                                 isPresented: $showingClearConfirmation, titleVisibility: .visible) {
                 Button(loc.t("common.deleteAll"), role: .destructive) {
+                    // Symptom checks are cleared too, although the log no
+                    // longer lists them. This is the only screen that can
+                    // clear them, and leaving a reader's answers on the phone
+                    // after they asked to delete everything would be the wrong
+                    // way to be literal about what the list shows.
                     log.clear()
                     vitals.clear()
                     labs.clear()
@@ -234,7 +239,6 @@ struct CaseLogView: View {
 
     private func delete(_ item: HealthLogDay.Item) {
         switch item {
-        case .check(let entry): log.delete(id: entry.id)
         case .vitals(let entry): vitals.delete(id: entry.id)
         case .lab(let report): labs.delete(id: report.id)
         }
@@ -351,16 +355,28 @@ private struct LogDaySummaryRow: View {
         .accessibilityElement(children: .combine)
     }
 
-    /// Red when the day carries an urgent outcome, so a bad day is visible
-    /// without opening it.
+    /// Coloured by the furthest a reading strayed that day, so a bad day is
+    /// visible without opening it.
+    ///
+    /// It used to take its colour from the day's worst triage outcome, which
+    /// was the symptom check's verdict. The log holds measurements now, so it
+    /// is coloured by the measurements: this marks the day a platelet count
+    /// fell, not the day the reader answered a questionnaire.
     private var accent: Color {
-        let worst = day.checks.map(\.outcome).max()
-        switch worst {
-        case .emergency: return Palette.riskInk(.severe)
-        case .seeDoctorToday: return Palette.riskInk(.high)
-        case .testAdvised: return Palette.riskInk(.moderate)
-        default: return Palette.accent
+        var worst = MeasureStatus.normal
+        for entry in day.vitals {
+            for kind in VitalKind.allCases {
+                guard let value = entry.value(for: kind) else { continue }
+                if kind.status(value).risk > worst.risk { worst = kind.status(value) }
+            }
         }
+        for report in day.labs {
+            for measure in LabMeasure.allCases {
+                guard let value = report.value(for: measure) else { continue }
+                if measure.status(value).risk > worst.risk { worst = measure.status(value) }
+            }
+        }
+        return worst == .normal ? Palette.accent : Palette.riskInk(worst.risk)
     }
 
     /// The day at a glance: its highest temperature, its latest blood
