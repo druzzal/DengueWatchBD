@@ -36,6 +36,20 @@ enum TriageOutcome: Int, Comparable, CaseIterable {
     }
 
     var headlineKey: String { "outcome.\(slug).headline" }
+
+    /// How loudly to colour this outcome, on the app's one risk palette.
+    ///
+    /// On the outcome rather than in a view, because Home and My Health both
+    /// show the latest check and two private copies of this mapping would be
+    /// two chances for the same outcome to appear in two colours.
+    var risk: RiskLevel {
+        switch self {
+        case .selfCare: .low
+        case .testAdvised: .moderate
+        case .seeDoctorToday: .high
+        case .emergency: .severe
+        }
+    }
     var summaryKey: String { "outcome.\(slug).summary" }
 
     var actionKeys: [String] {

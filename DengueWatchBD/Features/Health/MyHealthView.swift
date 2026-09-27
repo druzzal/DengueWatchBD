@@ -34,6 +34,7 @@ struct MyHealthView: View {
                     if sizeClass == .regular {
                         ScreenTitle(text: loc.t("tab.health"))
                     }
+                    symptomCheckCard
                     todayCard
                     feverTimelineCard
                     carePlanCard
@@ -69,29 +70,66 @@ struct MyHealthView: View {
         }
     }
 
+    // MARK: - Symptom check
+
+    /// The symptom check, on its own.
+    ///
+    /// Separated from the Today card because it is not the same act as writing
+    /// down a temperature. A reading is a number the reader already has; the
+    /// check is a set of WHO questions that produces the care plan below and
+    /// the day of illness the fever timeline runs on. Sharing a row with the
+    /// thermometer made the app's clinical core look like one more chore.
+    ///
+    /// It shows the last outcome rather than only a button, because "what did
+    /// it say last time" is the question someone opens this tab with.
+    private var symptomCheckCard: some View {
+        CardSection(loc.t("check.title"), subtitle: loc.t("health.check.subtitle")) {
+            VStack(alignment: .leading, spacing: Space.row) {
+                if let latest = caseLog.entries.first {
+                    HStack(alignment: .top, spacing: Space.row) {
+                        Image(systemName: latest.outcome.symbolName)
+                            .font(.title3)
+                            .foregroundStyle(Palette.riskTint(latest.outcome.risk))
+                            .frame(width: 26)
+                            .accessibilityHidden(true)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(loc.t(latest.outcome.headlineKey))
+                                .typo(.subheadline)
+                                .fixedSize(horizontal: false, vertical: true)
+                            Text(loc.t("health.checkedAt", loc.relative(latest.date)))
+                                .typo(.micro)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer(minLength: 0)
+                    }
+                    .accessibilityElement(children: .combine)
+                } else {
+                    Text(loc.t("health.empty"))
+                        .typo(.callout)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                SecondaryActionButton(
+                    title: loc.t(caseLog.entries.isEmpty ? "health.check" : "health.checkAgain"),
+                    systemImage: "stethoscope") { showingCheck = true }
+            }
+        }
+    }
+
     // MARK: - Today
 
     /// What has and has not been recorded today, so the card answers "am I up
     /// to date" without the reader counting entries themselves.
     private var todayCard: some View {
-        let checkedToday = caseLog.entries.first.map {
-            Calendar.current.isDateInToday($0.date)
-        } ?? false
         let vitalsToday = vitals.latest.map {
             Calendar.current.isDateInToday($0.date)
         } ?? false
 
         return CardSection(loc.t("health.today.title"),
                            subtitle: loc.t("health.today.subtitle")) {
-            VStack(spacing: Space.tight) {
-                todayRow(title: loc.t("health.today.symptoms"),
-                         symbol: "stethoscope",
-                         done: checkedToday) { showingCheck = true }
-                Divider()
-                todayRow(title: loc.t("health.today.vitals"),
-                         symbol: "heart.text.square",
-                         done: vitalsToday) { showingVitals = true }
-            }
+            todayRow(title: loc.t("health.today.vitals"),
+                     symbol: "heart.text.square",
+                     done: vitalsToday) { showingVitals = true }
         }
     }
 

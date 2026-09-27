@@ -83,6 +83,9 @@ extension Strings {
         "health.today.done": "Done",
         "health.today.todo": "Not yet",
         "health.latest.title": "Latest assessment",
+        // Under the symptom-check card's title. Says what it measures against
+        // and, in the same breath, what it does not do.
+        "health.check.subtitle": "Your symptoms against WHO warning signs. It does not diagnose dengue.",
 
         // Vital signs
         "vital.temperature": "Temperature",
@@ -333,6 +336,7 @@ extension Strings {
         "health.today.done": "হয়েছে",
         "health.today.todo": "এখনো হয়নি",
         "health.latest.title": "সর্বশেষ মূল্যায়ন",
+        "health.check.subtitle": "আপনার উপসর্গ বিশ্ব স্বাস্থ্য সংস্থার বিপদচিহ্নের সঙ্গে মিলিয়ে দেখা হয়। এটি ডেঙ্গু নির্ণয় করে না।",
 
         // জীবনচিহ্ন
         "vital.temperature": "তাপমাত্রা",

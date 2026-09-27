@@ -402,7 +402,7 @@ struct DashboardView: View {
                         HStack(alignment: .top, spacing: Space.row) {
                             Image(systemName: latest.outcome.symbolName)
                                 .font(.title3)
-                                .foregroundStyle(Palette.riskTint(outcomeRisk(latest.outcome)))
+                                .foregroundStyle(Palette.riskTint(latest.outcome.risk))
                                 .frame(width: 26)
                                 .accessibilityHidden(true)
                             VStack(alignment: .leading, spacing: 3) {
@@ -434,15 +434,6 @@ struct DashboardView: View {
 
     /// Maps a triage outcome onto the risk palette, so the colour here means
     /// the same thing it means everywhere else in the app.
-    private func outcomeRisk(_ outcome: TriageOutcome) -> RiskLevel {
-        switch outcome {
-        case .selfCare: .low
-        case .testAdvised: .moderate
-        case .seeDoctorToday: .high
-        case .emergency: .severe
-        }
-    }
-
     /// The brief's "Today in Bangladesh": the national snapshot, led by the
     /// freshest figure DGHS publishes rather than by the season total.
     ///
