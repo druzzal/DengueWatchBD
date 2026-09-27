@@ -303,10 +303,14 @@ extension Strings {
         "lab.none": "এখনো কোনো রিপোর্ট নেই।",
         "lab.add": "রিপোর্ট যোগ করুন",
         "lab.save": "রিপোর্ট সংরক্ষণ করুন",
-        "lab.platelets": "প্লেটলেট",
-        "lab.haematocrit": "হেমাটোক্রিট",
-        "lab.whiteCells": "শ্বেত রক্তকণিকা",
-        "lab.haemoglobin": "হিমোগ্লোবিন",
+        // The names a lab slip prints, like the units beside them. "শ্বেত
+        // রক্তকণিকা" is good Bengali and appears on no report in Bangladesh,
+        // so a reader matching the app against their own slip had to translate
+        // in their head. The abbreviations are what is actually printed.
+        "lab.platelets": "Platelet",
+        "lab.haematocrit": "HCT",
+        "lab.whiteCells": "WBC",
+        "lab.haemoglobin": "Hb",
         // Same rule: the "10" here is part of the symbol, not a number being
         // read, so it stays Latin like the µL beside it.
         "lab.unit.platelets": "×10³/µL",
