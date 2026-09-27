@@ -52,7 +52,8 @@ enum TemperatureUnit: String, CaseIterable, Identifiable, Sendable {
     /// Accepts what someone typed, in this unit, and returns Celsius to store.
     /// Nil when the text is not a number or is not a temperature a person has.
     func celsiusValue(from text: String) -> Double? {
-        let trimmed = text.trimmingCharacters(in: .whitespaces)
+        let trimmed = MeasureInput.westernDigits(text)
+            .trimmingCharacters(in: .whitespaces)
             .replacingOccurrences(of: ",", with: ".")
         guard let typed = Double(trimmed), plausibleRange.contains(typed) else { return nil }
         return toCelsius(typed)

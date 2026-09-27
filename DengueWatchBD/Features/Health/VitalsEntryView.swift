@@ -99,7 +99,7 @@ struct VitalsEntryView: View {
                 Text(loc.t(kind.labelKey))
                 Spacer(minLength: Space.row)
                 TextField("", text: binding(for: kind))
-                    .keyboardType(.decimalPad)
+                    .keyboardType(numberKeyboard)
                     .multilineTextAlignment(.trailing)
                     .frame(maxWidth: 90)
                     // The visible label sits beside the field rather than in it,
@@ -125,6 +125,14 @@ struct VitalsEntryView: View {
 
     private func unitLabel(_ kind: VitalKind) -> String {
         kind == .temperature ? preferences.temperatureUnit.symbol : loc.t(kind.unitKey)
+    }
+
+    /// A decimal pad cannot type Bengali numerals — it has no globe key, so a
+    /// reader whose numbers are ৩৯.৫ could not enter them at all. In Bengali
+    /// the field offers a keyboard that can be switched instead; English keeps
+    /// the pad, which is faster and loses nothing.
+    private var numberKeyboard: UIKeyboardType {
+        loc.language.usesBengaliDigits ? .numbersAndPunctuation : .decimalPad
     }
 
     private func binding(for kind: VitalKind) -> Binding<String> {

@@ -247,6 +247,14 @@ struct LabEntryView: View {
         if found { Haptic.selection() }
     }
 
+    /// A decimal pad cannot type Bengali numerals — it has no globe key, so a
+    /// reader whose numbers are ৩৯.৫ could not enter them at all. In Bengali
+    /// the field offers a keyboard that can be switched instead; English keeps
+    /// the pad, which is faster and loses nothing.
+    private var numberKeyboard: UIKeyboardType {
+        loc.language.usesBengaliDigits ? .numbersAndPunctuation : .decimalPad
+    }
+
     private func binding(for measure: LabMeasure) -> Binding<String> {
         Binding(get: { text[measure] ?? "" }, set: { text[measure] = $0 })
     }
@@ -268,7 +276,7 @@ struct LabEntryView: View {
                 Text(loc.t(measure.labelKey))
                 Spacer(minLength: Space.row)
                 TextField("", text: binding(for: measure))
-                    .keyboardType(.decimalPad)
+                    .keyboardType(numberKeyboard)
                     .multilineTextAlignment(.trailing)
                     .frame(maxWidth: 90)
                     // See VitalsEntryView: the label is beside the field, so

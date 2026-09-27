@@ -60,6 +60,25 @@ enum MeasureInput {
         read(text, within: measure.enterableRange)
     }
 
+    /// Numerals as the reader writes them, in the digits the parser needs.
+    ///
+    /// The app prints its own numbers in Bengali — ৩৯.৫ on every tile and in
+    /// every chart — so a reader typing on a Bangla keyboard is writing the
+    /// same digits back. Refusing those as "not a number" would be the app
+    /// failing to read its own output.
+    ///
+    /// Done by asking each character for its numeric value rather than by
+    /// mapping Bengali specifically, so Arabic-Indic and Devanagari numerals
+    /// work too without any of them being named here.
+    static func westernDigits(_ text: String) -> String {
+        String(text.map { character in
+            guard !character.isASCII, character.isNumber,
+                  let value = character.wholeNumberValue, (0...9).contains(value)
+            else { return character }
+            return Character(String(value))
+        })
+    }
+
     /// A comma is accepted as a decimal separator: Bangladeshi keyboards and
     /// habits produce both, and rejecting "38,5" as "not a number" would be
     /// pedantry rather than safety.
@@ -69,7 +88,7 @@ enum MeasureInput {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return .empty }
 
-        let normalised = trimmed.replacingOccurrences(of: ",", with: ".")
+        let normalised = westernDigits(trimmed).replacingOccurrences(of: ",", with: ".")
         guard let typed = Double(normalised), typed.isFinite else { return .notANumber }
         guard range.contains(typed) else { return .outOfRange(range) }
         return .value(converting(typed))

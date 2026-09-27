@@ -134,6 +134,50 @@ final class MeasureInputTests: XCTestCase {
         XCTAssertEqual(read("  72  ", .pulse), .value(72))
     }
 
+    // MARK: - Bengali numerals
+
+    /// The app prints ৩৯.৫ on every tile, so a reader on a Bangla keyboard is
+    /// typing the app's own digits back at it. Refusing them would be the app
+    /// failing to read its own output.
+    func testBengaliNumeralsAreRead() {
+        XCTAssertEqual(read("৩৯.৫", .temperature), .value(39.5))
+        XCTAssertEqual(read("৭২", .pulse), .value(72))
+        XCTAssertEqual(read("১১২", .pulse), .value(112))
+    }
+
+    func testBengaliNumeralsWorkForBloodCountsToo() {
+        XCTAssertEqual(read("৯৬", .platelets), .value(96))
+        XCTAssertEqual(read("১৩.২", .haemoglobin), .value(13.2))
+    }
+
+    func testBengaliNumeralsAreRangeCheckedLikeAnyOther() {
+        guard case .outOfRange = read("৯০০", .pulse) else {
+            return XCTFail("৯০০ is 900, and 900 is not a pulse")
+        }
+        guard case .outOfRange = read("৯৬০০০", .platelets) else {
+            return XCTFail("the decimal slip must be caught in either script")
+        }
+    }
+
+    func testBengaliAndWesternDigitsMixedInOneNumber() {
+        // A reader switching keyboards mid-number is unusual but not wrong.
+        XCTAssertEqual(read("৩9.৫", .temperature), .value(39.5))
+    }
+
+    func testABengaliNumeralWithACommaSeparator() {
+        XCTAssertEqual(read("৩৮,৫", .temperature), .value(38.5))
+    }
+
+    func testBengaliTemperatureIsCheckedAgainstTheUnitOnScreen() {
+        XCTAssertEqual(read("৯৮.৬", .temperature, .fahrenheit).storedValue.map {
+            ($0 * 10).rounded() / 10
+        }, 37.0)
+    }
+
+    func testLettersInBengaliScriptAreStillNotNumbers() {
+        XCTAssertEqual(read("জ্বর", .temperature), .notANumber)
+    }
+
     // MARK: - The shape the form relies on
 
     func testOnlyGoodReadingsCarryAValue() {
