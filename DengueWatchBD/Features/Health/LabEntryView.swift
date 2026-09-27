@@ -77,6 +77,9 @@ struct LabEntryView: View {
                     DatePicker(loc.t("lab.reportDate"), selection: $reportDate,
                                in: recordableRange,
                                displayedComponents: [.date, .hourAndMinute])
+                        // See VitalsEntryView: a picker follows the device
+                        // locale unless it is told otherwise.
+                        .environment(\.locale, loc.pickerLocale)
                 }
 
                 Section {

@@ -26,6 +26,10 @@ struct VitalsEntryView: View {
                     DatePicker(loc.t("vital.takenAt"), selection: $takenAt,
                                in: recordableRange,
                                displayedComponents: [.date, .hourAndMinute])
+                        // A DatePicker follows the device's locale, not the
+                        // app's, so a Bengali screen was showing "28 Sep, 2026"
+                        // in Western numerals beside its own Bengali labels.
+                        .environment(\.locale, loc.pickerLocale)
                 }
 
                 Section {

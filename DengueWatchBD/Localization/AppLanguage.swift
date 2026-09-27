@@ -31,6 +31,20 @@ enum AppLanguage: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
+    /// For controls that format their own text.
+    ///
+    /// Everything the app formats itself passes through `digits(_:)`, because
+    /// bn_BD gives Bengali month names and Latin numerals. A DatePicker draws
+    /// its own label and never reaches that, so the numbering system has to be
+    /// part of the locale handed to it — otherwise a Bengali form reads
+    /// "২৮ সেপ" nowhere and "28 সেপ, 2026" in its date field.
+    var pickerLocale: Locale {
+        switch self {
+        case .english: Locale(identifier: "en_BD")
+        case .bangla: Locale(identifier: "bn_BD@numbers=beng")
+        }
+    }
+
     /// Bengali readers expect Bengali digits; English readers expect Latin.
     var usesBengaliDigits: Bool { self == .bangla }
 }
@@ -42,6 +56,7 @@ struct NumberStyle: Sendable, Equatable {
     let language: AppLanguage
 
     var locale: Locale { language.locale }
+    var pickerLocale: Locale { language.pickerLocale }
 
     private func digits(_ text: String) -> String {
         guard language.usesBengaliDigits else { return text }
@@ -188,6 +203,7 @@ final class LocalizationManager {
     }
 
     var locale: Locale { language.locale }
+    var pickerLocale: Locale { language.pickerLocale }
 
     /// Hand this to anything nonisolated that needs to format — chart axes most of all.
     var style: NumberStyle { NumberStyle(language: language) }
