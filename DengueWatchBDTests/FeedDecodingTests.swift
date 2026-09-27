@@ -41,11 +41,13 @@ final class FeedDecodingTests: XCTestCase {
            {"title":"Age group distribution of affected cases from 1 January to till date in 2026",
             "headers":["Age Group","Male","Female","Total"],
             "rows":[{"Age Group":"0-5","Male":30,"Female":20,"Total":50},
+                    {"Age Group":"0-10","Male":1,"Female":0,"Total":1},
                     {"Age Group":"06-10","Male":40,"Female":30,"Total":70},
                     {"Age Group":"42309","Male":1,"Female":1,"Total":2},
                     {"Age Group":"","Male":1,"Female":0,"Total":1},
                     {"Age Group":"56-60","Male":5,"Female":5,"Total":10},
                     {"Age Group":"6-10","Male":1,"Female":0,"Total":1},
+                    {"Age Group":"76-80","Male":3,"Female":2,"Total":5},
                     {"Age Group":"80+","Male":2,"Female":1,"Total":3},
                     {"Age Group":"Grand Total","Male":34,"Female":22,"Total":56}]}
          ]}
@@ -196,7 +198,66 @@ final class FeedDecodingTests: XCTestCase {
         let store = DengueStore()
         await store.apply(document: try decoded(), source: .bundled)
 
-        XCTAssertEqual(store.ageBandsCases.map(\.lowerAge), [0, 6, 56, 80])
+        XCTAssertEqual(store.ageBandsCases.map(\.lowerAge), [0, 6, 56, 76, 80])
+    }
+
+    /// DGHS's sheet carries rows spanning bands it already publishes — "0-10"
+    /// beside "0-5" and "06-10" — with a case or two against thousands. They
+    /// cannot be placed among the bands they cover, and left in they sit next
+    /// to the real rows looking like real age groups.
+    @MainActor
+    func testARowSpanningPublishedBandsIsDropped() async throws {
+        let store = DengueStore()
+        await store.apply(document: try decoded(), source: .bundled)
+
+        XCTAssertFalse(store.ageBandsCases.contains { $0.lowerAge == 0 && $0.upperAge == 10 },
+                       "0-10 covers two published bands and is not one itself")
+        XCTAssertEqual(store.ageBandsCases.filter { $0.lowerAge == 0 }.count, 1,
+                       "one band starts at zero, not two")
+    }
+
+    /// The band it spans must survive, with its own count untouched.
+    @MainActor
+    func testTheBandsItSpannedAreKept() async throws {
+        let store = DengueStore()
+        await store.apply(document: try decoded(), source: .bundled)
+
+        XCTAssertEqual(store.ageBandsCases.first { $0.lowerAge == 0 }?.total, 50)
+        XCTAssertEqual(store.ageBandsCases.first { $0.lowerAge == 6 }?.total, 71, "70 + 1")
+    }
+
+    /// "76-80" and "80+" share the endpoint 80 in DGHS's own scheme. Neither
+    /// spans the other, and dropping either would lose a real age group.
+    @MainActor
+    func testBandsSharingAnEndpointAreBothKept() async throws {
+        let store = DengueStore()
+        await store.apply(document: try decoded(), source: .bundled)
+
+        XCTAssertNotNil(store.ageBandsCases.first { $0.lowerAge == 76 && $0.upperAge == 80 })
+        XCTAssertNotNil(store.ageBandsCases.first { $0.lowerAge == 80 && $0.upperAge == nil })
+    }
+
+    /// Two bands that begin at the same age are still two bands. Keyed on
+    /// where they start, SwiftUI drew one of them twice and dropped the other.
+    func testBandsSharingALowerAgeHaveDifferentIdentities() {
+        let a = AgeBand(lowerAge: 21, upperAge: 25, male: 1, female: 1)
+        let b = AgeBand(lowerAge: 21, upperAge: 30, male: 1, female: 1)
+        let top = AgeBand(lowerAge: 80, upperAge: nil, male: 1, female: 1)
+
+        XCTAssertNotEqual(a.id, b.id)
+        XCTAssertNotEqual(a.id, top.id)
+        XCTAssertEqual(a.id, AgeBand(lowerAge: 21, upperAge: 25,
+                                     male: 9, female: 9).id,
+                       "the same span is the same row, whatever its counts")
+    }
+
+    @MainActor
+    func testEveryBandOnTheCardHasItsOwnIdentity() async throws {
+        let store = DengueStore()
+        await store.apply(document: try decoded(), source: .bundled)
+
+        let ids = store.ageBandsCases.map(\.id)
+        XCTAssertEqual(Set(ids).count, ids.count, "a ForEach needs one id per row")
     }
 
     @MainActor

@@ -13,6 +13,16 @@ import SwiftUI
 struct WhoIsAffectedCard: View {
     @Environment(LocalizationManager.self) private var loc
 
+    /// Wide enough for the longest count either language writes.
+    ///
+    /// English abbreviates to "10.1k"; Bengali spells the scale out as
+    /// "১০ হাজার", which is half as wide again and wrapped onto a second line
+    /// in a column sized for the English. Fixed rather than fitted, so the
+    /// bars all start and end in the same place, and scaled so it still holds
+    /// at larger type.
+    @ScaledMetric(relativeTo: .caption) private var countWidth: CGFloat = 78
+    @ScaledMetric(relativeTo: .caption) private var bandWidth: CGFloat = 46
+
     let bands: [AgeBand]
     let split: SexSplit?
 
@@ -53,7 +63,7 @@ struct WhoIsAffectedCard: View {
                 .typo(.micro)
                 .monospacedDigit()
                 .foregroundStyle(.secondary)
-                .frame(width: 44, alignment: .leading)
+                .frame(width: bandWidth, alignment: .leading)
 
             GeometryReader { geometry in
                 let unit = geometry.size.width / CGFloat(peak)
@@ -71,7 +81,9 @@ struct WhoIsAffectedCard: View {
             Text(loc.compact(band.total))
                 .typo(.micro)
                 .monospacedDigit()
-                .frame(width: 46, alignment: .trailing)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .frame(width: countWidth, alignment: .trailing)
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(loc.t("who.a11y", band.label(loc.style),

@@ -225,9 +225,18 @@ final class DengueStore {
             merged[range, default: (0, 0)].male += male
             merged[range, default: (0, 0)].female += female
         }
-        return merged
+        let bands = merged
             .map { AgeBand(lowerAge: $0.key.low, upperAge: $0.key.high,
                            male: $0.value.male, female: $0.value.female) }
+
+        // A row that spans bands the table already publishes is not a band.
+        // DGHS's sheet carries "0-10" beside "0-5" and "06-10", and "21-30"
+        // beside "21-25" and "26-30" — one case each, against thousands. They
+        // cannot be placed among the bands they cover, and left in they sit
+        // next to the real rows looking like real age groups, which is what a
+        // reader sees as the same data listed twice.
+        return bands
+            .filter { band in !bands.contains { band.spans($0) } }
             .sorted { $0.lowerAge < $1.lowerAge }
     }
 

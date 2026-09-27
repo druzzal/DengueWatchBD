@@ -290,8 +290,28 @@ struct AgeBand: Identifiable, Hashable {
     let male: Int
     let female: Int
 
-    var id: Int { lowerAge }
+    /// The whole span, not just where it starts.
+    ///
+    /// Keyed on lowerAge alone, "21-25" and "21-30" were the same row to
+    /// SwiftUI: a ForEach given two items with one id draws one of them twice
+    /// and drops the other, which is how the largest band in the table
+    /// disappeared from the card while a one-case row appeared on it twice.
+    /// The rows that collided are filtered out upstream now, but an id has to
+    /// identify the thing rather than rely on the data being clean.
+    var id: String { "\(lowerAge)-\(upperAge.map(String.init) ?? "+")" }
     var total: Int { male + female }
+
+    /// True when this band covers all of another — "0-10" over "6-10".
+    ///
+    /// Used to spot rows that are not really bands. Consecutive bands that
+    /// merely share an endpoint, as "76-80" and "80+" do in DGHS's own scheme,
+    /// do not span each other and are left alone.
+    func spans(_ other: AgeBand) -> Bool {
+        guard self != other else { return false }
+        let myTop = upperAge ?? Int.max
+        let theirTop = other.upperAge ?? Int.max
+        return lowerAge <= other.lowerAge && theirTop <= myTop
+    }
 
     /// The band written out, in the reader's digits.
     ///
