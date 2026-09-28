@@ -214,8 +214,9 @@ struct MyHealthView: View {
                                 of: points.map(\.value),
                                 minimumChange: VitalKind.temperature.minimumMeaningfulChange),
                             tint: Palette.accent,
-                            usualRange: usualTemperatureRange,
-                            thresholdWord: loc.t("trend.threshold.fever"),
+                            threshold: .init(value: usualTemperatureRange.upperBound,
+                                             concern: .above,
+                                             word: loc.t("trend.threshold.fever")),
                             format: { loc.decimal($0, places: 1) })
                     }
 
@@ -240,6 +241,37 @@ struct MyHealthView: View {
     }
 
     /// The usual temperature band, converted into whatever unit is on screen.
+    /// The platelet count over the course of the illness.
+    ///
+    /// The one line in dengue a doctor asks to see: a count that is falling
+    /// says more than any single number does, which is why two counts are
+    /// enough to draw it and one is not. The threshold is marked below rather
+    /// than above — for a platelet count it is the floor that matters, and
+    /// marking the top of the range would highlight the readings nobody is
+    /// worried about.
+    ///
+    /// Still only a drawing of what the reader wrote down. It does not say
+    /// what a falling count means; that is the conversation the note under it
+    /// points them towards.
+    @ViewBuilder
+    private var plateletChart: some View {
+        let points = labs.series(for: .platelets)
+        if points.count >= 2 {
+            HealthTrendChart(
+                style: loc.style,
+                title: loc.t("trend.chart.platelets"),
+                points: points,
+                trend: HealthTrend.direction(
+                    of: points.map(\.value),
+                    minimumChange: LabMeasure.platelets.minimumMeaningfulChange),
+                tint: Palette.accent,
+                threshold: .init(value: LabMeasure.platelets.typicalRange.lowerBound,
+                                 concern: .below,
+                                 word: loc.t("lab.flag.low")),
+                format: { loc.num(Int($0.rounded())) })
+        }
+    }
+
     private var usualTemperatureRange: ClosedRange<Double> {
         let range = VitalKind.temperature.usualRange
         let unit = preferences.temperatureUnit
@@ -259,6 +291,7 @@ struct MyHealthView: View {
                 } else {
                     serologyChips
                     labTable
+                    plateletChart
                     Text(loc.t("lab.rangeNote"))
                         .typo(.micro)
                         .foregroundStyle(Color.secondary)
