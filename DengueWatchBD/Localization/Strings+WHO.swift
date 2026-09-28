@@ -48,7 +48,7 @@ extension Strings {
         "who.reason.severeSign": "You reported a sign of severe dengue.",
         "who.reason.warningSign": "You reported a warning sign.",
         "who.reason.coMorbidity": "You have a condition WHO counts as higher risk.",
-        "who.reason.criticalPhase": "You are in the critical phase — days 4 to 6, when plasma leak begins.",
+        "who.reason.criticalPhase": "You are in the critical phase — days 4 to 7, when plasma leak begins.",
         "who.reason.narrowPulsePressure": "Your last blood pressure had a narrow gap between the two numbers, 20 mmHg or less.",
         "who.reason.lowBloodPressure": "Your last blood pressure was under 90 on the upper number.",
         "who.reason.fastPulse": "Your last pulse was over 120.",
@@ -59,7 +59,7 @@ extension Strings {
         "fever.timeline.title": "Fever timeline",
         "fever.timeline.subtitle": "Dengue turns dangerous as the fever settles",
         "fever.timeline.day": "Day %@",
-        "fever.timeline.note": "The critical phase is days 4 to 6, around the time the fever drops. Feeling better then does not mean the danger has passed.",
+        "fever.timeline.note": "The critical phase is days 4 to 7, around the time the fever drops. Feeling better then does not mean the danger has passed.",
     ]
 
     static let bnWHO: [String: String] = [
@@ -95,7 +95,7 @@ extension Strings {
         "who.reason.severeSign": "আপনি মারাত্মক ডেঙ্গুর একটি লক্ষণ জানিয়েছেন।",
         "who.reason.warningSign": "আপনি একটি বিপদচিহ্ন জানিয়েছেন।",
         "who.reason.coMorbidity": "আপনার এমন একটি অবস্থা আছে, যাকে বিশ্ব স্বাস্থ্য সংস্থা বাড়তি ঝুঁকি ধরে।",
-        "who.reason.criticalPhase": "আপনি সংকটকালে আছেন — ৪ থেকে ৬ দিন, যখন রক্তরস বেরিয়ে যেতে শুরু করে।",
+        "who.reason.criticalPhase": "আপনি সংকটকালে আছেন — ৪ থেকে ৭ দিন, যখন রক্তরস বেরিয়ে যেতে শুরু করে।",
         "who.reason.narrowPulsePressure": "আপনার শেষ রক্তচাপে উপরের ও নিচের সংখ্যার ব্যবধান কম ছিল — ২০ বা তার কম।",
         "who.reason.lowBloodPressure": "আপনার শেষ রক্তচাপের উপরের সংখ্যা ৯০-এর নিচে ছিল।",
         "who.reason.fastPulse": "আপনার শেষ নাড়ির গতি ১২০-এর বেশি ছিল।",
@@ -105,6 +105,6 @@ extension Strings {
         "fever.timeline.title": "জ্বরের সময়রেখা",
         "fever.timeline.subtitle": "জ্বর নামার সময়েই ডেঙ্গু বেশি বিপজ্জনক হয়",
         "fever.timeline.day": "দিন %@",
-        "fever.timeline.note": "সংকটকাল জ্বরের ৪ থেকে ৬ দিন — সাধারণত যখন জ্বর নামতে শুরু করে। তখন ভালো লাগা মানেই বিপদ কেটে যাওয়া নয়।",
+        "fever.timeline.note": "সংকটকাল জ্বরের ৪ থেকে ৭ দিন — সাধারণত যখন জ্বর নামতে শুরু করে। তখন ভালো লাগা মানেই বিপদ কেটে যাওয়া নয়।",
     ]
 }

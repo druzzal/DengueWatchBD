@@ -38,7 +38,12 @@ final class NotificationManager {
         UserDefaults.standard.set(today, forKey: lastRiskAlertKey)
 
         let content = UNMutableNotificationContent()
-        content.title = "\(area.name): \(localization.t(area.risk.headlineKey))"
+        // The reader's own name for the place, as the geofence alert below
+        // already uses. Left as area.name this was the one string in the app
+        // that reached a Bengali reader in English — and it arrived on the
+        // lock screen, above a body that was translated.
+        content.title = "\(area.displayName(localization.language)): "
+            + localization.t(area.risk.headlineKey)
         content.body = localization.t("dash.home.detail",
                                       localization.num(area.lastWeekCases),
                                       localization.decimal(area.incidencePer100k))

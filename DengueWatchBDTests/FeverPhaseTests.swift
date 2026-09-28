@@ -66,6 +66,30 @@ final class FeverPhaseTests: XCTestCase {
         XCTAssertEqual(Phase.critical.dayRange, 4...7)
     }
 
+    /// The copy has to say the same days the engine uses.
+    ///
+    /// It did not: two strings told the reader the critical phase was days 4
+    /// to 6 while the engine put day 7 in it, so on day 7 the app announced
+    /// the critical phase directly above a note saying it had ended the day
+    /// before. Pinned to dayRange so the two cannot drift apart again.
+    func testTheCopyStatesTheSameDaysTheEngineUses() {
+        let range = Phase.critical.dayRange
+        let english = "days \(range.lowerBound) to \(range.upperBound)"
+        for key in ["who.reason.criticalPhase", "fever.timeline.note"] {
+            let text = Strings.english[key] ?? ""
+            XCTAssertTrue(text.contains(english),
+                          "\(key) should say \"\(english)\", says: \(text)")
+        }
+
+        // The same claim in Bengali numerals.
+        let bangla = "৪ থেকে ৭"
+        for key in ["who.reason.criticalPhase", "fever.timeline.note"] {
+            let text = Strings.bangla[key] ?? ""
+            XCTAssertTrue(text.contains(bangla),
+                          "\(key) should say \"\(bangla)\", says: \(text)")
+        }
+    }
+
     // MARK: - Content
 
     func testEveryPhaseHasANameAndASentenceInBothLanguages() {
