@@ -54,7 +54,7 @@ enum TemperatureUnit: String, CaseIterable, Identifiable, Sendable {
     func celsiusValue(from text: String) -> Double? {
         let trimmed = MeasureInput.westernDigits(text)
             .trimmingCharacters(in: .whitespaces)
-            .replacingOccurrences(of: ",", with: ".")
+            .replacingOccurrences(of: ",", with: "")   // grouping, not decimal
         guard let typed = Double(trimmed), plausibleRange.contains(typed) else { return nil }
         return toCelsius(typed)
     }

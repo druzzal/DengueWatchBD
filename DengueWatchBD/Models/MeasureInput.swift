@@ -79,16 +79,25 @@ enum MeasureInput {
         })
     }
 
-    /// A comma is accepted as a decimal separator: Bangladeshi keyboards and
-    /// habits produce both, and rejecting "38,5" as "not a number" would be
-    /// pedantry rather than safety.
+    /// A comma groups digits; it does not separate the decimal.
+    ///
+    /// Both bn_BD and en_BD put the decimal on "." and the grouping on ",", so
+    /// "1,234" is one thousand two hundred and thirty-four. This used to swap
+    /// the comma for a point, which read that as 1.234 — a platelet count
+    /// wrong by a factor of a thousand, inside the range, saved without a
+    /// murmur and shown as "1". Exactly the silent misreading the rest of this
+    /// type exists to prevent.
+    ///
+    /// Someone carrying a comma-decimal habit from another country now types
+    /// "38,5" and is told the range instead. Being asked again is the right
+    /// failure; being quietly recorded as 385 is not.
     private static func read(_ text: String,
                              within range: ClosedRange<Double>,
                              converting: (Double) -> Double = { $0 }) -> Reading {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return .empty }
 
-        let normalised = westernDigits(trimmed).replacingOccurrences(of: ",", with: ".")
+        let normalised = westernDigits(trimmed).replacingOccurrences(of: ",", with: "")
         guard let typed = Double(normalised), typed.isFinite else { return .notANumber }
         guard range.contains(typed) else { return .outOfRange(range) }
         return .value(converting(typed))

@@ -124,10 +124,21 @@ final class MeasureInputTests: XCTestCase {
 
     // MARK: - Separators
 
-    /// Both separators are typed in Bangladesh; refusing one as "not a number"
-    /// would be pedantry rather than safety.
-    func testACommaWorksAsADecimalPoint() {
-        XCTAssertEqual(read("38,5", .temperature), .value(38.5))
+    /// A comma groups digits in Bangladesh; it does not separate the decimal.
+    /// Read as a decimal point this was a platelet count wrong by a factor of
+    /// a thousand, inside the range, and saved without a murmur.
+    func testACommaGroupsDigitsRatherThanSeparatingTheDecimal() {
+        XCTAssertEqual(read("1,234", .platelets), .value(1234))
+        XCTAssertEqual(read("96,000", .platelets).storedValue, nil,
+                       "96000 is still out of range, comma or no comma")
+    }
+
+    /// Someone carrying a comma-decimal habit from elsewhere is asked again
+    /// rather than quietly recorded as 385.
+    func testACommaDecimalHabitIsRefusedRatherThanGuessed() {
+        guard case .outOfRange = read("38,5", .temperature) else {
+            return XCTFail("38,5 reads as 385, which is not a temperature")
+        }
     }
 
     func testSurroundingSpaceIsIgnored() {
@@ -164,8 +175,8 @@ final class MeasureInputTests: XCTestCase {
         XCTAssertEqual(read("৩9.৫", .temperature), .value(39.5))
     }
 
-    func testABengaliNumeralWithACommaSeparator() {
-        XCTAssertEqual(read("৩৮,৫", .temperature), .value(38.5))
+    func testABengaliNumeralWithAGroupingComma() {
+        XCTAssertEqual(read("১,২৩৪", .platelets), .value(1234))
     }
 
     func testBengaliTemperatureIsCheckedAgainstTheUnitOnScreen() {
@@ -247,8 +258,11 @@ final class MeasureInputTests: XCTestCase {
                           "this bound must not be a whole number, or the test proves nothing")
     }
 
-    func testACommaWorksInACountToo() {
-        XCTAssertEqual(read("13,2", .haemoglobin), .value(13.2))
+    func testAGroupingCommaInACountToo() {
+        // 13,2 reads as 132, which no haemoglobin is.
+        guard case .outOfRange = read("13,2", .haemoglobin) else {
+            return XCTFail("132 g/dL is not a haemoglobin")
+        }
     }
 
     func testEveryCountRefusesSomething() {

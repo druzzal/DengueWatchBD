@@ -83,11 +83,11 @@ final class TemperatureUnitTests: XCTestCase {
         }
     }
 
-    func testACommaDecimalIsAccepted() {
-        // Some keyboards produce a comma; rejecting it would look like the app
-        // ignoring a perfectly good reading.
-        XCTAssertEqual(try XCTUnwrap(TemperatureUnit.celsius.celsiusValue(from: "38,5")),
-                       38.5, accuracy: 0.001)
+    func testACommaGroupsRatherThanSeparatingTheDecimal() {
+        // Both bn_BD and en_BD put the decimal on "." and the grouping on ",".
+        // "38,5" therefore reads as 385, which is not a temperature and is
+        // refused rather than guessed at.
+        XCTAssertNil(TemperatureUnit.celsius.celsiusValue(from: "38,5"))
     }
 
     func testSurroundingSpacesAreTolerated() {
