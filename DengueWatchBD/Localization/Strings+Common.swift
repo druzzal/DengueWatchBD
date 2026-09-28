@@ -16,7 +16,6 @@ extension Strings {
         "common.yesterday": "Yesterday",
         "common.ok": "OK",
         "common.tryAgain": "Try again",
-        "common.saved": "Saved",
         "common.deleteAll": "Delete all",
         "common.per100k": "per 100k",
 
@@ -58,7 +57,6 @@ extension Strings {
         "common.yesterday": "গতকাল",
         "common.ok": "ঠিক আছে",
         "common.tryAgain": "আবার চেষ্টা করুন",
-        "common.saved": "সংরক্ষিত",
         "common.deleteAll": "সব মুছে ফেলুন",
         "common.per100k": "প্রতি লাখে",
 

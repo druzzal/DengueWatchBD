@@ -5,7 +5,6 @@ extension Strings {
         "care.plan.readings": "Some readings you recorded in the last few days are well outside the usual range: %@. Show them to a doctor along with how you feel. This app does not read them for you.",
         "care.plan.recheck": "Check symptoms again",
 
-        "result.temperatureMovedNote": "Recording your temperature? Use Vital signs in My health, where it is charted with your other readings.",
 
         "status.normal": "In the usual range",
         "status.outside": "Outside the usual range",
@@ -232,11 +231,8 @@ extension Strings {
         "result.whatToDo": "What to do now",
         "result.call999": "Call 999",
         "result.findHospital": "Find the nearest hospital",
-        "result.addToLog": "Add this to your log",
-        "result.keptOnPhone": "Kept on this phone only",
         "result.temperature": "Temperature, optional",
         "result.note": "Note, optional",
-        "result.saveEntry": "Save entry",
         "result.disclaimer": "DengueWatch cannot diagnose dengue. Only a clinician and a blood test can. If you feel worse at any point, go to a hospital regardless of what this screen says.",
 
         "log.title": "My log",
@@ -269,7 +265,6 @@ extension Strings {
         "care.plan.readings": "গত কয়েক দিনে লেখা কিছু পরিমাপ স্বাভাবিক সীমার অনেক বাইরে: %@। আপনার শারীরিক অবস্থার সঙ্গে এগুলোও চিকিৎসককে দেখান। এই অ্যাপ আপনার হয়ে এগুলো ব্যাখ্যা করে না।",
         "care.plan.recheck": "আবার উপসর্গ পরীক্ষা করুন",
 
-        "result.temperatureMovedNote": "তাপমাত্রা লিখতে চান? আমার স্বাস্থ্য-এর জীবনচিহ্ন ব্যবহার করুন, সেখানে অন্য পরিমাপের সঙ্গে এটি গ্রাফে দেখা যায়।",
 
         "status.normal": "স্বাভাবিক সীমার মধ্যে",
         "status.outside": "স্বাভাবিক সীমার বাইরে",
@@ -498,11 +493,8 @@ extension Strings {
         "result.whatToDo": "এখন যা করবেন",
         "result.call999": "৯৯৯-এ ফোন করুন",
         "result.findHospital": "নিকটতম হাসপাতাল খুঁজুন",
-        "result.addToLog": "আপনার তালিকায় যোগ করুন",
-        "result.keptOnPhone": "শুধু এই ফোনেই থাকবে",
         "result.temperature": "তাপমাত্রা, ঐচ্ছিক",
         "result.note": "মন্তব্য, ঐচ্ছিক",
-        "result.saveEntry": "সংরক্ষণ করুন",
         "result.disclaimer": "ডেঙ্গুওয়াচ ডেঙ্গু নির্ণয় করতে পারে না। কেবল একজন চিকিৎসক ও রক্ত পরীক্ষাই তা পারে। যেকোনো সময় অবস্থা খারাপ মনে হলে এই পর্দা যা-ই বলুক, হাসপাতালে যান।",
 
         "log.title": "আমার তালিকা",

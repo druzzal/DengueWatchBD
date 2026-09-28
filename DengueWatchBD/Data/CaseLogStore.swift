@@ -65,6 +65,11 @@ final class CaseLogStore {
 
     func add(_ entry: CaseLogEntry) {
         entries.insert(entry, at: 0)
+        // Sorted, like the other two stores and like load(). A check always
+        // arrives dated now, so this changes nothing today — but load() sorts,
+        // and a store whose two halves disagree about its own order is a store
+        // waiting to be wrong.
+        entries.sort { $0.date > $1.date }
         save()
     }
 

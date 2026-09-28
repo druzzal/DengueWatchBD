@@ -72,18 +72,7 @@ struct SymptomCheckerView: View {
                     outcome: outcome,
                     selected: selected,
                     phaseKey: hasFeverDate ? TriageEngine.phaseKey(feverDaysAgo: daysSinceFever) : nil,
-                    feverDay: hasFeverDate ? daysSinceFever + 1 : nil,
-                    onSave: { note in
-                        log.add(CaseLogEntry(symptomIDs: Array(selected),
-                                             outcomeRawValue: outcome.rawValue,
-                                             areaCode: preferences.homeAreaCode,
-                                             note: note,
-                                             feverDaysAgo: hasFeverDate ? daysSinceFever : nil,
-                                             isPregnant: context.isPregnant,
-                                             isUnderFiveOrOverSixty: context.isUnderFiveOrOverSixty,
-                                             hasChronicCondition: context.hasChronicCondition,
-                                             hadDengueBefore: context.hadDengueBefore))
-                    }
+                    feverDay: hasFeverDate ? daysSinceFever + 1 : nil
                 )
             }
         }
@@ -260,6 +249,19 @@ struct SymptomCheckerView: View {
         .accessibilityAddTraits(isOn ? [.isButton, .isSelected] : .isButton)
     }
 
+    /// Writes the completed check, so My Health can go on showing the care
+    /// plan and the day of illness it produced.
+    private func recordCheck() {
+        log.add(CaseLogEntry(symptomIDs: Array(selected),
+                             outcomeRawValue: outcome.rawValue,
+                             areaCode: preferences.homeAreaCode,
+                             feverDaysAgo: hasFeverDate ? daysSinceFever : nil,
+                             isPregnant: context.isPregnant,
+                             isUnderFiveOrOverSixty: context.isUnderFiveOrOverSixty,
+                             hasChronicCondition: context.hasChronicCondition,
+                             hadDengueBefore: context.hadDengueBefore))
+    }
+
     private var footer: some View {
         HStack(spacing: Space.row) {
             if stepIndex > 0 {
@@ -267,7 +269,18 @@ struct SymptomCheckerView: View {
                                       systemImage: "chevron.left") { retreat() }
             }
             PrimaryActionButton(title: isLastStep ? loc.t("step.seeResult") : loc.t("step.next")) {
-                if isLastStep { showingResult = true } else { advance() }
+                if isLastStep {
+                    // Recorded as the check completes rather than behind a
+                    // button on the result. The checker's job is to say what
+                    // WHO advises; keeping the answers is the app's job, and
+                    // asking the reader to opt in meant the care plan and the
+                    // fever timeline quietly depended on a step most people
+                    // would skip.
+                    recordCheck()
+                    showingResult = true
+                } else {
+                    advance()
+                }
             }
             // The engine tolerates an empty set, but a result from no answers
             // tells the reader nothing, so the last step waits for one.
@@ -308,12 +321,9 @@ struct TriageResultView: View {
     let selected: Set<String>
     let phaseKey: String?
     let feverDay: Int?
-    let onSave: (String) -> Void
 
     @Environment(LocalizationManager.self) private var loc
     @Environment(\.dismiss) private var dismiss
-    @State private var note = ""
-    @State private var saved = false
 
     private var accent: Color {
         switch outcome {
@@ -346,7 +356,6 @@ struct TriageResultView: View {
                     emergencyActions
                 }
 
-                logCard
 
                 Text(loc.t("result.disclaimer"))
                     .typo(.micro)
@@ -464,29 +473,4 @@ struct TriageResultView: View {
         }
     }
 
-    private var logCard: some View {
-        CardSection(loc.t("result.addToLog"), subtitle: loc.t("result.keptOnPhone")) {
-            TextField(loc.t("result.note"), text: $note, axis: .vertical)
-                .lineLimit(2...4)
-                .textFieldStyle(.roundedBorder)
-            // Temperature is recorded once, in Vital signs, where it is charted
-            // alongside pulse and blood pressure. Asking for it again here gave
-            // two places to type the same reading and two records that could
-            // disagree.
-            Text(loc.t("result.temperatureMovedNote"))
-                .typo(.micro)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-            Button {
-                onSave(note)
-                saved = true
-            } label: {
-                Label(loc.t(saved ? "common.saved" : "result.saveEntry"),
-                      systemImage: saved ? "checkmark" : "square.and.arrow.down")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .disabled(saved)
-        }
-    }
 }
