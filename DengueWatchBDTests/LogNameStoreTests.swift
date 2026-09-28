@@ -12,7 +12,7 @@ import XCTest
 final class LogNameStoreTests: XCTestCase {
 
     private func store() -> LogNameStore {
-        LogNameStore(filename: "log-names-\(UUID().uuidString).json")
+        LogNameStore(filename: temporaryStoreFilename("log-names"))
     }
 
     private var calendar: Calendar { Calendar.current }

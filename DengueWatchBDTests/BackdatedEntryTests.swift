@@ -12,9 +12,8 @@ import XCTest
 final class BackdatedEntryTests: XCTestCase {
 
     private func stores() -> (VitalsStore, LabStore) {
-        let suffix = UUID().uuidString
-        return (VitalsStore(filename: "vitals-\(suffix).json"),
-                LabStore(filename: "labs-\(suffix).json"))
+        (VitalsStore(filename: temporaryStoreFilename("vitals")),
+         LabStore(filename: temporaryStoreFilename("labs")))
     }
 
     private func at(_ day: Int, _ hour: Int) -> Date {

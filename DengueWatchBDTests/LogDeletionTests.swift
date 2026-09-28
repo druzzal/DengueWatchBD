@@ -11,10 +11,9 @@ import XCTest
 final class LogDeletionTests: XCTestCase {
 
     private func stores() -> (CaseLogStore, VitalsStore, LabStore) {
-        let suffix = UUID().uuidString
-        return (CaseLogStore(filename: "case-\(suffix).json"),
-                VitalsStore(filename: "vitals-\(suffix).json"),
-                LabStore(filename: "labs-\(suffix).json"))
+        (CaseLogStore(filename: temporaryStoreFilename("case")),
+         VitalsStore(filename: temporaryStoreFilename("vitals")),
+         LabStore(filename: temporaryStoreFilename("labs")))
     }
 
     func testDeletingOneKindOfRecordLeavesTheOthersAlone() {
