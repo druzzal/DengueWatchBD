@@ -240,14 +240,14 @@ final class FeedDecodingTests: XCTestCase {
     /// Two bands that begin at the same age are still two bands. Keyed on
     /// where they start, SwiftUI drew one of them twice and dropped the other.
     func testBandsSharingALowerAgeHaveDifferentIdentities() {
-        let a = AgeBand(lowerAge: 21, upperAge: 25, male: 1, female: 1)
-        let b = AgeBand(lowerAge: 21, upperAge: 30, male: 1, female: 1)
-        let top = AgeBand(lowerAge: 80, upperAge: nil, male: 1, female: 1)
+        let a = AgeBand(lowerAge: 21, upperAge: 25, male: 1, female: 1, total: 1 + 1)
+        let b = AgeBand(lowerAge: 21, upperAge: 30, male: 1, female: 1, total: 1 + 1)
+        let top = AgeBand(lowerAge: 80, upperAge: nil, male: 1, female: 1, total: 1 + 1)
 
         XCTAssertNotEqual(a.id, b.id)
         XCTAssertNotEqual(a.id, top.id)
         XCTAssertEqual(a.id, AgeBand(lowerAge: 21, upperAge: 25,
-                                     male: 9, female: 9).id,
+                                     male: 9, female: 9, total: 18).id,
                        "the same span is the same row, whatever its counts")
     }
 
@@ -274,7 +274,7 @@ final class FeedDecodingTests: XCTestCase {
     /// The source only ever publishes Western numerals; a Bengali reader should
     /// not meet them in the middle of a Bengali screen.
     func testAgeBandLabelsUseTheReadersDigits() {
-        let band = AgeBand(lowerAge: 6, upperAge: 10, male: 1, female: 1)
+        let band = AgeBand(lowerAge: 6, upperAge: 10, male: 1, female: 1, total: 1 + 1)
         XCTAssertEqual(band.label(NumberStyle(language: .english)), "6–10")
         XCTAssertEqual(band.label(NumberStyle(language: .bangla)), "৬–১০")
     }

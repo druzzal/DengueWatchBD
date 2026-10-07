@@ -217,17 +217,26 @@ final class DengueStore {
         // tidy: they are the same ten-year-olds, and showing one row of 2,101
         // beside another of 1 invites the reader to treat the second as a
         // distinct group.
-        var merged: [Range: (male: Int, female: Int)] = [:]
+        // The published Total is carried, not recomputed. DGHS's table counts
+        // cases whose sex was never recorded — they appear in Total and in
+        // neither Male nor Female — so male plus female is smaller than the
+        // band, and summing the two would quietly shrink every row.
+        var merged: [Range: (male: Int, female: Int, total: Int)] = [:]
         for row in table.rows {
             guard let text = row["Age Group"]?.text, let range = Self.ageRange(text) else { continue }
             let male = row["Male"]?.number ?? 0
             let female = row["Female"]?.number ?? 0
-            merged[range, default: (0, 0)].male += male
-            merged[range, default: (0, 0)].female += female
+            // A table without a Total column is not malformed, only older:
+            // fall back to the two sexes rather than reporting the band empty.
+            let total = row["Total"]?.number ?? (male + female)
+            merged[range, default: (0, 0, 0)].male += male
+            merged[range, default: (0, 0, 0)].female += female
+            merged[range, default: (0, 0, 0)].total += total
         }
         let bands = merged
             .map { AgeBand(lowerAge: $0.key.low, upperAge: $0.key.high,
-                           male: $0.value.male, female: $0.value.female) }
+                           male: $0.value.male, female: $0.value.female,
+                           total: $0.value.total) }
 
         // A row that spans bands the table already publishes is not a band.
         // DGHS's sheet carries "0-10" beside "0-5" and "06-10", and "21-30"

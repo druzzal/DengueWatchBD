@@ -30,6 +30,9 @@ extension Strings {
 
         "who.title": "Who is affected",
         "who.subtitle": "Reported cases this season, by age and sex",
+        // Cases DGHS counted but recorded no sex for — 244 of them this
+        // season. Named rather than hidden, since the bar draws them.
+        "who.unrecorded": "Not recorded",
         "who.male": "Male",
         "who.female": "Female",
         "who.share": "%@%%",
@@ -102,6 +105,7 @@ extension Strings {
 
         "who.title": "কারা আক্রান্ত হচ্ছেন",
         "who.subtitle": "এ মৌসুমে বয়স ও লিঙ্গ অনুযায়ী শনাক্ত রোগী",
+        "who.unrecorded": "লেখা নেই",
         "who.male": "পুরুষ",
         "who.female": "নারী",
         "who.share": "%@%%",

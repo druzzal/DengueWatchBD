@@ -289,6 +289,13 @@ struct AgeBand: Identifiable, Hashable {
     let upperAge: Int?
     let male: Int
     let female: Int
+    /// The band's total as DGHS published it, which is not always male plus
+    /// female: their table records cases whose sex was never filled in — 244
+    /// of them this season, spread across every band. Deriving the total from
+    /// the two sexes dropped those silently, so each row printed a smaller
+    /// number than the source it came from, and the card as a whole accounted
+    /// for 256 fewer cases than the season figure on the home screen.
+    let total: Int
 
     /// The whole span, not just where it starts.
     ///
@@ -299,7 +306,15 @@ struct AgeBand: Identifiable, Hashable {
     /// The rows that collided are filtered out upstream now, but an id has to
     /// identify the thing rather than rely on the data being clean.
     var id: String { "\(lowerAge)-\(upperAge.map(String.init) ?? "+")" }
-    var total: Int { male + female }
+
+    /// Cases in this band with no sex recorded.
+    ///
+    /// Shown rather than hidden: they are real people in the count, and a bar
+    /// that silently omitted them would make the card disagree with the
+    /// season total the rest of the app reports. Clamped at zero so a source
+    /// whose total is somehow smaller than its parts cannot produce a
+    /// negative width.
+    var unrecordedSex: Int { max(0, total - male - female) }
 
     /// True when this band covers all of another — "0-10" over "6-10".
     ///

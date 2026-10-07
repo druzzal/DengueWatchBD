@@ -44,10 +44,15 @@ struct WhoIsAffectedCard: View {
                 .padding(.bottom, 2)
             }
 
+            // The third entry appears only when the source actually carries
+            // cases of unrecorded sex, so a clean table is not given a legend
+            // key for something it does not contain.
             ChartLegend(items: [
                 .init(label: loc.t("who.male"), color: Palette.cases),
                 .init(label: loc.t("who.female"), color: Palette.deaths)
-            ])
+            ] + (bands.contains { $0.unrecordedSex > 0 }
+                 ? [.init(label: loc.t("who.unrecorded"), color: Palette.mutedInk)]
+                 : []))
 
             VStack(spacing: 5) {
                 ForEach(bands) { band in
@@ -72,6 +77,14 @@ struct WhoIsAffectedCard: View {
                         .frame(width: max(1, CGFloat(band.male) * unit))
                     Capsule().fill(Palette.deaths)
                         .frame(width: max(1, CGFloat(band.female) * unit))
+                    // Cases DGHS counted but recorded no sex for. Drawn in
+                    // neutral ink so the bar adds up to the number printed
+                    // beside it — without this the row claimed a total it did
+                    // not draw.
+                    if band.unrecordedSex > 0 {
+                        Capsule().fill(Palette.mutedInk)
+                            .frame(width: max(1, CGFloat(band.unrecordedSex) * unit))
+                    }
                     Spacer(minLength: 0)
                 }
                 .frame(height: geometry.size.height, alignment: .center)
