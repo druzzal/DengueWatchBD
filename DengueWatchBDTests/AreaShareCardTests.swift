@@ -54,6 +54,30 @@ final class AreaShareCardTests: XCTestCase {
         XCTAssertFalse(content(area(weeklyCases: [130, 100])).weeklyChangeIsUp)
     }
 
+    /// The number and the arrow must agree.
+    ///
+    /// `percentChange` always prefixes a sign, so passing it `abs(value)`
+    /// printed "+33%" for an area that had fallen 33% — beside a downward
+    /// arrow, on an image that travels without the app to correct it. Found by
+    /// rendering the card on a device and reading it.
+    func testAFallingAreaIsNotLabelledAsARise() {
+        let falling = area(weeklyCases: [130, 100])
+        let result = content(falling)
+        XCTAssertFalse(result.weeklyChangeIsUp, "this area fell")
+        XCTAssertTrue(result.weeklyChange?.contains("\u{2212}") == true,
+                      "the number must carry the minus the arrow shows: \(result.weeklyChange ?? "nil")")
+        XCTAssertFalse(result.weeklyChange?.contains("+") == true,
+                       "a fall must never print a plus: \(result.weeklyChange ?? "nil")")
+    }
+
+    func testARisingAreaStillReadsAsARise() {
+        let rising = area(weeklyCases: [100, 130])
+        let result = content(rising)
+        XCTAssertTrue(result.weeklyChangeIsUp)
+        XCTAssertTrue(result.weeklyChange?.contains("+") == true,
+                      result.weeklyChange ?? "nil")
+    }
+
     // MARK: - Attribution
 
     /// The attribution is language-specific: English uses the acronym, Bengali

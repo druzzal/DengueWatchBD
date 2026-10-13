@@ -28,9 +28,13 @@ enum AreaShareCard {
                         loc: LocalizationManager) -> Content {
         // Only stated when the previous week exists; otherwise the ratio is
         // meaningless and the line is omitted entirely.
-        let change: String? = area.weeklyChange.map { value in
-            loc.t("share.change", loc.percentChange(abs(value)))
-        }
+        //
+        // The signed value, not its magnitude. `percentChange` always prefixes
+        // a sign, so passing `abs(value)` printed "+33%" beside a falling
+        // arrow — the card said the opposite of what the area had done, on the
+        // one artefact that travels without the app to correct it.
+        let change: String? = area.weeklyChange.map { loc.percentChange($0) }
+            .map { loc.t("share.change", $0) }
 
         let source = lastUpdated.map {
             loc.t("share.source", loc.fullDate($0))

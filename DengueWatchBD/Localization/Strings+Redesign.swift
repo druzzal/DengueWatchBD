@@ -22,7 +22,7 @@ extension Strings {
         "area.chooseHint": "Choose your area for a local reading",
 
         "activity.title": "Today in Bangladesh",
-        "activity.thisWeek": "Cases this week",
+        "activity.thisWeek": "Cases, last 7 days",
         "activity.hotspots": "High-risk areas",
         "activity.hotspotsCaption": "of %@ reporting areas",
         "activity.title.stale": "Latest from DGHS",
@@ -46,7 +46,6 @@ extension Strings {
         "locperm.notNow": "Not now",
         "geo.prompt.title": "Warn me when I enter a high-risk area",
         "geo.prompt.enable": "Turn on",
-        "geo.prompt.enabled": "Alerts on for high-risk areas",
 
         "trend.section": "Trend",
         "trend.title": "Reported cases",
@@ -58,10 +57,6 @@ extension Strings {
         "map.section": "Where it is spreading",
         "map.preview.a11y": "Map preview showing the highest-risk areas. Opens the full risk map.",
 
-        "guidance.title": "What you can do",
-        "guidance.check": "Check symptoms",
-        "guidance.care": "Find care",
-        "guidance.prevent": "Prevent",
 
         "alert.viewMap": "View risk map",
         "alert.rising.title": "Cases are rising",
@@ -111,7 +106,7 @@ extension Strings {
         "area.chooseHint": "নিজের এলাকার তথ্য পেতে এলাকা বাছুন",
 
         "activity.title": "আজ বাংলাদেশে",
-        "activity.thisWeek": "এ সপ্তাহে রোগী",
+        "activity.thisWeek": "গত ৭ দিনে রোগী",
         "activity.hotspots": "উচ্চঝুঁকির এলাকা",
         "activity.hotspotsCaption": "%@টি এলাকার মধ্যে",
         "activity.title.stale": "স্বাস্থ্য অধিদপ্তরের সর্বশেষ",
@@ -135,7 +130,6 @@ extension Strings {
         "locperm.notNow": "এখন নয়",
         "geo.prompt.title": "উচ্চঝুঁকির এলাকায় ঢুকলে সতর্ক করুন",
         "geo.prompt.enable": "চালু করুন",
-        "geo.prompt.enabled": "উচ্চঝুঁকির এলাকার সতর্কবার্তা চালু আছে",
 
         "trend.section": "গতিপ্রকৃতি",
         "trend.title": "শনাক্ত রোগী",
@@ -147,10 +141,6 @@ extension Strings {
         "map.section": "কোথায় ছড়াচ্ছে",
         "map.preview.a11y": "সর্বোচ্চ ঝুঁকির এলাকাগুলোর মানচিত্রের সংক্ষিপ্ত রূপ। পূর্ণ ঝুঁকির মানচিত্র খোলে।",
 
-        "guidance.title": "আপনি যা করতে পারেন",
-        "guidance.check": "উপসর্গ দেখুন",
-        "guidance.care": "চিকিৎসা খুঁজুন",
-        "guidance.prevent": "প্রতিরোধ",
 
         "alert.viewMap": "ঝুঁকির মানচিত্র দেখুন",
         "alert.rising.title": "রোগীর সংখ্যা বাড়ছে",

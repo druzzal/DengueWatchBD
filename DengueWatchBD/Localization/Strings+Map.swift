@@ -11,7 +11,6 @@ extension Strings {
         "share.change": "%@ on last week",
         "share.source": "Source: DGHS · %@",
         "share.sourceNoDate": "Source: DGHS",
-        "share.failed": "The card could not be created.",
 
         "area.apportioned.note": "Weekly figures for the Dhaka city corporations are shared out from the Dhaka division series, which is the finest weekly breakdown DGHS publishes. Season cases and deaths are reported for this area directly.",
         "map.title": "Where it is spreading",
@@ -48,6 +47,7 @@ extension Strings {
         "area.share": "%@%% of national cases",
         "area.chart.title": "Cases in %@",
         "area.chart.subtitle": "Cases by epidemiological week, with a 3-week average",
+        "area.legend.average": "3-week average",
         "area.peers.title": "Rest of %@ division",
         "area.peers.subtitle": "Season cases in neighbouring areas",
         "area.picker.title": "My area",
@@ -64,7 +64,6 @@ extension Strings {
         "share.change": "গত সপ্তাহের তুলনায় %@",
         "share.source": "উৎস: স্বাস্থ্য অধিদপ্তর · %@",
         "share.sourceNoDate": "উৎস: স্বাস্থ্য অধিদপ্তর",
-        "share.failed": "কার্ডটি তৈরি করা যায়নি।",
 
         "area.apportioned.note": "ঢাকার সিটি করপোরেশনগুলোর সাপ্তাহিক হিসাব ঢাকা বিভাগের সিরিজ থেকে ভাগ করে বের করা — স্বাস্থ্য অধিদপ্তর সাপ্তাহিক হিসাব এর চেয়ে সূক্ষ্মভাবে প্রকাশ করে না। মৌসুমের রোগী ও মৃত্যু সরাসরি এই এলাকার জন্যই জানানো।",
         "map.title": "কোথায় ছড়াচ্ছে",
@@ -101,6 +100,7 @@ extension Strings {
         "area.share": "জাতীয় রোগীর %@%%",
         "area.chart.title": "%@ এলাকার রোগী",
         "area.chart.subtitle": "সপ্তাহভিত্তিক রোগী, সঙ্গে ৩ সপ্তাহের গড়",
+        "area.legend.average": "৩ সপ্তাহের গড়",
         "area.peers.title": "%@ বিভাগের অন্যান্য এলাকা",
         "area.peers.subtitle": "পার্শ্ববর্তী এলাকাগুলোতে মৌসুমের রোগী",
         "area.picker.title": "আমার এলাকা",

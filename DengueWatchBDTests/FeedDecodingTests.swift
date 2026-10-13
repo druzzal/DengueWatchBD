@@ -286,7 +286,7 @@ final class FeedDecodingTests: XCTestCase {
 
         XCTAssertEqual(store.seasonCases, 300)
         XCTAssertEqual(store.seasonDeaths, 6)
-        XCTAssertEqual(store.cases24h, 988)
+        XCTAssertEqual(store.snapshot.last24Cases, 988)
         XCTAssertEqual(store.headline?.epiWeek, "W35")
         XCTAssertEqual(store.sexSplitCases?.male, 180)
     }

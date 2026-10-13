@@ -15,6 +15,15 @@ struct DashboardView: View {
     @Environment(\.dynamicTypeSize) private var typeSize
     @Environment(\.horizontalSizeClass) private var sizeClass
 
+    /// The gutter the per-100,000 rate sits in on a Top areas row.
+    ///
+    /// Measured on an iPhone 15 Pro Max: the widest English form,
+    /// "41.3 per 100,000", runs 116pt, and Bengali's "প্রতি লাখে ৪১.৩" is
+    /// shorter. 124pt clears both with room for a three-digit rate, and scales
+    /// with Dynamic Type — .micro resolves to the .caption text style, so the
+    /// gutter grows at the same rate as the words inside it.
+    @ScaledMetric(relativeTo: .caption) private var rateWidth: CGFloat = 124
+
     @State private var trendRange: TrendRange = .fortnight
     @State private var showingAbout = false
     @State private var showingRiskDetail = false
@@ -168,7 +177,6 @@ struct DashboardView: View {
         riskSection
         activitySection
         whatChangedSection
-        myHealthSection
         topAreasSection
         trendSection
         mapSection
@@ -264,7 +272,8 @@ struct DashboardView: View {
                 guard let change = area.weeklyChange, change > 0 else { return nil }
                 return (name: area.displayName(loc.language), change: change)
             }
-            .sorted { $0.change > $1.change }
+            .sorted { $0.change > $1.change },
+            formatNumber: { loc.num($0) }
         )
 
         if !items.isEmpty {
@@ -368,10 +377,21 @@ struct DashboardView: View {
                     RiskBadge(risk: area.risk, compact: true)
                 }
                 HStack(spacing: Space.tight) {
+                    // A fixed gutter, so the change starts at the same place on
+                    // every row. Sized to its text, the rate carried the trend
+                    // along with it — "8.1 per 100,000" is a character shorter
+                    // than "41.3 per 100,000", so Dhaka (outside city) printed
+                    // its change 8pt left of the four rows above and the column
+                    // read as crooked. Measured on an iPhone 15 Pro Max: the
+                    // widest form is 116pt, so this clears it. Monospaced on
+                    // top, so rates of the same length do not shuffle either.
                     Text(loc.t("top.rate", loc.decimal(area.incidencePer100k)))
                         .typo(.micro)
+                        .monospacedDigit()
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
+                        .minimumScaleFactor(0.9)
+                        .frame(width: rateWidth, alignment: .leading)
                     TrendIndicator(change: area.weeklyChange)
                     Spacer(minLength: 0)
                 }
@@ -384,52 +404,6 @@ struct DashboardView: View {
         .frame(minHeight: Hit.minimum)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
-    }
-
-    /// The reader's own last check, if they have done one.
-    ///
-    /// Shows the recommendation and when it was made, and nothing else. The
-    /// symptoms themselves stay in the case log behind the Check tab: Home is
-    /// the screen most likely to be glanced at by someone else in the room,
-    /// and a list of someone's symptoms is not a thing to put there by default.
-    @ViewBuilder
-    private var myHealthSection: some View {
-        VStack(alignment: .leading, spacing: Space.row) {
-            SectionHeader(loc.t("health.title"))
-            Card {
-                if let latest = caseLog.entries.first {
-                    VStack(alignment: .leading, spacing: Space.row) {
-                        HStack(alignment: .top, spacing: Space.row) {
-                            Image(systemName: latest.outcome.symbolName)
-                                .font(.title3)
-                                .foregroundStyle(Palette.riskTint(latest.outcome.risk))
-                                .frame(width: 26)
-                                .accessibilityHidden(true)
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text(loc.t(latest.outcome.headlineKey))
-                                    .typo(.subheadline)
-                                    .fixedSize(horizontal: false, vertical: true)
-                                Text(loc.t("health.checkedAt", loc.relative(latest.date)))
-                                    .typo(.micro)
-                                    .foregroundStyle(.secondary)
-                            }
-                            Spacer(minLength: 0)
-                        }
-                        SecondaryActionButton(title: loc.t("health.checkAgain"),
-                                              systemImage: "stethoscope") { router.show(.health, requesting: .symptomCheck) }
-                    }
-                } else {
-                    VStack(alignment: .leading, spacing: Space.row) {
-                        Text(loc.t("health.empty"))
-                            .typo(.callout)
-                            .foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                        SecondaryActionButton(title: loc.t("health.check"),
-                                              systemImage: "stethoscope") { router.show(.health, requesting: .symptomCheck) }
-                    }
-                }
-            }
-        }
     }
 
     /// Maps a triage outcome onto the risk palette, so the colour here means

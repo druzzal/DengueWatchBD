@@ -322,9 +322,6 @@ final class DengueStore {
     var seasonCases: Int { headline?.ytdCases ?? Series.sum(national.map(\.cases)) }
     var seasonDeaths: Int { headline?.ytdDeaths ?? Series.sum(national.map(\.deaths)) }
 
-    var cases24h: Int { headline?.last24Cases ?? national.last?.cases ?? 0 }
-    var deaths24h: Int { headline?.last24Deaths ?? national.last?.deaths ?? 0 }
-
 
     var last7Cases: Int { Series.sum(national.suffix(7).map(\.cases)) }
     var previous7Cases: Int { Series.sum(national.dropLast(7).suffix(7).map(\.cases)) }

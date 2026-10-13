@@ -18,8 +18,6 @@ extension Strings {
         "care.nearby.search": "Search near me",
         "care.nearby.searching": "Looking for hospitals nearby…",
         "care.nearby.empty": "No hospitals found nearby. Try the search again, or use the list of major hospitals below.",
-        "care.nearby.permission": "Allow location access to find hospitals near you.",
-        "care.nearby.enable": "Allow location",
         "care.nearby.distance": "%@ km away",
         "care.directions": "Directions",
 
@@ -47,8 +45,6 @@ extension Strings {
         "care.nearby.search": "আমার কাছে খুঁজুন",
         "care.nearby.searching": "কাছাকাছি হাসপাতাল খোঁজা হচ্ছে…",
         "care.nearby.empty": "কাছাকাছি কোনো হাসপাতাল পাওয়া যায়নি। আবার চেষ্টা করুন, অথবা নিচের বড় হাসপাতালের তালিকা দেখুন।",
-        "care.nearby.permission": "আপনার কাছাকাছি হাসপাতাল খুঁজতে অবস্থানের অনুমতি দিন।",
-        "care.nearby.enable": "অবস্থানের অনুমতি দিন",
         "care.nearby.distance": "%@ কিমি দূরে",
         "care.directions": "দিকনির্দেশ",
 

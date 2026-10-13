@@ -47,22 +47,28 @@ struct SurveillanceDigest {
     ///   - hasAreaBreakdown: whether per-area figures arrived at all. An empty
     ///     area list and "no areas are high risk" mean opposite things.
     ///   - risingAreas: (name, change) for areas that rose, steepest first.
+    ///   - formatNumber: renders a figure in the reader's own digits. The
+    ///     default is plain ASCII, which keeps these rules language-free for
+    ///     the tests; the screen passes its localised formatter. Without it a
+    ///     Bengali reader saw "4টি এলাকা উচ্চ ঝুঁকিতে" — a Latin 4 in a Bengali
+    ///     sentence, the only number on the screen not in their own digits.
     static func items(nationalChange: Double?,
                       hotspotCount: Int,
                       hasAreaBreakdown: Bool,
-                      risingAreas: [(name: String, change: Double)]) -> [Item] {
+                      risingAreas: [(name: String, change: Double)],
+                      formatNumber: (Int) -> String = { String($0) }) -> [Item] {
         var items: [Item] = []
 
         if let change = nationalChange {
-            let percent = abs(change) * 100
+            let percent = formatNumber(Int((abs(change) * 100).rounded()))
             if change > steadyBand {
                 items.append(Item(kind: .nationalRise,
                                   key: "digest.national.rise",
-                                  arguments: [percent.formatted(.number.precision(.fractionLength(0)))]))
+                                  arguments: [percent]))
             } else if change < -steadyBand {
                 items.append(Item(kind: .nationalFall,
                                   key: "digest.national.fall",
-                                  arguments: [percent.formatted(.number.precision(.fractionLength(0)))]))
+                                  arguments: [percent]))
             } else {
                 items.append(Item(kind: .nationalSteady,
                                   key: "digest.national.steady",
@@ -79,7 +85,7 @@ struct SurveillanceDigest {
 
         items.append(Item(kind: .hotspots,
                           key: hotspotCount == 1 ? "digest.hotspots.one" : "digest.hotspots.many",
-                          arguments: [String(hotspotCount)]))
+                          arguments: [formatNumber(hotspotCount)]))
 
         let notable = risingAreas
             .filter { $0.change >= notableAreaRise }

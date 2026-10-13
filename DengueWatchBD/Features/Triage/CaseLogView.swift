@@ -28,6 +28,11 @@ struct CaseLogView: View {
     /// The record being renamed, and the text as it is typed.
     @State private var renaming: HealthLogDay?
     @State private var draftName = ""
+    /// Days a reader has asked to delete, held until they confirm. Deleting a
+    /// day removes every reading and lab report taken that day, and there is
+    /// no undo — "delete everything" asked first and a swipe did not, which
+    /// put the smaller, easier gesture on the less reversible path.
+    @State private var pendingDeletion: [HealthLogDay] = []
 
     private var days: [HealthLogDay] {
         let ordered = HealthLog.days(vitals: vitals.entries,
@@ -69,7 +74,7 @@ struct CaseLogView: View {
                                 }
                                 .swipeActions {
                                     Button(loc.t("common.delete"), role: .destructive) {
-                                        deleteDay(day)
+                                        pendingDeletion = [day]
                                     }
                                 }
                                 .contextMenu {
@@ -133,8 +138,32 @@ struct CaseLogView: View {
                 }
                 Button(loc.t("common.cancel"), role: .cancel) {}
             }
+            .confirmationDialog(deletionTitle, isPresented: pendingDeletionBinding,
+                                titleVisibility: .visible) {
+                Button(loc.t("common.delete"), role: .destructive) {
+                    pendingDeletion.forEach(deleteDay)
+                    pendingDeletion = []
+                    selection.removeAll()
+                }
+                Button(loc.t("common.cancel"), role: .cancel) { pendingDeletion = [] }
+            } message: {
+                Text(loc.t("log.delete.detail"))
+            }
 
         }
+    }
+
+    private var pendingDeletionBinding: Binding<Bool> {
+        Binding(get: { !pendingDeletion.isEmpty },
+                set: { if !$0 { pendingDeletion = [] } })
+    }
+
+    /// Names what is about to go, because by the time the sheet is up the
+    /// reader can no longer see which rows they swiped or ticked.
+    private var deletionTitle: String {
+        pendingDeletion.count == 1
+            ? loc.t("log.delete.day")
+            : loc.t("log.delete.days", loc.num(pendingDeletion.count))
     }
 
     /// The PDF is built when the reader actually shares, not when the screen
@@ -219,8 +248,7 @@ struct CaseLogView: View {
     }
 
     private func deleteSelectedDays() {
-        days.filter { selection.contains($0.id) }.forEach(deleteDay)
-        selection.removeAll()
+        pendingDeletion = days.filter { selection.contains($0.id) }
     }
 
     @ViewBuilder

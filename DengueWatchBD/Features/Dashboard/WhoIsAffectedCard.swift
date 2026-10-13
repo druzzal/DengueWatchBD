@@ -99,8 +99,13 @@ struct WhoIsAffectedCard: View {
                 .frame(width: countWidth, alignment: .trailing)
         }
         .accessibilityElement(children: .combine)
+        // The third segment is drawn, so it is spoken: a reader hearing only
+        // the two sexes would be told a smaller number than the bar shows.
         .accessibilityLabel(loc.t("who.a11y", band.label(loc.style),
-                                  loc.num(band.male), loc.num(band.female)))
+                                  loc.num(band.male), loc.num(band.female))
+                            + (band.unrecordedSex > 0
+                               ? " " + loc.t("who.a11y.unrecorded", loc.num(band.unrecordedSex))
+                               : ""))
     }
 
     private func sexShare(label: String, value: Int, share: Double, color: Color) -> some View {

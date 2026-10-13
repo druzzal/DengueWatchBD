@@ -3,7 +3,6 @@ import Foundation
 extension Strings {
     static let enDashboard: [String: String] = [
         // My health
-        "health.title": "My health",
         "health.empty": "Track your symptoms and understand when to seek care.",
         "health.check": "Check symptoms",
         "health.checkAgain": "Check again",
@@ -33,6 +32,7 @@ extension Strings {
         // Cases DGHS counted but recorded no sex for — 244 of them this
         // season. Named rather than hidden, since the bar draws them.
         "who.unrecorded": "Not recorded",
+        "who.a11y.unrecorded": "%@ with no sex recorded.",
         "who.male": "Male",
         "who.female": "Female",
         "who.share": "%@%%",
@@ -49,7 +49,7 @@ extension Strings {
 
         "dash.stat.cases": "Cases this season",
         "dash.stat.seasonDeaths": "Deaths this season",
-        "dash.stat.vsLastWeek": "vs last week",
+        "dash.stat.vsLastWeek": "vs previous 7 days",
         "dash.delta.a11y": "%@ versus the previous week",
 
         "dash.legend.daily": "Daily reported",
@@ -78,7 +78,6 @@ extension Strings {
 
     static let bnDashboard: [String: String] = [
         // আমার স্বাস্থ্য
-        "health.title": "আমার স্বাস্থ্য",
         "health.empty": "উপসর্গ লিখে রাখুন, কখন চিকিৎসা নিতে হবে বুঝে নিন।",
         "health.check": "উপসর্গ পরীক্ষা করুন",
         "health.checkAgain": "আবার পরীক্ষা করুন",
@@ -106,6 +105,7 @@ extension Strings {
         "who.title": "কারা আক্রান্ত হচ্ছেন",
         "who.subtitle": "এ মৌসুমে বয়স ও লিঙ্গ অনুযায়ী শনাক্ত রোগী",
         "who.unrecorded": "লেখা নেই",
+        "who.a11y.unrecorded": "%@ জনের লিঙ্গ লেখা নেই।",
         "who.male": "পুরুষ",
         "who.female": "নারী",
         "who.share": "%@%%",
@@ -120,7 +120,7 @@ extension Strings {
 
         "dash.stat.cases": "এ মৌসুমে আক্রান্ত",
         "dash.stat.seasonDeaths": "এ মৌসুমে মৃত্যু",
-        "dash.stat.vsLastWeek": "গত সপ্তাহের তুলনায়",
+        "dash.stat.vsLastWeek": "আগের ৭ দিনের তুলনায়",
         "dash.delta.a11y": "গত সপ্তাহের তুলনায় %@",
 
         "dash.legend.daily": "দৈনিক শনাক্ত",

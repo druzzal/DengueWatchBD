@@ -170,6 +170,32 @@ final class NationalSnapshotTests: XCTestCase {
 
     // MARK: - Weekly change
 
+    /// The weekly tile is a rolling seven days, and DGHS's published weekly
+    /// figure is not.
+    ///
+    /// On 7 October 2026 the dashboard's W40 tile read 7,847 — Sunday to
+    /// Wednesday, four days of a week still running — while the last seven
+    /// days held 12,596. Both are right about different windows. The tile used
+    /// to be labelled "Cases this week" beside an official-source badge, which
+    /// invited the reader to check it against the dashboard and find the app
+    /// off by sixty per cent.
+    ///
+    /// The label now says seven days. This pins the arithmetic to match it, so
+    /// the two windows cannot be quietly swapped back under the same words.
+    func testTheWeeklyFigureIsSevenDaysAndNotThePublishedEpiWeek() {
+        let fortnight = [900, 950, 1_000, 1_050, 1_100, 1_150, 1_200,
+                         2_089, 1_902, 1_996, 1_860, 1_500, 1_600, 1_700]
+        let published = FeedHeadline(epiWeek: "W40", weekCases: 7_847, weekDeaths: 33,
+                                     ytdCases: nil, ytdDeaths: nil,
+                                     last24Cases: nil, last24Deaths: nil,
+                                     dischargedLast24: nil, dischargedYtd: nil)
+        let result = snapshot(headline: published, national: series(fortnight))
+        XCTAssertEqual(result.weekCases, fortnight.suffix(7).reduce(0, +),
+                       "the tile is the last seven days of the series")
+        XCTAssertNotEqual(result.weekCases, published.weekCases,
+                          "the published EPI week is a different window and must not leak in")
+    }
+
     func testWeeklyChangeNeedsAnEarlierWeekToCompareWith() {
         // Three days into a season there is no "last week", and 0 → 40 is not
         // "up 100%".

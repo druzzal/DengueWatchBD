@@ -7,7 +7,7 @@ import Foundation
 /// showing them identically wastes the one thing colour is good at. What this
 /// does not do is say what any of it means — the wording beside the number is
 /// unchanged, and still sends the reader to their report and their doctor.
-enum MeasureStatus: String, Equatable {
+enum MeasureStatus: String, CaseIterable, Equatable {
     case normal
     case outside
     case farOutside

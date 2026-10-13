@@ -110,6 +110,18 @@ struct HealthTrendChart: View {
             Text(loc.t("trend.readings", loc.num(points.count)))
                 .typo(.micro)
                 .foregroundStyle(Palette.mutedInk)
+
+            // The row above the plot names a direction — "Falling" — which is
+            // the closest this app comes to saying something about a reader's
+            // numbers. It is a fact about the series and not a finding, and
+            // the difference is not obvious to someone watching their own
+            // platelet count drop. So the claim carries its limit with it.
+            if trend != .notEnoughData {
+                Text(loc.t("trend.note"))
+                    .typo(.micro)
+                    .foregroundStyle(Palette.mutedInk)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 

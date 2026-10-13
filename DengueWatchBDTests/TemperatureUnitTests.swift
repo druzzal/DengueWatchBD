@@ -106,7 +106,7 @@ final class TemperatureUnitTests: XCTestCase {
             XCTAssertNotNil(Strings.english[unit.labelKey], "missing EN: \(unit.labelKey)")
             XCTAssertNotNil(Strings.bangla[unit.labelKey], "missing BN: \(unit.labelKey)")
         }
-        for key in ["temp.unit.label", "temp.outOfRange"] {
+        for key in ["temp.unit.label"] {
             XCTAssertNotNil(Strings.english[key], "missing EN: \(key)")
             XCTAssertNotNil(Strings.bangla[key], "missing BN: \(key)")
         }

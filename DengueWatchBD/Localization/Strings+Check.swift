@@ -54,8 +54,6 @@ extension Strings {
         "lab.unit.haematocrit": "%",
         "lab.unit.whiteCells": "×10³/µL",
         "lab.unit.haemoglobin": "g/dL",
-        "lab.typicalRange": "Typical %@–%@",
-        "lab.outsideTypical": "Outside the typical range",
         "lab.rangeNote": "Typical ranges differ by sex, age and laboratory. Compare these with the reference range printed on your own report, and take the report to your doctor.",
         "lab.flag.low": "Low",
         "lab.flag.high": "High",
@@ -76,15 +74,7 @@ extension Strings {
         // On the vital-signs form: when the reading was taken, which is often
         // not when it is being written down.
         "vital.takenAt": "Taken at",
-        "lab.reported": "Reported %@",
 
-        "health.today.title": "Today",
-        "health.today.subtitle": "Keeping a daily record makes a pattern visible.",
-        "health.today.symptoms": "Record today's symptoms",
-        "health.today.vitals": "Record today's vital signs",
-        "health.today.done": "Done",
-        "health.today.todo": "Not yet",
-        "health.latest.title": "Latest assessment",
         // Under the symptom-check card's title. Says what it measures against
         // and, in the same breath, what it does not do.
         "health.check.subtitle": "Your symptoms against WHO warning signs. It does not diagnose dengue.",
@@ -106,16 +96,13 @@ extension Strings {
         "vital.record": "Record readings",
         "vital.save": "Save readings",
         "vital.none": "No readings yet.",
-        "vital.outsideUsual": "Outside the usual range",
         "vital.outsideUsual.detail": "This app does not interpret readings. Show them to a doctor or pharmacist, especially with a fever.",
-        "vital.usualRange": "Usual %@–%@",
         "vital.lastTaken": "Last taken %@",
 
         // Temperature units
         "temp.unit.label": "Unit",
         "temp.unit.celsius": "Celsius",
         "temp.unit.fahrenheit": "Fahrenheit",
-        "temp.outOfRange": "That does not look like a body temperature in %@.",
 
         // Stepped symptom check
         "step.fever.title": "Do you have a fever?",
@@ -136,11 +123,8 @@ extension Strings {
         "step.back": "Back",
         "step.seeResult": "See what to do",
         "step.progress": "Step %@ of %@",
-        "step.skip": "Skip",
 
         // Fever timeline
-        "phase.title": "Where you are in the fever",
-        "phase.subtitle": "Typical course. Days are counted from the first day of fever.",
         "phase.febrile.name": "Febrile",
         "phase.critical.name": "Critical",
         "phase.recovery.name": "Recovery",
@@ -149,9 +133,6 @@ extension Strings {
         "phase.a11y.unknown": "Fever timeline. No start date given.",
 
         "check.title": "Symptom check",
-        "check.intro": "Tick everything you have felt in the last 24 hours. This is a guide based on WHO dengue criteria, not a diagnosis.",
-        "check.seeResult": "See what to do",
-        "check.clearAll": "Clear all",
 
         "symptom.group.core": "Core symptoms",
         "symptom.group.warning": "Dengue warning signs",
@@ -189,14 +170,12 @@ extension Strings {
         "symptom.heavyBleed.title": "Heavy bleeding",
         "symptom.heavyBleed.detail": "Vomiting blood, black stools, or heavy vaginal bleeding.",
 
-        "check.fever.section": "Your fever",
         "check.fever.knowDate": "I know when the fever started",
         "check.fever.started": "Fever started",
         "check.phase.febrile": "Day %@ of fever — febrile phase. An NS1 test works best now.",
         "check.phase.critical": "Day %@ of fever — the critical phase. Warning signs usually appear as the fever falls, so check yourself twice a day.",
         "check.phase.recovery": "Day %@ of fever — recovery phase for most people, but watch for fluid overload and lingering fatigue.",
 
-        "check.risk.section": "Anything that raises your risk",
         "check.risk.pregnant": "Pregnant",
         "check.risk.age": "Under 5 or over 60 years old",
         "check.risk.chronic": "Diabetes, heart, kidney or liver condition",
@@ -231,7 +210,6 @@ extension Strings {
         "result.whatToDo": "What to do now",
         "result.call999": "Call 999",
         "result.findHospital": "Find the nearest hospital",
-        "result.temperature": "Temperature, optional",
         "result.note": "Note, optional",
         "result.disclaimer": "DengueWatch cannot diagnose dengue. Only a clinician and a blood test can. If you feel worse at any point, go to a hospital regardless of what this screen says.",
 
@@ -249,13 +227,13 @@ extension Strings {
         "log.sort.newest": "Newest first",
         "log.sort.oldest": "Oldest first",
         "log.delete.selected": "Delete %@",
-        "log.delete.day": "Delete this day",
+        "log.delete.day": "Delete this day?",
+        "log.delete.days": "Delete %@ days?",
+        "log.delete.detail": "Every reading and lab report in it is deleted from this phone. This cannot be undone.",
         "log.pdf.title": "Health log",
         "log.pdf.generated": "Exported %@",
-        "log.pdf.symptoms": "S",
         "log.pdf.vitals": "V",
         "log.pdf.labs": "L",
-        "log.pdf.noSymptoms": "No symptoms recorded",
         "log.pdf.disclaimer": "This is a personal record kept by the reader, not a medical record and not a diagnosis. S marks a symptom check, V a set of vital-sign readings, L a lab report as the reader entered it.",
         "log.privacyFooter": "This log never leaves your phone. It is not sent to DGHS or to anyone else.",
         "log.confirmDelete": "Delete every entry?",
@@ -312,8 +290,6 @@ extension Strings {
         "lab.unit.haematocrit": "%",
         "lab.unit.whiteCells": "×10³/µL",
         "lab.unit.haemoglobin": "g/dL",
-        "lab.typicalRange": "সাধারণত %@–%@",
-        "lab.outsideTypical": "সাধারণ সীমার বাইরে",
         "lab.rangeNote": "সাধারণ সীমা লিঙ্গ, বয়স ও ল্যাব অনুযায়ী আলাদা হয়। নিজের রিপোর্টে ছাপা সীমার সঙ্গে মিলিয়ে দেখুন এবং রিপোর্টটি চিকিৎসককে দেখান।",
         "lab.flag.low": "কম",
         "lab.flag.high": "বেশি",
@@ -336,15 +312,7 @@ extension Strings {
         "lab.timingNote": "এগুলো বলে কোন পরীক্ষা কখন কার্যকর। আপনার ফল কী বোঝায় তা চিকিৎসকের প্রশ্ন।",
         "lab.reportDate": "রিপোর্টের তারিখ",
         "vital.takenAt": "পরিমাপের সময়",
-        "lab.reported": "%@ রিপোর্ট",
 
-        "health.today.title": "আজ",
-        "health.today.subtitle": "প্রতিদিন লিখে রাখলে ধরনটা বোঝা যায়।",
-        "health.today.symptoms": "আজকের উপসর্গ লিখুন",
-        "health.today.vitals": "আজকের জীবনচিহ্ন লিখুন",
-        "health.today.done": "হয়েছে",
-        "health.today.todo": "এখনো হয়নি",
-        "health.latest.title": "সর্বশেষ মূল্যায়ন",
         "health.check.subtitle": "আপনার উপসর্গ বিশ্ব স্বাস্থ্য সংস্থার বিপদচিহ্নের সঙ্গে মিলিয়ে দেখা হয়। এটি ডেঙ্গু নির্ণয় করে না।",
 
         // জীবনচিহ্ন
@@ -368,16 +336,13 @@ extension Strings {
         "vital.record": "পরিমাপ লিখুন",
         "vital.save": "সংরক্ষণ করুন",
         "vital.none": "এখনো কোনো পরিমাপ নেই।",
-        "vital.outsideUsual": "স্বাভাবিক সীমার বাইরে",
         "vital.outsideUsual.detail": "এই অ্যাপ পরিমাপের ব্যাখ্যা দেয় না। বিশেষত জ্বর থাকলে এগুলো চিকিৎসক বা ফার্মাসিস্টকে দেখান।",
-        "vital.usualRange": "স্বাভাবিক %@–%@",
         "vital.lastTaken": "সর্বশেষ %@",
 
         // তাপমাত্রার একক
         "temp.unit.label": "একক",
         "temp.unit.celsius": "সেলসিয়াস",
         "temp.unit.fahrenheit": "ফারেনহাইট",
-        "temp.outOfRange": "%@-এ এটি শরীরের তাপমাত্রা বলে মনে হচ্ছে না।",
 
         // ধাপে ধাপে উপসর্গ পরীক্ষা
         "step.fever.title": "আপনার কি জ্বর আছে?",
@@ -398,11 +363,8 @@ extension Strings {
         "step.back": "পেছনে",
         "step.seeResult": "করণীয় দেখুন",
         "step.progress": "ধাপ %@ / %@",
-        "step.skip": "এড়িয়ে যান",
 
         // জ্বরের সময়রেখা
-        "phase.title": "আপনি জ্বরের কোন পর্যায়ে",
-        "phase.subtitle": "সাধারণ গতিপথ। জ্বরের প্রথম দিন থেকে দিন গোনা হয়।",
         "phase.febrile.name": "জ্বরের পর্যায়",
         "phase.critical.name": "সংকটকাল",
         "phase.recovery.name": "সুস্থ হওয়া",
@@ -411,9 +373,6 @@ extension Strings {
         "phase.a11y.unknown": "জ্বরের সময়রেখা। শুরুর তারিখ দেওয়া হয়নি।",
 
         "check.title": "উপসর্গ পরীক্ষা",
-        "check.intro": "গত ২৪ ঘণ্টায় আপনার যা যা হয়েছে সব চিহ্নিত করুন। এটি বিশ্ব স্বাস্থ্য সংস্থার নির্দেশনার ভিত্তিতে একটি দিকনির্দেশ, রোগনির্ণয় নয়।",
-        "check.seeResult": "কী করণীয় দেখুন",
-        "check.clearAll": "সব মুছুন",
 
         "symptom.group.core": "প্রধান উপসর্গ",
         "symptom.group.warning": "ডেঙ্গুর বিপদচিহ্ন",
@@ -451,14 +410,12 @@ extension Strings {
         "symptom.heavyBleed.title": "প্রচণ্ড রক্তক্ষরণ",
         "symptom.heavyBleed.detail": "রক্তবমি, কালো পায়খানা বা অতিরিক্ত যোনিপথে রক্তক্ষরণ।",
 
-        "check.fever.section": "আপনার জ্বর",
         "check.fever.knowDate": "জ্বর কবে শুরু হয়েছে আমি জানি",
         "check.fever.started": "জ্বর শুরু হয়েছে",
         "check.phase.febrile": "জ্বরের %@ দিন — জ্বরের পর্যায়। এখনই NS1 পরীক্ষা সবচেয়ে কার্যকর।",
         "check.phase.critical": "জ্বরের %@ দিন — সংকটকালীন পর্যায়। জ্বর কমার সময়ই বিপদচিহ্ন দেখা দেয়, তাই দিনে দুবার নিজেকে পরীক্ষা করুন।",
         "check.phase.recovery": "জ্বরের %@ দিন — বেশিরভাগ মানুষের সুস্থ হওয়ার পর্যায়, তবে শরীরে পানি জমা ও দীর্ঘস্থায়ী দুর্বলতার দিকে খেয়াল রাখুন।",
 
-        "check.risk.section": "যেসব কারণে ঝুঁকি বাড়ে",
         "check.risk.pregnant": "গর্ভবতী",
         "check.risk.age": "৫ বছরের কম বা ৬০ বছরের বেশি বয়স",
         "check.risk.chronic": "ডায়াবেটিস, হৃদরোগ, কিডনি বা লিভারের সমস্যা",
@@ -493,7 +450,6 @@ extension Strings {
         "result.whatToDo": "এখন যা করবেন",
         "result.call999": "৯৯৯-এ ফোন করুন",
         "result.findHospital": "নিকটতম হাসপাতাল খুঁজুন",
-        "result.temperature": "তাপমাত্রা, ঐচ্ছিক",
         "result.note": "মন্তব্য, ঐচ্ছিক",
         "result.disclaimer": "ডেঙ্গুওয়াচ ডেঙ্গু নির্ণয় করতে পারে না। কেবল একজন চিকিৎসক ও রক্ত পরীক্ষাই তা পারে। যেকোনো সময় অবস্থা খারাপ মনে হলে এই পর্দা যা-ই বলুক, হাসপাতালে যান।",
 
@@ -511,13 +467,13 @@ extension Strings {
         "log.sort.newest": "নতুন আগে",
         "log.sort.oldest": "পুরোনো আগে",
         "log.delete.selected": "%@টি মুছুন",
-        "log.delete.day": "এই দিনের সব মুছুন",
+        "log.delete.day": "এই দিনটি মুছে ফেলবেন?",
+        "log.delete.days": "%@ দিন মুছে ফেলবেন?",
+        "log.delete.detail": "এতে রাখা সব পরিমাপ ও ল্যাব রিপোর্ট ফোন থেকে মুছে যাবে। এটি আর ফেরানো যাবে না।",
         "log.pdf.title": "স্বাস্থ্য বিবরণী",
         "log.pdf.generated": "%@ তারিখে তৈরি",
-        "log.pdf.symptoms": "উ",
         "log.pdf.vitals": "জ",
         "log.pdf.labs": "ল",
-        "log.pdf.noSymptoms": "কোনো উপসর্গ লেখা হয়নি",
         "log.pdf.disclaimer": "এটি ব্যবহারকারীর নিজের রাখা রেকর্ড — কোনো মেডিকেল রেকর্ড বা রোগনির্ণয় নয়। উ মানে উপসর্গ পরীক্ষা, জ মানে জীবনচিহ্নের পরিমাপ, ল মানে ব্যবহারকারীর লেখা ল্যাব রিপোর্ট।",
         "log.privacyFooter": "এই তালিকা কখনো আপনার ফোন থেকে বের হয় না। এটি স্বাস্থ্য অধিদপ্তর বা অন্য কারও কাছে পাঠানো হয় না।",
         "log.confirmDelete": "সব তথ্য মুছে ফেলবেন?",

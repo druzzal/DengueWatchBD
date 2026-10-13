@@ -67,7 +67,7 @@ struct WHOCarePlan: Equatable {
 
     /// Why the reader is in this group — shown so the plan is never a verdict
     /// out of nowhere.
-    enum Reason: String, Identifiable, Equatable {
+    enum Reason: String, CaseIterable, Identifiable, Equatable {
         case severeSign          // a sign of severe dengue was reported
         case warningSign         // one or more WHO warning signs
         case coMorbidity         // a co-existing condition WHO singles out

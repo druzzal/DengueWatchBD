@@ -63,7 +63,7 @@ struct AreaDetailView: View {
                     // colour is what says so.
                     ChartLegend(items: RiskLevel.allCases.map {
                         .init(label: loc.t($0.labelKey), color: $0.tint)
-                    } + [.init(label: loc.t("dash.legend.average"),
+                    } + [.init(label: loc.t("area.legend.average"),
                                color: Palette.cases, isLine: true)])
 
                     Chart {

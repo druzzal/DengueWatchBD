@@ -452,6 +452,20 @@ struct AreaRow: View {
     let area: Area
     let peak: Int
 
+    /// The column the risk badge sits in.
+    ///
+    /// The badge is what positions the season total, not the other way round.
+    /// Left to their intrinsic widths, "Moderate" measures about 90pt against
+    /// "High" at 61pt, and the count ahead of it was pushed by that difference
+    /// — the three totals in Dhaka division ended 31pt apart while the names
+    /// and the badges either side of them sat square. Giving the count its own
+    /// frame does not help: the frame still floats. Fixing the badge's width
+    /// anchors everything to its left.
+    ///
+    /// Sized for the widest band name with a little room, and scaling with
+    /// Dynamic Type the way the age card's columns already do.
+    @ScaledMetric(relativeTo: .caption) private var badgeWidth: CGFloat = 96
+
     /// The division, unless the area's own name already carries it.
     ///
     /// Equality was not enough: "Dhaka (outside city)" is not the string
@@ -486,6 +500,7 @@ struct AreaRow: View {
                 Spacer(minLength: 6)
                 Text(loc.num(area.seasonCases)).typo(.subheadline).monospacedDigit()
                 RiskBadge(risk: area.risk, compact: true)
+                    .frame(width: badgeWidth, alignment: .trailing)
             }
             // Length is the season total, colour is the area's current risk
             // band — the same band the badge above shows, so the row can be

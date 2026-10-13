@@ -6,7 +6,7 @@ import Foundation
 /// and nothing here attempts it: "your platelet count has fallen across these
 /// three reports" is a description, while "your platelets are dropping, this
 /// may be severe dengue" is a diagnosis. This type only ever produces the first.
-enum HealthTrend: String, Equatable {
+enum HealthTrend: String, CaseIterable, Equatable {
     case rising
     case falling
     case steady

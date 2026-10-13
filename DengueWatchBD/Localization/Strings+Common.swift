@@ -19,9 +19,7 @@ extension Strings {
         "common.deleteAll": "Delete all",
         "common.per100k": "per 100k",
 
-        "tab.overview": "Overview",
         "tab.map": "Map",
-        "tab.check": "Check",
         "tab.health": "My health",
         "tab.care": "Care",
         "tab.prevent": "Prevent",
@@ -60,9 +58,7 @@ extension Strings {
         "common.deleteAll": "সব মুছে ফেলুন",
         "common.per100k": "প্রতি লাখে",
 
-        "tab.overview": "সারসংক্ষেপ",
         "tab.map": "মানচিত্র",
-        "tab.check": "পরীক্ষা",
         "tab.health": "আমার স্বাস্থ্য",
         "tab.care": "চিকিৎসা",
         "tab.prevent": "প্রতিরোধ",

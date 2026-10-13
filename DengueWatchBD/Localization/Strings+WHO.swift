@@ -11,7 +11,6 @@ import Foundation
 extension Strings {
     static let enWHO: [String: String] = [
         "who.plan.title": "WHO care plan",
-        "who.plan.subtitle": "Your symptom check and readings, matched to WHO's guidance",
         "who.plan.checkedAt": "From your symptom check on %@",
         "who.plan.stale": "This is from an older check. Dengue changes day by day — run the check again so this reflects how you are now.",
         // Shown beside the lab line, which is the one place a reader might
@@ -64,7 +63,6 @@ extension Strings {
 
     static let bnWHO: [String: String] = [
         "who.plan.title": "বিশ্ব স্বাস্থ্য সংস্থার পরামর্শ",
-        "who.plan.subtitle": "আপনার উপসর্গ পরীক্ষা ও পরিমাপ বিশ্ব স্বাস্থ্য সংস্থার নির্দেশিকার সঙ্গে মিলিয়ে",
         "who.plan.checkedAt": "%@ তারিখের উপসর্গ পরীক্ষা থেকে",
         "who.plan.stale": "এটি আগের একটি পরীক্ষার ফল। ডেঙ্গু দিনে দিনে বদলায় — এখন কেমন আছেন তা জানতে আবার পরীক্ষা করুন।",
         "care.plan.note": "এই পরামর্শ আপনার উপসর্গ পরীক্ষা ও নেওয়া পরিমাপ অনুযায়ী, ল্যাব রিপোর্ট অনুযায়ী নয়। ল্যাব রিপোর্ট আপনার ডাক্তার দেখবেন।",
