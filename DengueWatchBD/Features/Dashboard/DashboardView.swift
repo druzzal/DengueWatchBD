@@ -188,7 +188,9 @@ struct DashboardView: View {
             DengueRiskCard(
                 risk: focusRisk,
                 areaName: focusAreaName,
-                change: focusArea?.weeklyChange ?? store.weeklyCaseChange,
+                // An area with no prior week has no trend; it must not borrow
+                // the national one under its own name.
+                change: focusArea.map(\.weeklyChange) ?? store.weeklyCaseChange,
                 lastUpdated: store.lastUpdated,
                 incidence: focusArea?.incidencePer100k ?? nationalIncidence,
                 isNationwide: focusArea == nil,

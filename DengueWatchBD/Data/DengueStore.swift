@@ -65,6 +65,7 @@ final class DengueStore {
     func refresh() async {
         do {
             apply(try bundled.load())
+            source = bundled.isServingDownloadedData ? .network : .bundled
             state = .loaded
         } catch {
             // A failed refresh is no reason to blank a screen that already has
@@ -91,7 +92,8 @@ final class DengueStore {
 
         national = Self.dailySeries(from: document)
         epiWeeks = document.chart(.divisionCasesByWeek)?.categories ?? []
-        areas = Self.areas(from: document, weekCount: epiWeeks.count)
+        areas = Self.areas(from: document, weekCount: epiWeeks.count,
+                           latestWeekIsPartial: Self.latestWeekIsPartial(document, daily: national))
         history = Self.history(from: document)
         ageBandsCases = Self.ageBands(in: document, titled: "affected cases from 1 January")
         sexSplitCases = Self.sexSplit(document.chart(.casesByGender))
@@ -124,7 +126,37 @@ final class DengueStore {
         }
     }
 
-    private static func areas(from document: FeedDocument, weekCount: Int) -> [Area] {
+    /// Whether the newest EPI week in the weekly breakdown is still open.
+    ///
+    /// DGHS's EPI weeks run Sunday to Saturday (week 41 of 2026 is 11–17
+    /// October), and the weekly series carries the current week as far as it
+    /// has got. So unless the report is a Saturday's, the last entry is a few
+    /// days of cases, not a week of them.
+    ///
+    /// The weekday alone would also drop a complete week on the day the
+    /// weekly table lags the daily one, so the last week's national total is
+    /// checked against the days reported so far: it is the open week only if
+    /// it matches those days better than it matches the seven before them.
+    static func latestWeekIsPartial(_ document: FeedDocument, daily: [DailyPoint]) -> Bool {
+        guard let reportDay = daily.last?.date,
+              let weekly = document.chart(.divisionCasesByWeek),
+              !weekly.categories.isEmpty else { return false }
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "Asia/Dhaka") ?? .gmt
+        // Sunday is 1, so this is also how many days of the week are in.
+        let daysIn = calendar.component(.weekday, from: reportDay)
+        guard daysIn < 7 else { return false }
+
+        let lastIndex = weekly.categories.count - 1
+        let weekTotal = weekly.series.reduce(0) { $0 + ($1.values[safe: lastIndex] ?? 0) }
+        let cases = daily.map(\.cases)
+        let soFar = Series.sum(Array(cases.suffix(daysIn)))
+        let weekBefore = Series.sum(Array(cases.dropLast(daysIn).suffix(7)))
+        return abs(weekTotal - soFar) < abs(weekTotal - weekBefore)
+    }
+
+    private static func areas(from document: FeedDocument, weekCount: Int,
+                              latestWeekIsPartial: Bool = false) -> [Area] {
         let seasonCases = document.chart(.areaSeasonCases)
         let seasonDeaths = document.chart(.areaSeasonDeaths)
         let weekly = document.chart(.divisionCasesByWeek)
@@ -181,7 +213,8 @@ final class DengueStore {
                 seasonDeaths: seasonDeaths?.value(for: definition.feedCategory) ?? 0,
                 weeklyCases: series,
                 weeklyIsApportioned: apportioned,
-                geofenceRadiusMeters: definition.geofenceRadiusMeters
+                geofenceRadiusMeters: definition.geofenceRadiusMeters,
+                latestWeekIsPartial: latestWeekIsPartial && !series.isEmpty
             )
         }
     }

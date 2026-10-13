@@ -69,7 +69,14 @@ struct AlertSettingsView: View {
                 Toggle(loc.t("alerts.weekly"), isOn: $preferences.weeklyDigestEnabled)
                     .onChange(of: preferences.weeklyDigestEnabled) { _, isOn in
                         Task {
-                            if isOn { await NotificationManager.shared.requestAuthorization() }
+                            // Same as the alert toggle above: a switch left on
+                            // with no permission behind it promises a digest
+                            // that will never arrive.
+                            if isOn, !(await NotificationManager.shared.requestAuthorization()) {
+                                preferences.weeklyDigestEnabled = false
+                                permissionDenied = true
+                                return
+                            }
                             await NotificationManager.shared.scheduleWeeklyDigest(enabled: isOn,
                                                                                   localization: loc)
                         }

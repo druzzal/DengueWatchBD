@@ -77,16 +77,20 @@ struct NumberStyle: Sendable, Equatable {
 
     /// Bengali uses হাজার / লাখ rather than k / M, because "১০১k" is not how
     /// anyone reads a number in Bengali.
+    ///
+    /// Each unit takes over from the value that would round up to it, so
+    /// 99,600 reads "১.০ লাখ" rather than "১০০ হাজার", and 999,600 "1.0M"
+    /// rather than "1000k".
     func compact(_ value: Int) -> String {
         switch language {
         case .english:
-            if value >= 1_000_000 { return String(format: "%.1fM", Double(value) / 1_000_000) }
+            if value >= 999_500 { return String(format: "%.1fM", Double(value) / 1_000_000) }
             if value >= 10_000 { return String(format: "%.0fk", Double(value) / 1_000) }
             if value >= 1_000 { return String(format: "%.1fk", Double(value) / 1_000) }
             return num(value)
         case .bangla:
-            if value >= 10_000_000 { return digits(String(format: "%.1f", Double(value) / 10_000_000)) + " কোটি" }
-            if value >= 100_000 { return digits(String(format: "%.1f", Double(value) / 100_000)) + " লাখ" }
+            if value >= 9_995_000 { return digits(String(format: "%.1f", Double(value) / 10_000_000)) + " কোটি" }
+            if value >= 99_500 { return digits(String(format: "%.1f", Double(value) / 100_000)) + " লাখ" }
             if value >= 1_000 { return digits(String(format: "%.0f", Double(value) / 1_000)) + " হাজার" }
             return num(value)
         }

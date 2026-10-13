@@ -65,7 +65,7 @@ extension Strings {
         "dash.history.a11y": "%@: %@ cases, %@ deaths",
 
 
-        "dash.home.detail": "%@ cases in the last 7 days · %@ per 100k over 14 days",
+        "dash.home.detail": "%@ cases in the latest full week · %@ per 100k over 14 days",
 
         "sync.updating": "Updating…",
         "sync.justUpdated": "Data updated",
@@ -136,7 +136,7 @@ extension Strings {
         "dash.history.a11y": "%@: %@ জন আক্রান্ত, %@ জনের মৃত্যু",
 
 
-        "dash.home.detail": "গত ৭ দিনে %@ জন · ১৪ দিনে প্রতি লাখে %@",
+        "dash.home.detail": "সর্বশেষ পূর্ণ সপ্তাহে %@ জন · ১৪ দিনে প্রতি লাখে %@",
 
         "sync.updating": "হালনাগাদ হচ্ছে…",
         "sync.justUpdated": "তথ্য হালনাগাদ হয়েছে",

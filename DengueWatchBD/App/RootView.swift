@@ -55,6 +55,15 @@ struct RootView: View {
             configureLocationHandling()
             await evaluateAlerts()
         }
+        // The digest's text is fixed when it is scheduled, so a reader who
+        // switches language would otherwise keep getting it in the old one.
+        .onChange(of: localization.language) {
+            guard preferences.weeklyDigestEnabled else { return }
+            Task {
+                await NotificationManager.shared.scheduleWeeklyDigest(enabled: true,
+                                                                      localization: localization)
+            }
+        }
         .onChange(of: scenePhase) { _, phase in
             guard phase == .active else { return }
             Task {

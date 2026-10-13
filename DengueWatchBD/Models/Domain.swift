@@ -38,14 +38,28 @@ struct Area: Identifiable, Hashable {
     let weeklyIsApportioned: Bool
     /// Roughly half the area's extent, for the entry geofence.
     let geofenceRadiusMeters: Double
+    /// True when the last entry of `weeklyCases` is the EPI week still in
+    /// progress — a Tuesday report carries three days of it.
+    ///
+    /// Read as a whole week, that stub made every area look like it was
+    /// falling for most of the week and banded the fortnight on ten days of
+    /// cases, understating risk exactly when it was being read. The charts
+    /// still draw it; the figures below are judged on complete weeks only.
+    var latestWeekIsPartial = false
 
     var id: String { code }
 
-    var lastWeekCases: Int { weeklyCases.last ?? 0 }
-    var previousWeekCases: Int { weeklyCases.dropLast().last ?? 0 }
+    /// The weekly series up to the last week DGHS has finished reporting.
+    private var completeWeeks: ArraySlice<Int> {
+        latestWeekIsPartial ? weeklyCases.dropLast() : weeklyCases[...]
+    }
 
-    /// Two most recent EPI weeks — the window the risk bands are calibrated for.
-    var recentCases: Int { Series.sum(Array(weeklyCases.suffix(2))) }
+    var lastWeekCases: Int { completeWeeks.last ?? 0 }
+    var previousWeekCases: Int { completeWeeks.dropLast().last ?? 0 }
+
+    /// Two most recent complete EPI weeks — the window the risk bands are
+    /// calibrated for.
+    var recentCases: Int { completeWeeks.suffix(2).reduce(0, +) }
 
     /// Week-on-week change as a fraction, e.g. `0.18` for +18%.
     /// `nil` when the prior week is empty and a ratio would be meaningless.
@@ -80,7 +94,7 @@ struct Area: Identifiable, Hashable {
         return RiskLevel(incidencePer100k: incidence)
     }
 
-    func recentWeeks(_ count: Int) -> [Int] { Array(weeklyCases.suffix(count)) }
+    func recentWeeks(_ count: Int) -> [Int] { Array(completeWeeks.suffix(count)) }
 }
 
 /// Where each reporting area sits and how many people live there.

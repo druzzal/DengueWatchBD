@@ -106,6 +106,9 @@ final class FeedSync {
 
     /// `force` skips the probe floor — used by pull-to-refresh.
     func sync(force: Bool) async {
+        // Launch and the first scene activation both ask within the same
+        // moment; the second would only repeat the first one's requests.
+        guard status != .syncing else { return }
         guard let summaryEndpoint = FeedConfig.summaryEndpoint,
               let latestEndpoint = FeedConfig.latestEndpoint else {
             status = .bundledOnly
@@ -130,7 +133,16 @@ final class FeedSync {
                                             validators: cache.validators)
             let known = store?.meta?.lastUpdated
             switch try await service.fetchIfChanged(knownReportDate: known) {
-            case .notModified:
+            case .notModified(let reportDate):
+                // The server can say "nothing new" about a document this screen
+                // has never seen: a background refresh in this same process
+                // downloads into the cache, with its own store, and saves the
+                // new ETag. The next request here sends that ETag, gets a 304,
+                // and without this the reader keeps the old figures until the
+                // app is killed. The cache is the newer copy, so read it.
+                if let reportDate, reportDate != store?.meta?.lastUpdated {
+                    await store?.refresh()
+                }
                 lastSuccessfulSync = Date()
                 status = .upToDate(lastSuccessfulSync ?? Date())
             case .updated(let document, let data, let validators):

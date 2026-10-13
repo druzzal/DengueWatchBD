@@ -30,7 +30,7 @@ screenshot and UI-test runs use:
 SIMCTL_CHILD_DW_START_TAB=map xcrun simctl launch booted bd.denguewatch.app
 ```
 
-`DW_START_TAB` is one of overview/map/check/care/prevent, and is compiled out of
+`DW_START_TAB` is one of home/map/health/care/prevent, and is compiled out of
 release builds.
 
 ## Features

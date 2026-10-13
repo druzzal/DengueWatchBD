@@ -71,7 +71,7 @@ struct WHOCarePlan: Equatable {
         case severeSign          // a sign of severe dengue was reported
         case warningSign         // one or more WHO warning signs
         case coMorbidity         // a co-existing condition WHO singles out
-        case criticalPhase       // days 4-6, when plasma leak begins
+        case criticalPhase       // days 4-7, when plasma leak begins
         case narrowPulsePressure // systolic − diastolic ≤ 20 mmHg
         case lowBloodPressure
         case fastPulse
