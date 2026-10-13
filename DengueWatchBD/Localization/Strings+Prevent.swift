@@ -153,7 +153,7 @@ extension Strings {
         // আজকের প্রতিরোধ তালিকা
         "checklist.title": "আজকের প্রতিরোধ",
         "checklist.subtitle": "দিনে একবার, পাঁচ মিনিট। আগামীকাল আবার শুরু।",
-        "checklist.progress": "%@টির মধ্যে %@টি হয়েছে",
+        "checklist.progress": "%2$@টির মধ্যে %1$@টি হয়েছে",
         "checklist.allDone": "আজকের সব কাজ শেষ।",
         "checklist.task.standingWater": "জমা পানি সরান",
         "checklist.task.plantTrays": "গাছের টব ও ট্রে দেখুন",

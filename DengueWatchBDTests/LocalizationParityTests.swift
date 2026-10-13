@@ -54,12 +54,27 @@ final class LocalizationParityTests: XCTestCase {
 
     /// Format specifiers must survive translation: a string that takes one
     /// argument in English and none in Bangla crashes or silently drops data.
+    ///
+    /// Counted with or without a position, because Bangla sometimes needs its
+    /// arguments the other way round: "৫টির মধ্যে ২টি" is total first.
     func testFormatPlaceholdersMatchBetweenLanguages() {
+        let placeholder = /%(\d+\$)?@/
         for (key, english) in Strings.english {
             guard let bangla = Strings.bangla[key] else { continue }
-            XCTAssertEqual(english.components(separatedBy: "%@").count,
-                           bangla.components(separatedBy: "%@").count,
+            XCTAssertEqual(english.matches(of: placeholder).count,
+                           bangla.matches(of: placeholder).count,
                            "placeholder count differs for \(key)")
         }
+    }
+
+    /// The checklist counter reads total first in Bangla. Unnumbered, it took
+    /// the arguments in English order and told the reader "5 done out of 0".
+    @MainActor
+    func testTheChecklistCounterKeepsDoneAndTotalApartInBangla() {
+        let defaults = UserDefaults(suiteName: #function)!
+        defaults.set("bn", forKey: "appLanguage")
+        defer { defaults.removePersistentDomain(forName: #function) }
+        let loc = LocalizationManager(defaults: defaults)
+        XCTAssertEqual(loc.t("checklist.progress", loc.num(2), loc.num(5)), "৫টির মধ্যে ২টি হয়েছে")
     }
 }

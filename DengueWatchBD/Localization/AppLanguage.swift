@@ -85,13 +85,16 @@ struct NumberStyle: Sendable, Equatable {
         switch language {
         case .english:
             if value >= 999_500 { return String(format: "%.1fM", Double(value) / 1_000_000) }
-            if value >= 10_000 { return String(format: "%.0fk", Double(value) / 1_000) }
+            if value >= 9_950 { return String(format: "%.0fk", Double(value) / 1_000) }
             if value >= 1_000 { return String(format: "%.1fk", Double(value) / 1_000) }
             return num(value)
         case .bangla:
             if value >= 9_995_000 { return digits(String(format: "%.1f", Double(value) / 10_000_000)) + " কোটি" }
             if value >= 99_500 { return digits(String(format: "%.1f", Double(value) / 100_000)) + " লাখ" }
-            if value >= 1_000 { return digits(String(format: "%.0f", Double(value) / 1_000)) + " হাজার" }
+            // One decimal below ten thousand, as English has: rounded whole,
+            // the map legend labelled a 1,500-case circle "১ হাজার".
+            if value >= 9_950 { return digits(String(format: "%.0f", Double(value) / 1_000)) + " হাজার" }
+            if value >= 1_000 { return digits(String(format: "%.1f", Double(value) / 1_000)) + " হাজার" }
             return num(value)
         }
     }

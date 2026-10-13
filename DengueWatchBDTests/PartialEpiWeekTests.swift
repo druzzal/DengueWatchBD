@@ -110,5 +110,7 @@ final class PartialEpiWeekTests: XCTestCase {
         XCTAssertEqual(bn.compact(99_600), "১.০ লাখ")
         XCTAssertEqual(bn.compact(99_400), "৯৯ হাজার")
         XCTAssertEqual(bn.compact(9_996_000), "১.০ কোটি")
+        XCTAssertEqual(bn.compact(1_500), "১.৫ হাজার", "the map legend's smallest circle")
+        XCTAssertEqual(bn.compact(6_600), "৬.৬ হাজার")
     }
 }
