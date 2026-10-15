@@ -434,8 +434,9 @@ private struct Chip: View {
 }
 
 /// Normal / Low / High, as a pill: risk ink on its own soft wash, the way the
-/// app marks a reading. A normal reading stays neutral — there is no success
-/// colour, so only what needs attention is coloured.
+/// app marks a reading — green in the usual range, amber to red outside it.
+/// Always with its word and a mark, so the page still reads when printed in
+/// black and white.
 private struct StatusPill: View {
     @Environment(LocalizationManager.self) private var loc
     let side: MeasureSide
@@ -443,15 +444,13 @@ private struct StatusPill: View {
 
     var body: some View {
         HStack(spacing: 3) {
-            if status != .normal {
-                Image(systemName: status.symbol).font(.system(size: 6.5, weight: .bold))
-            }
+            Image(systemName: status.symbol).font(.system(size: 6.5, weight: .bold))
             Text(loc.t(side.labelKey)).font(.system(size: 8, weight: .semibold))
         }
-        .foregroundStyle(status == .normal ? Paper.secondary : Palette.riskInk(status.risk))
+        .foregroundStyle(Palette.riskInk(status.risk))
         .padding(.horizontal, 6)
         .padding(.vertical, 2)
-        .background(status == .normal ? Paper.hairline.opacity(0.6) : Palette.riskTint(status.risk).opacity(0.14),
+        .background(Palette.riskTint(status.risk).opacity(0.14),
                     in: Capsule())
         .environment(\.colorScheme, .light)
     }
@@ -540,7 +539,7 @@ private struct GlanceTiles: View {
                         HStack(alignment: .firstTextBaseline, spacing: 2) {
                             Text(tile.value)
                                 .font(.system(size: 19, weight: .bold))
-                                .foregroundStyle(tile.status == .normal ? Paper.ink : Palette.riskInk(tile.status.risk))
+                                .foregroundStyle(Palette.riskInk(tile.status.risk))
                                 .monospacedDigit()
                             Text(tile.unit)
                                 .font(.system(size: 8))
@@ -771,7 +770,7 @@ private struct TrendChart: View {
                         .lineStyle(StrokeStyle(lineWidth: 1.6, lineCap: .round, lineJoin: .round))
                         .interpolationMethod(.monotone)
                     PointMark(x: .value("Date", point.date), y: .value("Value", point.value))
-                        .foregroundStyle(point.status == .normal ? Paper.accent : Palette.riskTint(point.status.risk))
+                        .foregroundStyle(Palette.riskTint(point.status.risk))
                         .symbolSize(22)
                 }
             }
@@ -908,7 +907,7 @@ private struct ReadingCellPDF: View {
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text(value)
                     .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(status == .normal ? Paper.ink : Palette.riskInk(status.risk))
+                    .foregroundStyle(Palette.riskInk(status.risk))
                     .monospacedDigit()
                 Text(unit).font(.system(size: 7.5)).foregroundStyle(Paper.secondary)
             }

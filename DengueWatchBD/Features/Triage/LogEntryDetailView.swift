@@ -111,8 +111,9 @@ private struct FlowReadings: View {
 ///
 /// The word is on screen, not only the mark beside the number: the mark said
 /// a reading was out of range without saying which way, and a log is read for
-/// exactly that — a platelet count that fell, a fever that rose. Colour is
-/// still never the only signal, and a normal reading stays in neutral ink.
+/// exactly that — a platelet count that fell, a fever that rose. A normal
+/// reading is green, as it is in My health, and colour is still never the only
+/// signal: the word and the mark say the same thing.
 ///
 /// Spoken as one label: combining the children would read the number and its
 /// name and stop, leaving a low count sounding exactly like a normal one.
@@ -128,22 +129,18 @@ private struct ReadingCell: View {
             HStack(alignment: .firstTextBaseline, spacing: 3) {
                 Text(value)
                     .typo(.caption).fontWeight(.semibold).monospacedDigit()
-                if status != .normal {
-                    Image(systemName: status.symbol).font(.caption2)
-                }
+                // A mark on every reading, a tick for a normal one: green and
+                // red side by side must never be the only thing telling them
+                // apart, which for a red-green colour-blind reader they are not.
+                Image(systemName: status.symbol).font(.caption2)
             }
-            // Neutral ink for a reading in its range, per the palette rule the
-            // rest of My Health follows: there is no success colour, so only
-            // the readings that need attention are coloured. Painting a normal
-            // count green would also put red and green side by side as the one
-            // thing telling them apart — the single worst pairing to rely on.
-            .foregroundStyle(status == .normal ? Color.primary : Palette.riskInk(status.risk))
+            .foregroundStyle(Palette.riskInk(status.risk))
             Text(label)
                 .typo(.micro).foregroundStyle(.secondary)
                 .lineLimit(2)
             Text(loc.t(side.labelKey))
                 .typo(.micro).fontWeight(.semibold)
-                .foregroundStyle(status == .normal ? Color.secondary : Palette.riskInk(status.risk))
+                .foregroundStyle(Palette.riskInk(status.risk))
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(status == .normal

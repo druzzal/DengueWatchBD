@@ -4,10 +4,11 @@ import SwiftUI
 /// and what the app last suggested they do.
 ///
 /// Built from the app's own components and type scale, so it reads as the same
-/// app as the surveillance tabs. What it keeps from the Broadsheet system is
-/// the palette: cyan for interaction, magenta for alarm, and no success
-/// colour — "in the usual range" is neutral ink and a word, never green, so
-/// only the readings that need attention are coloured. See `Broadsheet`.
+/// app as the surveillance tabs. Readings take the risk palette: a reading in
+/// its usual range is green, one outside it amber to red. Colour is never the
+/// only signal — every reading also carries its word ("In the usual range",
+/// "Low", "High") and a mark, so the scale still reads in greyscale and to a
+/// colour-blind reader.
 ///
 /// It records and shows. It does not interpret. Every number here came from
 /// the reader or from the triage engine's existing rules, and nothing on this

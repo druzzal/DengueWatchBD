@@ -383,21 +383,28 @@ private struct LogDaySummaryRow: View {
     /// was the symptom check's verdict. The log holds measurements now, so it
     /// is coloured by the measurements: this marks the day a platelet count
     /// fell, not the day the reader answered a questionnaire.
+    ///
+    /// Green when every reading was in its usual range, matching the readings
+    /// themselves. A day with no readings at all — only fluids — keeps the
+    /// accent: it has nothing to be normal or abnormal about.
     private var accent: Color {
         var worst = MeasureStatus.normal
+        var hasReading = false
         for entry in day.vitals {
             for kind in VitalKind.allCases {
                 guard let value = entry.value(for: kind) else { continue }
+                hasReading = true
                 if kind.status(value).risk > worst.risk { worst = kind.status(value) }
             }
         }
         for report in day.labs {
             for measure in LabMeasure.allCases {
                 guard let value = report.value(for: measure) else { continue }
+                hasReading = true
                 if measure.status(value).risk > worst.risk { worst = measure.status(value) }
             }
         }
-        return worst == .normal ? Palette.accent : Palette.riskInk(worst.risk)
+        return hasReading ? Palette.riskInk(worst.risk) : Palette.accent
     }
 
     /// The day at a glance: its highest temperature, its latest blood
