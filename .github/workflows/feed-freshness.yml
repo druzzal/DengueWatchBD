@@ -1,0 +1,91 @@
+# Warns the maintainer when the published dengue feed stops updating.
+#
+# The app reads one static feed, scraped from the DGHS HEOC dashboard by the
+# dengue-bd-dashboard pipeline. If the dashboard changes shape, the scraper can
+# stop producing new reports without anything visibly breaking. Readers are
+# warned in the app once figures are three days old; this fires a day earlier,
+# so there is time to fix the pipeline before anyone sees a stale warning.
+#
+# Daily at noon in Dhaka. It fails, and opens one issue, when the report date
+# is two days or more behind today's Dhaka date or the feed cannot be read. The
+# issue is closed by the first run that finds the feed fresh again.
+
+name: Feed freshness
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # 12:00 Asia/Dhaka
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+env:
+  SUMMARY_URL: https://druzzal.github.io/dengue-bd-dashboard/data/summary.json
+  ISSUE_TITLE: Dengue feed has stopped updating
+  # DGHS publishes daily; a report two days old means a day was missed.
+  MAX_AGE_DAYS: 2
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the published report date
+        id: check
+        run: |
+          set -euo pipefail
+          summary=$(curl -fsSL --retry 3 --retry-delay 10 "$SUMMARY_URL")
+          updated=$(echo "$summary" | jq -er '.last_updated')
+          today=$(TZ=Asia/Dhaka date +%F)
+          age=$(( ( $(date -ud "$today" +%s) - $(date -ud "$updated" +%s) ) / 86400 ))
+          echo "updated=$updated" >> "$GITHUB_OUTPUT"
+          echo "age=$age" >> "$GITHUB_OUTPUT"
+          echo "Latest DGHS report in the feed: $updated ($age day(s) before $today in Dhaka)."
+          if [ "$age" -ge "$MAX_AGE_DAYS" ]; then
+            echo "::error::The feed's latest report is $age days old ($updated)."
+            exit 1
+          fi
+
+      - name: Open an issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          UPDATED: ${{ steps.check.outputs.updated }}
+          AGE: ${{ steps.check.outputs.age }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          open=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
+            --search "in:title \"$ISSUE_TITLE\"" --json number --jq '.[0].number // empty')
+          if [ -n "$open" ]; then
+            gh issue comment "$open" --repo "$GITHUB_REPOSITORY" \
+              --body "Still stale on $(TZ=Asia/Dhaka date +%F): latest report ${UPDATED:-unreadable}. $RUN_URL"
+            exit 0
+          fi
+          cat > issue.md <<EOF
+          The daily freshness check could not find a recent DGHS report in the published feed.
+
+          - Latest report in the feed: ${UPDATED:-could not be read}
+          - Age: ${AGE:-unknown} day(s), against a limit of $MAX_AGE_DAYS
+          - Feed: $SUMMARY_URL
+          - Run: $RUN_URL
+
+          Check the dengue-bd-dashboard scraper's recent runs, and whether the DGHS HEOC
+          dashboard has changed. The app starts warning readers once its figures are
+          three days old. This issue closes itself when the feed is fresh again.
+          EOF
+          gh issue create --repo "$GITHUB_REPOSITORY" --title "$ISSUE_TITLE" --body-file issue.md
+
+      - name: Close the issue once the feed is fresh
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          UPDATED: ${{ steps.check.outputs.updated }}
+        run: |
+          set -euo pipefail
+          for number in $(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
+              --search "in:title \"$ISSUE_TITLE\"" --json number --jq '.[].number'); do
+            gh issue close "$number" --repo "$GITHUB_REPOSITORY" \
+              --comment "Fresh again: the feed now carries the DGHS report of $UPDATED."
+          done

@@ -43,7 +43,16 @@ struct CaseLogEntry: Identifiable, Codable, Hashable {
         }
     }
 
-    var outcome: TriageOutcome { TriageOutcome(rawValue: outcomeRawValue) ?? .selfCare }
+    /// What the check advises, worked out from its answers by today's rules.
+    ///
+    /// Not the outcome stored when the check was made: when the rules change —
+    /// as they did for WHO's 2025 guideline — a stored outcome would go on
+    /// showing the old advice on the card, beside a care plan that is always
+    /// worked out afresh, and the two would disagree. `outcomeRawValue` is still
+    /// written, as a record of what was shown at the time.
+    var outcome: TriageOutcome {
+        TriageEngine.evaluate(selected: Set(symptomIDs), context: triageContext)
+    }
 }
 
 /// The user's own check-ins, kept on device in Application Support.

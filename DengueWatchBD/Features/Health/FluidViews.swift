@@ -24,12 +24,14 @@ struct FluidCard: View {
                               value: loc.num(today.drunkMillilitres),
                               unit: loc.t("fluid.unit.ml"),
                               detail: "\(loc.t("fluid.drinks")): \(loc.num(today.drinks))")
+                        .accessibilityIdentifier("fluidIntakeTile")
                     FluidTile(label: loc.t("fluid.urine"),
                               value: loc.num(today.urinations),
                               unit: loc.t("fluid.unit.times"),
                               detail: loc.t("fluid.urine.aim",
                                             loc.num(FluidLog.urinationAim.lowerBound),
                                             loc.num(FluidLog.urinationAim.upperBound)))
+                        .accessibilityIdentifier("fluidUrineTile")
                 }
 
                 if FluidLog.urineGapIsLong(entries: fluids.entries) {

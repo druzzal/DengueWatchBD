@@ -26,6 +26,13 @@ struct DengueWatchBDApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @Environment(\.scenePhase) private var scenePhase
 
+    init() {
+        #if DEBUG
+        // Before the root view exists, so its stores load the test's state.
+        UITestSupport.prepare()
+        #endif
+    }
+
     var body: some Scene {
         WindowGroup {
             RootView()

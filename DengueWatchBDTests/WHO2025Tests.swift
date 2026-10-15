@@ -118,24 +118,75 @@ final class WHO2025Tests: XCTestCase {
         XCTAssertEqual(FluidLog.urinationAim, 4...6)
     }
 
-    func testALongGapInAKeptLogIsRaised() {
-        let now = Date()
-        let entries = [FluidEntry(date: now.addingTimeInterval(-7 * 3600), kind: .urine)]
-        XCTAssertTrue(FluidLog.urineGapIsLong(entries: entries, now: now))
+    /// Fixed times in a fixed zone, so the night window falls in the same
+    /// place whenever the suite runs.
+    private var dhaka: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "Asia/Dhaka")!
+        return calendar
+    }
+
+    private func dhakaTime(_ day: Int, _ hour: Int, _ minute: Int = 0) -> Date {
+        dhaka.date(from: DateComponents(year: 2026, month: 10, day: day,
+                                        hour: hour, minute: minute))!
+    }
+
+    private func urine(at date: Date) -> [FluidEntry] { [FluidEntry(date: date, kind: .urine)] }
+
+    func testALongDaytimeGapIsRaised() {
+        XCTAssertTrue(FluidLog.urineGapIsLong(entries: urine(at: dhakaTime(16, 9)),
+                                              now: dhakaTime(16, 16), calendar: dhaka))
     }
 
     func testARecentEntryRaisesNothing() {
-        let now = Date()
-        let entries = [FluidEntry(date: now.addingTimeInterval(-2 * 3600), kind: .urine)]
-        XCTAssertFalse(FluidLog.urineGapIsLong(entries: entries, now: now))
+        XCTAssertFalse(FluidLog.urineGapIsLong(entries: urine(at: dhakaTime(16, 14)),
+                                               now: dhakaTime(16, 16), calendar: dhaka))
+    }
+
+    /// Urine at ten at night and a look at the app at eight in the morning is
+    /// a night's sleep, not a ten-hour gap.
+    func testTheNightIsNotCounted() {
+        XCTAssertFalse(FluidLog.urineGapIsLong(entries: urine(at: dhakaTime(15, 22)),
+                                               now: dhakaTime(16, 8), calendar: dhaka))
+        XCTAssertEqual(FluidLog.wakingHours(from: dhakaTime(15, 22), to: dhakaTime(16, 8),
+                                            calendar: dhaka), 2, accuracy: 0.001)
+    }
+
+    /// The waking hours either side of the night still add up.
+    func testWakingHoursEitherSideOfTheNightAddUp() {
+        // 7 pm to 11 pm is four, 7 am to 10 am is three: seven waking hours.
+        XCTAssertEqual(FluidLog.wakingHours(from: dhakaTime(15, 19), to: dhakaTime(16, 10),
+                                            calendar: dhaka), 7, accuracy: 0.001)
+        XCTAssertTrue(FluidLog.urineGapIsLong(entries: urine(at: dhakaTime(15, 19)),
+                                              now: dhakaTime(16, 10), calendar: dhaka))
+    }
+
+    func testTheGapDoesNotGrowDuringTheNight() {
+        XCTAssertEqual(FluidLog.wakingHours(from: dhakaTime(16, 0), to: dhakaTime(16, 6),
+                                            calendar: dhaka), 0, accuracy: 0.001)
     }
 
     /// Someone who stopped logging has not stopped passing urine.
     func testAnAbandonedLogRaisesNothing() {
-        let now = Date()
-        let entries = [FluidEntry(date: now.addingTimeInterval(-3 * 86_400), kind: .urine)]
-        XCTAssertFalse(FluidLog.urineGapIsLong(entries: entries, now: now))
-        XCTAssertFalse(FluidLog.urineGapIsLong(entries: [], now: now))
+        XCTAssertFalse(FluidLog.urineGapIsLong(entries: urine(at: dhakaTime(13, 12)),
+                                               now: dhakaTime(16, 12), calendar: dhaka))
+        XCTAssertFalse(FluidLog.urineGapIsLong(entries: [], now: dhakaTime(16, 12),
+                                               calendar: dhaka))
+    }
+
+    // MARK: - A check's advice follows today's rules
+
+    /// A check saved under the old rules shows what the current rules say, so
+    /// its card can never disagree with the care plan beside it.
+    func testACheckIsJudgedByTodaysRulesNotTheStoredOutcome() {
+        var oldRules = CaseLogEntry(symptomIDs: ["fever", "headache", "aches"],
+                                    outcomeRawValue: TriageOutcome.seeDoctorToday.rawValue)
+        oldRules.hadDengueBefore = true
+        XCTAssertEqual(oldRules.outcome, .testAdvised,
+                       "previous dengue alone no longer raises the advice")
+        let plan = WHOCarePlan.evaluate(symptoms: Set(oldRules.symptomIDs), vitals: nil,
+                                        context: oldRules.triageContext, feverDaysAgo: nil)
+        XCTAssertEqual(plan.group, .home)
     }
 
     func testTheStoreRejectsADrinkWithNoPlausibleAmount() {

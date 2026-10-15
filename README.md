@@ -35,6 +35,26 @@ SIMCTL_CHILD_DW_START_TAB=map xcrun simctl launch booted bd.uzzal.denguewatch
 `DW_START_TAB` is one of home/map/health/care/prevent, and is compiled out of
 release builds.
 
+### Tests
+
+```sh
+# Unit tests: rules, stores, localisation, PDF
+xcodebuild test -project DengueWatchBD.xcodeproj -scheme DengueWatchBD \
+  -destination "platform=iOS Simulator,name=iPhone 18 Pro" -only-testing:DengueWatchBDTests
+
+# UI tests: the My health flows, tapped on the real app
+xcodebuild test -project DengueWatchBD.xcodeproj -scheme DengueWatchBD \
+  -destination "platform=iOS Simulator,name=iPhone 18 Pro" -only-testing:DengueWatchBDUITests
+```
+
+The UI tests add a drink, log and undo a urination, complete a symptom check,
+delete the latest check and a past one, and export the log to the share sheet.
+They launch the app with `DW_UITEST=1`, which (in DEBUG builds only, see
+`App/UITestSupport.swift`) starts it empty, in English, past the first-run
+disclaimer and without animations; `DW_UITEST_SEED=checks,vitals` adds sample
+records. They match English labels, so a reworded button means updating the
+test that taps it.
+
 ### Installing on an iPhone
 
 Build the Release configuration for a connected, paired phone, then install and
@@ -131,6 +151,23 @@ by hand, and the same URLs the app reads can be opened in a browser.
 There is no API key, no account and no server of our own. The feed is a static
 file on GitHub Pages, which is also why it needs no credential shipped inside
 the app.
+
+### When the feed stops updating
+
+If the DGHS dashboard changes shape, the scraper can stop producing new reports
+without anything visibly failing. Two things catch that:
+
+- **Readers** see a warning in the app once its figures are three days old, and
+  a stronger one at seven.
+- **The maintainer** hears a day earlier. `.github/workflows/feed-freshness.yml`
+  runs daily at noon Dhaka time, reads `summary.json`, and fails when the latest
+  report is two days or more behind today's Dhaka date, or the feed cannot be
+  read. A failure opens one GitHub issue, "Dengue feed has stopped updating",
+  comments on it each further day, and the first fresh run closes it. GitHub
+  also emails the failure. It can be run by hand from the Actions tab.
+
+A day missed for a public holiday will raise the issue too; it closes itself
+when DGHS resumes.
 
 ## Location
 
@@ -236,13 +273,16 @@ DengueWatchBD.xcodeproj
 DengueWatchBD/          the app (below)
 DengueWatchBDTests/     decoding, mapping, geography, triage, care plan, health
                         log, PDF and localisation tests
+DengueWatchBDUITests/   the My health flows, driven on the real app
+.github/workflows/      the daily feed-freshness check
 Tools/                  helper scripts
 ```
 
 Inside `DengueWatchBD/`:
 
 ```
-App/            entry point, tab shell, about + first-run disclaimer
+App/            entry point, tab shell, about + first-run disclaimer, UI-test
+                launch state (DEBUG only)
 Models/         FeedPayload (wire format), Domain (Area, Geography, RiskLevel),
                 WHOCarePlan, vital signs, lab reports, fluid log
 Localization/   AppLanguage, NumberStyle, the two string tables, place names
@@ -301,6 +341,10 @@ A single symptom check can be deleted from the symptom check card in My health,
 and any earlier one from its list of past checks. The care plan and fever
 timeline then follow the check before it.
 
+A check's advice is worked out from its saved answers each time it is shown,
+by the current rules, so a check made before a rule changed says what the care
+plan beside it says. The outcome shown at the time is still stored with it.
+
 The PDF opens with an at-a-glance summary and trend charts, then the record day
 by day. When fluids were logged it adds a fluid summary — days logged, average
 drunk on a whole day, and the days urine reached WHO's aim — and two daily bar
@@ -320,5 +364,7 @@ appears in every advice path that involves fever.
 WHO's outpatient recommendation of measured oral fluids is the fluid log in My
 health: drinks in millilitres and the number of times urine was passed, against
 WHO's aim of four to six times a day. It sets no volume target, because WHO sets
-that by age and condition. A haematocrit that rises on two reports in a row is
+that by age and condition. If no urine has been logged for six waking hours —
+the symptom check's own warning sign — it says so; the night, 11 pm to 7 am,
+does not count, so a night's sleep does not raise it every morning. A haematocrit that rises on two reports in a row is
 pointed out for the doctor, but like every lab value it never changes the advice.

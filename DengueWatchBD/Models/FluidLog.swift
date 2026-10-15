@@ -62,6 +62,13 @@ enum FluidLog {
     /// The same number as the symptom check, so the two never disagree.
     static let urineGapHours: Double = 6
 
+    /// The night the urine gap does not count, as hours of the day: from
+    /// 11 pm to 7 am. Someone who passed urine at ten and slept until seven
+    /// has not gone nine hours without, in the sense the warning sign means,
+    /// and telling them so first thing every morning teaches them to ignore it.
+    static let nightStartHour = 23
+    static let nightEndHour = 7
+
     /// How long a silent log still counts as being kept. Past this the reader
     /// has stopped writing things down, and a gap says nothing about them.
     static let activeLogHours: Double = 24
@@ -122,17 +129,38 @@ enum FluidLog {
             includesToday: days.contains { $0.date == today })
     }
 
-    /// Whether the log shows no urine for longer than the warning sign allows.
+    /// Whether the log shows no urine for longer than the warning sign allows,
+    /// counting waking hours only.
     ///
     /// Only while the reader is keeping the log: someone who logged once last
     /// week has not gone a week without passing urine, they have stopped
     /// writing it down. Nothing logged at all raises nothing — a missing
     /// record is not a finding.
-    static func urineGapIsLong(entries: [FluidEntry], now: Date = Date()) -> Bool {
-        guard let last = entries.filter({ $0.kind == .urine }).map(\.date).max() else {
-            return false
+    static func urineGapIsLong(entries: [FluidEntry], now: Date = Date(),
+                               calendar: Calendar = .current) -> Bool {
+        guard let last = entries.filter({ $0.kind == .urine }).map(\.date).max(),
+              now.timeIntervalSince(last) <= activeLogHours * 3600 else { return false }
+        return wakingHours(from: last, to: now, calendar: calendar) >= urineGapHours
+    }
+
+    /// Hours between two moments, less any time inside the night window.
+    static func wakingHours(from start: Date, to end: Date,
+                            calendar: Calendar = .current) -> Double {
+        guard end > start else { return 0 }
+        var asleep: TimeInterval = 0
+        // Every night that could overlap: the one that began the evening
+        // before `start`, through the one that begins on `end`'s day.
+        var day = calendar.date(byAdding: .day, value: -1, to: calendar.startOfDay(for: start))!
+        while day <= end {
+            guard let nightStart = calendar.date(bySettingHour: nightStartHour, minute: 0,
+                                                 second: 0, of: day),
+                  let nextDay = calendar.date(byAdding: .day, value: 1, to: day),
+                  let nightEnd = calendar.date(bySettingHour: nightEndHour, minute: 0,
+                                               second: 0, of: nextDay) else { break }
+            let overlap = min(end, nightEnd).timeIntervalSince(max(start, nightStart))
+            if overlap > 0 { asleep += overlap }
+            day = nextDay
         }
-        let hours = now.timeIntervalSince(last) / 3600
-        return hours >= urineGapHours && hours <= activeLogHours
+        return (end.timeIntervalSince(start) - asleep) / 3600
     }
 }
