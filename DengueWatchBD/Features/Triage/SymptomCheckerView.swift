@@ -72,7 +72,9 @@ struct SymptomCheckerView: View {
                     outcome: outcome,
                     selected: selected,
                     phaseKey: hasFeverDate ? TriageEngine.phaseKey(feverDaysAgo: daysSinceFever) : nil,
-                    feverDay: hasFeverDate ? daysSinceFever + 1 : nil
+                    feverDay: hasFeverDate ? daysSinceFever + 1 : nil,
+                    raisedByRiskGroup: TriageEngine.isRaisedByRiskGroup(selected: selected,
+                                                                        context: context)
                 )
             }
         }
@@ -321,6 +323,13 @@ struct TriageResultView: View {
     let selected: Set<String>
     let phaseKey: String?
     let feverDay: Int?
+    /// Same-day advice that came from the reader's risk group, not from a
+    /// warning sign, takes its own summary.
+    var raisedByRiskGroup = false
+
+    private var summaryKey: String {
+        raisedByRiskGroup ? "outcome.seeDoctor.riskGroup.summary" : outcome.summaryKey
+    }
 
     @Environment(LocalizationManager.self) private var loc
     @Environment(\.dismiss) private var dismiss
@@ -381,7 +390,7 @@ struct TriageResultView: View {
                 Text(loc.t(outcome.headlineKey))
                     .typo(.title)
             }
-            Text(loc.t(outcome.summaryKey))
+            Text(loc.t(summaryKey))
                 .typo(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

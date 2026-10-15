@@ -18,7 +18,7 @@ extension Strings {
         "myth.platelets.myth": "A platelet count is the only thing that matters.",
         "myth.platelets.fact": "Warning signs in the person matter more than any single number. Severe dengue is driven by fluid leaking from blood vessels, and someone can be seriously unwell with a count that has not dropped far.",
         "myth.painkillers.myth": "Any painkiller is fine for the fever.",
-        "myth.painkillers.fact": "Aspirin and ibuprofen-type painkillers raise the risk of bleeding in dengue. Ask a doctor or pharmacist which one to use before taking anything.",
+        "myth.painkillers.fact": "Aspirin, ibuprofen, diclofenac and other NSAIDs raise the risk of bleeding, and WHO recommends against them in dengue. Ask a doctor or pharmacist before taking anything.",
 
         // Today's prevention checklist
         "checklist.title": "Today's prevention",
@@ -76,8 +76,8 @@ extension Strings {
         "prevent.care.title": "Caring for someone with dengue",
         "prevent.care.summary": "Most dengue is managed at home with fluids and rest. The danger window is when the fever falls, not when it is highest.",
         "prevent.care.step1": "Paracetamol only for fever and pain. No aspirin, ibuprofen, diclofenac or other NSAIDs — they increase bleeding risk.",
-        "prevent.care.step2": "Fluids through the day: oral rehydration solution, coconut water, rice water, soup, milk. Plain water alone is not ideal.",
-        "prevent.care.step3": "Track urine — passing urine every 4 to 6 hours is a good sign that hydration is adequate.",
+        "prevent.care.step2": "Fluids through the day, mostly water, with oral rehydration salts, soup, coconut water or rice water. Avoid fizzy drinks, packaged juice and sweetened tea.",
+        "prevent.care.step3": "Measure and write down what the patient drinks, and aim for urine at least 4 to 6 times a day. My health has a fluid log for this.",
         "prevent.care.step4": "Watch for warning signs from day 3 to day 7, especially as the fever drops.",
         "prevent.care.step5": "Do not take antibiotics or steroids unless a doctor prescribes them; they do nothing for dengue.",
         "prevent.care.step6": "Keep the patient under a net so the infection does not spread to the rest of the household.",
@@ -95,7 +95,7 @@ extension Strings {
         "prevent.testing.step1": "NS1 antigen test: most reliable in the first 5 days of fever.",
         "prevent.testing.step2": "IgM/IgG antibody test: useful from about day 5 onward.",
         "prevent.testing.step3": "A packed cell volume (haematocrit) trend matters as much as the platelet count — a rising haematocrit with a falling platelet count signals plasma leak.",
-        "prevent.testing.step4": "Go in the same day for any warning sign: bad stomach pain, repeated vomiting, bleeding, breathlessness, sudden weakness, or little urine.",
+        "prevent.testing.step4": "Go in the same day for any warning sign: bad stomach pain, repeated vomiting, being unable to drink, bleeding, breathlessness, unusual sleepiness, or little urine.",
         "prevent.testing.step5": "Free or subsidised dengue testing is offered at government hospitals and many city corporation centres during outbreak season.",
 
         "alerts.entry": "Alert me",
@@ -129,6 +129,11 @@ extension Strings {
         "geo.status.foreground": "Only while the app is open",
         "geo.status.always": "On, including in the background",
         "geo.monitoring": "Watching %@ high-risk areas",
+
+        "myth.transfusion.myth": "A low platelet count means you need a platelet transfusion.",
+        "myth.transfusion.fact": "Not on its own. WHO advises against giving platelets just because the count is low — even below 50,000 — when there is no bleeding. Careful fluids and close watching are what help.",
+        "myth.steroids.myth": "Steroids help you recover from dengue faster.",
+        "myth.steroids.fact": "WHO advises against steroids for dengue, mild or severe: they have not been shown to help, and they carry risks of their own. Take them only if a doctor treating you prescribes them.",
     ]
 
     static let bnPrevent: [String: String] = [
@@ -148,7 +153,7 @@ extension Strings {
         "myth.platelets.myth": "শুধু Platelet-এর সংখ্যাই গুরুত্বপূর্ণ।",
         "myth.platelets.fact": "যেকোনো একটি সংখ্যার চেয়ে রোগীর বিপদচিহ্ন বেশি গুরুত্বপূর্ণ। মারাত্মক ডেঙ্গু হয় রক্তনালি থেকে পানি বেরিয়ে যাওয়ায়, আর Platelet খুব না কমলেও কেউ গুরুতর অসুস্থ হতে পারে।",
         "myth.painkillers.myth": "জ্বরে যেকোনো ব্যথার ওষুধ চলে।",
-        "myth.painkillers.fact": "অ্যাসপিরিন ও আইবুপ্রোফেন জাতীয় ওষুধ ডেঙ্গুতে রক্তক্ষরণের ঝুঁকি বাড়ায়। কিছু খাওয়ার আগে চিকিৎসক বা ফার্মাসিস্টকে জিজ্ঞেস করে নিন।",
+        "myth.painkillers.fact": "অ্যাসপিরিন, আইবুপ্রোফেন, ডাইক্লোফেনাক ও অন্য এনএসএআইডি রক্তক্ষরণের ঝুঁকি বাড়ায়, আর ডেঙ্গুতে এগুলো না খাওয়ার পরামর্শ দেয় বিশ্ব স্বাস্থ্য সংস্থা। কিছু খাওয়ার আগে চিকিৎসক বা ফার্মাসিস্টকে জিজ্ঞেস করে নিন।",
 
         // আজকের প্রতিরোধ তালিকা
         "checklist.title": "আজকের প্রতিরোধ",
@@ -206,8 +211,8 @@ extension Strings {
         "prevent.care.title": "ডেঙ্গু রোগীর যত্ন",
         "prevent.care.summary": "বেশিরভাগ ডেঙ্গু ঘরে বসেই পানি ও বিশ্রামে সামলানো যায়। বিপদের সময় জ্বর কমার মুহূর্ত, জ্বর সবচেয়ে বেশি থাকার সময় নয়।",
         "prevent.care.step1": "জ্বর ও ব্যথার জন্য শুধু প্যারাসিটামল। অ্যাসপিরিন, আইবুপ্রোফেন, ডাইক্লোফেনাক বা অন্য এনএসএআইডি নয় — এগুলো রক্তক্ষরণের ঝুঁকি বাড়ায়।",
-        "prevent.care.step2": "সারা দিন তরল: খাবার স্যালাইন, ডাবের পানি, চালের মাড়, স্যুপ, দুধ। শুধু সাধারণ পানি যথেষ্ট নয়।",
-        "prevent.care.step3": "প্রস্রাবের দিকে খেয়াল রাখুন — প্রতি ৪ থেকে ৬ ঘণ্টায় প্রস্রাব হলে বুঝবেন শরীরে পানি ঠিক আছে।",
+        "prevent.care.step2": "সারা দিন তরল — বেশিরভাগ পানি, সঙ্গে খাবার স্যালাইন, স্যুপ, ডাবের পানি বা চালের মাড়। কোমল পানীয়, প্যাকেটজাত জুস ও চিনি দেওয়া চা এড়িয়ে চলুন।",
+        "prevent.care.step3": "রোগী কতটা পান করছেন মেপে লিখে রাখুন, আর দিনে অন্তত ৪ থেকে ৬ বার প্রস্রাব হচ্ছে কি না দেখুন। ‘আমার স্বাস্থ্য’-তে এর জন্য তরলের হিসাব রাখার ব্যবস্থা আছে।",
         "prevent.care.step4": "৩ থেকে ৭ দিনের মধ্যে, বিশেষত জ্বর কমার সময় বিপদচিহ্নের দিকে নজর রাখুন।",
         "prevent.care.step5": "ডাক্তারের পরামর্শ ছাড়া অ্যান্টিবায়োটিক বা স্টেরয়েড খাবেন না; ডেঙ্গুতে এগুলো কোনো কাজে আসে না।",
         "prevent.care.step6": "রোগীকে মশারির নিচে রাখুন যাতে পরিবারের অন্যদের মধ্যে সংক্রমণ না ছড়ায়।",
@@ -225,7 +230,7 @@ extension Strings {
         "prevent.testing.step1": "NS1 অ্যান্টিজেন পরীক্ষা: জ্বরের প্রথম ৫ দিনে সবচেয়ে নির্ভরযোগ্য।",
         "prevent.testing.step2": "IgM/IgG অ্যান্টিবডি পরীক্ষা: প্রায় ৫ম দিন থেকে কার্যকর।",
         "prevent.testing.step3": "Haematocrit-এর গতিপ্রকৃতি Platelet-এর মতোই গুরুত্বপূর্ণ — Haematocrit বাড়ার সঙ্গে Platelet কমা মানে রক্তরস বেরিয়ে যাচ্ছে।",
-        "prevent.testing.step4": "যেকোনো বিপদচিহ্ন দেখা দিলে সেদিনই যান: তীব্র পেটব্যথা, বারবার বমি, রক্তক্ষরণ, শ্বাসকষ্ট, হঠাৎ দুর্বলতা বা প্রস্রাব কমে যাওয়া।",
+        "prevent.testing.step4": "যেকোনো বিপদচিহ্ন দেখা দিলে সেদিনই যান: তীব্র পেটব্যথা, বারবার বমি, কিছু পান করতে না পারা, রক্তক্ষরণ, শ্বাসকষ্ট, অস্বাভাবিক ঘুম ঘুম ভাব বা প্রস্রাব কমে যাওয়া।",
         "prevent.testing.step5": "প্রাদুর্ভাবের মৌসুমে সরকারি হাসপাতাল ও অনেক সিটি করপোরেশন কেন্দ্রে বিনামূল্যে বা কম খরচে ডেঙ্গু পরীক্ষা করা হয়।",
 
         "alerts.entry": "আমাকে জানান",
@@ -259,5 +264,10 @@ extension Strings {
         "geo.status.foreground": "শুধু অ্যাপ খোলা থাকলে",
         "geo.status.always": "চালু, পটভূমিতেও",
         "geo.monitoring": "%@টি উচ্চঝুঁকির এলাকার ওপর নজর রাখা হচ্ছে",
+
+        "myth.transfusion.myth": "Platelet কমে গেলেই Platelet দিতে হয়।",
+        "myth.transfusion.fact": "শুধু সংখ্যা দেখে নয়। রক্তক্ষরণ না থাকলে, Platelet ৫০,০০০-এর নিচে নামলেও কেবল কম বলে Platelet দেওয়ার বিপক্ষে পরামর্শ দেয় বিশ্ব স্বাস্থ্য সংস্থা। সঠিক পরিমাণে তরল আর কাছ থেকে নজর রাখাই কাজে আসে।",
+        "myth.steroids.myth": "স্টেরয়েড খেলে ডেঙ্গু তাড়াতাড়ি সেরে যায়।",
+        "myth.steroids.fact": "হালকা হোক বা মারাত্মক, ডেঙ্গুতে স্টেরয়েডের বিপক্ষে পরামর্শ দেয় বিশ্ব স্বাস্থ্য সংস্থা: এতে উপকার হয় বলে প্রমাণ মেলেনি, আর এর নিজস্ব ঝুঁকিও আছে। চিকিৎসা করছেন এমন ডাক্তার লিখে দিলে তবেই খাবেন।",
     ]
 }

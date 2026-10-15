@@ -78,4 +78,47 @@ final class LogDeletionTests: XCTestCase {
             XCTAssertNotNil(Strings.bangla[key], key)
         }
     }
+
+    // MARK: - Single symptom checks
+
+    /// The latest check drives the care plan. Deleting it must hand that job
+    /// to the check before it, not leave the deleted one's advice behind.
+    func testDeletingTheLatestCheckMakesThePreviousOneLatest() {
+        let (checks, _, _) = stores()
+        let older = CaseLogEntry(date: Date().addingTimeInterval(-86_400),
+                                 symptomIDs: ["fever"],
+                                 outcomeRawValue: TriageOutcome.testAdvised.rawValue)
+        let newer = CaseLogEntry(symptomIDs: ["faint"],
+                                 outcomeRawValue: TriageOutcome.emergency.rawValue)
+        checks.add(older)
+        checks.add(newer)
+        XCTAssertEqual(checks.entries.first?.id, newer.id)
+
+        checks.delete(id: newer.id)
+
+        XCTAssertEqual(checks.entries.map(\.id), [older.id])
+        XCTAssertEqual(checks.entries.first?.outcome, .testAdvised)
+    }
+
+    func testDeletingOneCheckLeavesTheMeasurementsAlone() {
+        let (checks, vitals, labs) = stores()
+        checks.add(CaseLogEntry(symptomIDs: ["fever"], outcomeRawValue: 1))
+        vitals.add(VitalsEntry(temperature: 38.4))
+        labs.add(LabReport(platelets: 96))
+
+        checks.delete(id: try! XCTUnwrap(checks.entries.first).id)
+
+        XCTAssertTrue(checks.entries.isEmpty)
+        XCTAssertEqual(vitals.entries.count, 1)
+        XCTAssertEqual(labs.reports.count, 1)
+    }
+
+    func testTheCheckDeletionTextExistsInBothLanguages() {
+        for key in ["check.actions", "check.history.title", "check.history.latest",
+                    "check.history.footer", "check.delete", "check.delete.confirm",
+                    "check.delete.detail", "log.checksOnly"] {
+            XCTAssertNotNil(Strings.english[key], key)
+            XCTAssertNotNil(Strings.bangla[key], key)
+        }
+    }
 }

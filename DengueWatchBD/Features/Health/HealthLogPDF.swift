@@ -202,17 +202,25 @@ private struct HealthLogReport {
 
     private var vitals: [VitalsEntry] { days.flatMap(\.vitals).sorted { $0.date < $1.date } }
     private var labs: [LabReport] { days.flatMap(\.labs).sorted { $0.date < $1.date } }
+    private var fluids: [FluidEntry] { days.flatMap(\.fluids).sorted { $0.date < $1.date } }
 
     func blocks(loc: LocalizationManager, generatedAt: Date) -> [Piece] {
         var pieces: [Piece] = []
         let dates = days.map(\.date).sorted()
         pieces.append(Piece(view: AnyView(ReportHeader(
             first: dates.first ?? generatedAt, last: dates.last ?? generatedAt,
-            readings: vitals.count, labs: labs.count, generatedAt: generatedAt))))
+            readings: vitals.count, labs: labs.count,
+            fluidDays: FluidLog.daily(fluids).count, generatedAt: generatedAt))))
 
         let glance = GlanceTiles(vitals: vitals, labs: labs, unit: unit)
         if glance.hasAny {
             pieces.append(Piece(view: AnyView(glance)))
+        }
+        // Its own block rather than more glance tiles: those grade each figure
+        // Normal / Low / High, and fluids have no range to grade against.
+        if !fluids.isEmpty {
+            pieces.append(Piece(view: AnyView(FluidGlancePDF(
+                summary: FluidLog.summary(fluids, now: generatedAt)))))
         }
 
         let temperatures = vitals.compactMap { entry in
@@ -247,10 +255,31 @@ private struct HealthLogReport {
             })))
         }
 
+        // Intake and urine in two charts, never one: they are different units,
+        // and this app draws no dual-axis chart. Two days are the least that
+        // show a direction, as with the trend charts above.
+        let daily = FluidLog.daily(fluids)
+        if daily.count >= 2 {
+            let today = Calendar.current.startOfDay(for: generatedAt)
+            pieces.append(Piece(view: AnyView(HStack(alignment: .top, spacing: 8) {
+                FluidBarChart(title: loc.t("pdf.fluids.chart.intake"),
+                              unitLabel: loc.t("fluid.unit.ml"),
+                              bars: daily.map { ($0.date, Double($0.day.drunkMillilitres), $0.date == today) },
+                              aim: nil)
+                FluidBarChart(title: loc.t("pdf.fluids.chart.urine"),
+                              unitLabel: loc.t("fluid.unit.times"),
+                              bars: daily.map { ($0.date, Double($0.day.urinations), $0.date == today) },
+                              aim: Double(FluidLog.urinationAim.lowerBound))
+            })))
+        }
+
         for day in days {
             pieces.append(Piece(view: AnyView(DayHeading(
                 date: day.date, number: numbers[day.date], name: names[day.date])),
                 keepWithNext: true))
+            if !day.fluids.isEmpty {
+                pieces.append(Piece(view: AnyView(FluidCardPDF(entries: day.fluids))))
+            }
             for item in day.itemsNewestFirst {
                 switch item {
                 case .vitals(let entry):
@@ -280,6 +309,9 @@ private enum Paper {
     /// colour inside a gradient prints as a dark band in PDF.
     static let accentSoft = Color(hex: "#E6F2F5")
     static let headerStart = Color(hex: "#DCEDF2")
+    /// The accent at about forty per cent, flattened onto white, for a bar
+    /// that is still being filled in.
+    static let accentMuted = Color(hex: "#99CAD8")
     static let lab = Color(hex: "#2a78d6")
 }
 
@@ -340,6 +372,7 @@ private struct ReportHeader: View {
     let last: Date
     let readings: Int
     let labs: Int
+    let fluidDays: Int
     let generatedAt: Date
 
     var body: some View {
@@ -367,6 +400,10 @@ private struct ReportHeader: View {
                          symbol: "calendar")
                     Chip(text: loc.t("pdf.counts", loc.num(readings), loc.num(labs)),
                          symbol: "list.bullet.clipboard")
+                    if fluidDays > 0 {
+                        Chip(text: loc.t("pdf.fluidDays", loc.num(fluidDays)),
+                             symbol: "cup.and.saucer.fill")
+                    }
                 }
             }
         }
@@ -525,6 +562,161 @@ private struct GlanceTiles: View {
     }
 }
 
+// MARK: - Fluids at a glance
+
+/// The fluid log summed for the front page: how many days were logged, the
+/// average drunk on a whole day, and on how many days urine reached the bottom
+/// of WHO's aim. Plain figures in ink — no status colour, because there is no
+/// usual range for intake, and the urine aim is stated rather than graded.
+private struct FluidGlancePDF: View {
+    @Environment(LocalizationManager.self) private var loc
+    let summary: FluidSummary
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            SectionTitle(text: loc.t("fluid.log.title"))
+            HStack(alignment: .top, spacing: 8) {
+                figure(loc.t("pdf.fluids.days"), loc.num(summary.daysLogged), "")
+                if let average = summary.averageMillilitres {
+                    figure(loc.t("pdf.fluids.average"), loc.num(average), loc.t("fluid.unit.ml"))
+                }
+                if summary.daysWithUrineLogged > 0 {
+                    figure(loc.t("pdf.fluids.aimMet", loc.num(FluidLog.urinationAim.lowerBound)),
+                           loc.t("pdf.fluids.ofDays", loc.num(summary.daysUrineAimMet),
+                                 loc.num(summary.daysWithUrineLogged)), "")
+                }
+            }
+            if summary.includesToday {
+                Text(loc.t("pdf.fluids.wholeDays"))
+                    .font(.system(size: 7.5))
+                    .foregroundStyle(Paper.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private func figure(_ label: String, _ value: String, _ unit: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            // Two lines reserved on every tile, so one wrapping label does
+            // not push its figure below the others'.
+            Text(label)
+                .font(.system(size: 8.5, weight: .medium))
+                .foregroundStyle(Paper.secondary)
+                .lineLimit(2, reservesSpace: true)
+            HStack(alignment: .firstTextBaseline, spacing: 2) {
+                Text(value)
+                    .font(.system(size: 19, weight: .bold))
+                    .foregroundStyle(Paper.ink)
+                    .monospacedDigit()
+                Text(unit)
+                    .font(.system(size: 8))
+                    .foregroundStyle(Paper.secondary)
+            }
+        }
+        .padding(9)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Paper.card, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
+            .stroke(Paper.hairline, lineWidth: 0.75))
+    }
+}
+
+/// One bar per logged day. Today's bar is paler and labelled, because it is
+/// still being filled in and would otherwise read as a bad day. The urine
+/// chart carries WHO's aim as a dashed line, named in the legend.
+private struct FluidBarChart: View {
+    @Environment(LocalizationManager.self) private var loc
+    let title: String
+    let unitLabel: String
+    let bars: [(date: Date, value: Double, isPartial: Bool)]
+    let aim: Double?
+
+    private var dayStride: Int {
+        guard let first = bars.first?.date, let last = bars.last?.date else { return 1 }
+        let span = Calendar.current.dateComponents([.day], from: first, to: last).day ?? 1
+        return max(1, Int((Double(span) / 6).rounded(.up)))
+    }
+
+    private var top: Double {
+        max(bars.map(\.value).max() ?? 1, aim ?? 0, 1) * 1.15
+    }
+
+    var body: some View {
+        // Read outside the axis builders, which cannot touch the environment.
+        let style = loc.style
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text(title).font(.system(size: 11, weight: .bold)).foregroundStyle(Paper.ink)
+                Text(unitLabel).font(.system(size: 8.5)).foregroundStyle(Paper.secondary)
+                Spacer(minLength: 0)
+            }
+            // A line of its own: beside a half-width title, the legend
+            // squeezed it onto three lines, and Bangla titles run longer still.
+            HStack(spacing: 4) {
+                if let aim {
+                    // The rule's own dash, so the legend matches the chart.
+                    Path { path in
+                        path.move(to: CGPoint(x: 0, y: 1))
+                        path.addLine(to: CGPoint(x: 12, y: 1))
+                    }
+                    .stroke(Paper.ink, style: StrokeStyle(lineWidth: 0.8, dash: [3, 2]))
+                    .frame(width: 12, height: 2)
+                    Text(loc.t("pdf.fluids.aim", style.num(Int(aim))))
+                        .font(.system(size: 7.5)).foregroundStyle(Paper.secondary)
+                }
+                if bars.contains(where: \.isPartial) {
+                    RoundedRectangle(cornerRadius: 1.5).fill(Paper.accentMuted)
+                        .frame(width: 8, height: 8)
+                    Text(loc.t("pdf.fluids.today"))
+                        .font(.system(size: 7.5)).foregroundStyle(Paper.secondary)
+                }
+                Spacer(minLength: 0)
+            }
+            .frame(height: 10)
+            Chart {
+                ForEach(Array(bars.enumerated()), id: \.offset) { _, bar in
+                    BarMark(x: .value("Day", bar.date, unit: .day),
+                            y: .value("Value", bar.value))
+                        .foregroundStyle(bar.isPartial ? Paper.accentMuted : Paper.accent)
+                        .cornerRadius(2)
+                }
+                if let aim {
+                    RuleMark(y: .value("Aim", aim))
+                        .foregroundStyle(Paper.ink)
+                        .lineStyle(StrokeStyle(lineWidth: 0.8, dash: [3, 2]))
+                }
+            }
+            .chartYScale(domain: 0...top)
+            .chartYAxis {
+                AxisMarks(position: .leading, values: .automatic(desiredCount: 4)) { value in
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5)).foregroundStyle(Paper.hairline)
+                    AxisValueLabel {
+                        // Counts and millilitres are whole numbers; a tick at
+                        // 2.5 urinations would label something that cannot happen.
+                        if let number = value.as(Double.self), number == number.rounded() {
+                            Text(style.num(Int(number))).font(.system(size: 7))
+                                .foregroundStyle(Paper.secondary)
+                        }
+                    }
+                }
+            }
+            .chartXAxis {
+                AxisMarks(values: .stride(by: .day, count: dayStride)) { value in
+                    AxisValueLabel(centered: true) {
+                        if let date = value.as(Date.self) {
+                            Text(style.dayMonth(date)).font(.system(size: 7)).foregroundStyle(Paper.secondary)
+                        }
+                    }
+                }
+            }
+            .frame(height: 104)
+        }
+        .padding(10)
+        .background(.white, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Paper.hairline, lineWidth: 0.75))
+    }
+}
+
 // MARK: - Trends
 
 private struct TrendChart: View {
@@ -653,7 +845,8 @@ private struct RecordCard<Content: View>: View {
     let title: String
     let symbol: String
     let tint: Color
-    let date: Date
+    /// Nil for a card that sums a whole day rather than recording a moment.
+    let date: Date?
     let note: String
     @ViewBuilder let content: Content
 
@@ -667,10 +860,12 @@ private struct RecordCard<Content: View>: View {
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(Paper.ink)
                 Spacer()
-                Text(loc.time(date))
-                    .font(.system(size: 9, weight: .medium))
-                    .foregroundStyle(Paper.secondary)
-                    .monospacedDigit()
+                if let date {
+                    Text(loc.time(date))
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundStyle(Paper.secondary)
+                        .monospacedDigit()
+                }
             }
             content
             if !note.isEmpty {
@@ -826,6 +1021,56 @@ private struct LabCard: View {
                 }
             }
         }
+    }
+}
+
+/// A day's fluids as WHO asks for them to be reviewed: the total drunk, how
+/// many drinks, and how many times urine was passed against WHO's aim. No
+/// Normal / Low word: there is no volume target to judge it against, and the
+/// urine aim is printed for the doctor to read rather than graded here.
+private struct FluidCardPDF: View {
+    @Environment(LocalizationManager.self) private var loc
+    let entries: [FluidEntry]
+
+    var body: some View {
+        let day = FluidLog.day(entries.first?.date ?? Date(), entries: entries)
+        RecordCard(title: loc.t("fluid.log.title"), symbol: "cup.and.saucer.fill",
+                   tint: Paper.accent, date: nil, note: "") {
+            LazyVGrid(columns: readingColumns, alignment: .leading, spacing: 6) {
+                cell(loc.t("fluid.drunk"), loc.num(day.drunkMillilitres), loc.t("fluid.unit.ml"))
+                cell(loc.t("fluid.drinks"), loc.num(day.drinks), "")
+                cell(loc.t("fluid.urine"), loc.num(day.urinations), loc.t("fluid.unit.times"),
+                     detail: loc.t("fluid.urine.aim",
+                                   loc.num(FluidLog.urinationAim.lowerBound),
+                                   loc.num(FluidLog.urinationAim.upperBound)))
+            }
+        }
+    }
+
+    private func cell(_ label: String, _ value: String, _ unit: String,
+                      detail: String? = nil) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(label)
+                .font(.system(size: 8, weight: .medium))
+                .foregroundStyle(Paper.secondary)
+                .lineLimit(1)
+            HStack(alignment: .firstTextBaseline, spacing: 2) {
+                Text(value)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(Paper.ink)
+                    .monospacedDigit()
+                Text(unit).font(.system(size: 7.5)).foregroundStyle(Paper.secondary)
+            }
+            if let detail {
+                Text(detail)
+                    .font(.system(size: 6.5))
+                    .foregroundStyle(Paper.secondary)
+                    .lineLimit(2)
+            }
+        }
+        .padding(7)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.white, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 }
 

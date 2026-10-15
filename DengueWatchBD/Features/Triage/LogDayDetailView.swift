@@ -25,6 +25,9 @@ struct LogDayDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Space.stack) {
+                if !day.fluids.isEmpty {
+                    Card { FluidDaySummary(entries: day.fluids) }
+                }
                 ForEach(items) { item in
                     Card {
                         VStack(alignment: .leading, spacing: Space.row) {

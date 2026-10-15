@@ -2,40 +2,48 @@ import Foundation
 
 /// What WHO advises for someone who has recorded these symptoms and readings.
 ///
-/// This is a lookup, not a judgement. WHO's dengue guidance sorts patients
-/// into three management groups by criteria a person can report about
-/// themselves — warning signs, the co-existing conditions that raise risk,
-/// and the signs of severe disease. The app already collects exactly those in
-/// the symptom check; this states which group WHO's guidance puts them in and
-/// what that guidance says to do.
+/// This is a lookup, not a judgement. WHO's guidance separates non-severe
+/// dengue, managed as an outpatient, from severe disease, which needs a
+/// hospital, by criteria a person can largely report about themselves —
+/// warning signs, the groups WHO would admit, and the signs of severe disease.
+/// The app already collects exactly those in the symptom check; this states
+/// where WHO's guidance puts them and what that guidance says to do.
 ///
 /// What it never does is diagnose. It does not say the reader has dengue, and
 /// nothing here decides that from a lab value. Every line is traceable to a
 /// criterion the reader themselves ticked or a number they themselves wrote
 /// down, and each is named on screen so they can see what produced it.
 ///
-/// Source: WHO, *Dengue: guidelines for diagnosis, treatment, prevention and
-/// control* (2009), chapter 2 — the A / B / C management groups.
+/// Source: WHO, *Guidelines for clinical management of arboviral diseases:
+/// dengue, chikungunya, Zika and yellow fever* (2025) — section 2.6 for who is
+/// admitted, section 4 for outpatient care. Its recommendations supersede the
+/// 2009 dengue guidelines, whose A / B / C groups this plan used to follow.
 struct WHOCarePlan: Equatable {
 
-    /// WHO's three management groups.
+    /// Where WHO's guidance puts the reader, most urgent last.
+    ///
+    /// WHO 2025 has two groups: non-severe, managed as an outpatient, and
+    /// severe, needing a hospital. The severe group is split here by urgency
+    /// alone — the same hospital, but "today" for a warning sign and "now" for
+    /// signs of shock or severe dengue — because that is the decision a reader
+    /// at home actually has to make. The split adds no clinical criterion.
     enum Group: Int, Comparable, CaseIterable {
-        /// May be managed at home, with daily review.
+        /// Non-severe: care at home, with daily review.
         case home
-        /// Should be referred for in-hospital care.
+        /// Severe: to be assessed in hospital today.
         case referral
-        /// Requires emergency treatment.
+        /// Severe, with signs of shock or severe dengue: emergency care now.
         case emergency
 
         static func < (lhs: Group, rhs: Group) -> Bool { lhs.rawValue < rhs.rawValue }
 
-        /// WHO's own letter for the group, which is what a clinician here
-        /// will recognise on a referral slip.
-        var letter: String {
+        /// Drawn beside the title. A shape as well as a colour, so the level
+        /// still reads in greyscale.
+        var symbolName: String {
             switch self {
-            case .home: "A"
-            case .referral: "B"
-            case .emergency: "C"
+            case .home: "house.fill"
+            case .referral: "cross.case.fill"
+            case .emergency: "exclamationmark.octagon.fill"
             }
         }
 
@@ -52,7 +60,12 @@ struct WHOCarePlan: Equatable {
 
         /// What WHO says to do, as a short list.
         var adviceKeys: [String] {
-            let count = self == .emergency ? 3 : 4
+            let count: Int
+            switch self {
+            case .home: count = 5
+            case .referral: count = 4
+            case .emergency: count = 3
+            }
             return (1...count).map { "who.group.\(slug).advice\($0)" }
         }
 
@@ -70,7 +83,9 @@ struct WHOCarePlan: Equatable {
     enum Reason: String, CaseIterable, Identifiable, Equatable {
         case severeSign          // a sign of severe dengue was reported
         case warningSign         // one or more WHO warning signs
-        case coMorbidity         // a co-existing condition WHO singles out
+        case pregnancy           // WHO 2025 lists pregnancy as a reason to admit
+        case higherRiskGroup     // extremes of age or an underlying condition
+        case previousDengue      // raises the risk; changes no advice on its own
         case criticalPhase       // days 4-7, when plasma leak begins
         case narrowPulsePressure // systolic − diastolic ≤ 20 mmHg
         case lowBloodPressure
@@ -168,14 +183,20 @@ extension WHOCarePlan {
         let measured = measuredConcerns(vitals)
         reasons.append(contentsOf: measured)
 
-        if context.hasCoMorbidity { reasons.append(.coMorbidity) }
+        if context.isPregnant { reasons.append(.pregnancy) }
+        if context.isUnderFiveOrOverSixty || context.hasChronicCondition {
+            reasons.append(.higherRiskGroup)
+        }
+        if context.hadDengueBefore { reasons.append(.previousDengue) }
 
         let phase = TriageEngine.phase(feverDaysAgo: feverDaysAgo)
         if phase == .critical { reasons.append(.criticalPhase) }
 
         // The group is WHO's, and the measured signs only ever raise it.
+        // Previous dengue is a reason shown, not a reason to move: WHO names it
+        // as a risk factor for severe disease, not as a criterion to admit.
         var group: Group = .home
-        if hasWarning || context.hasCoMorbidity { group = .referral }
+        if hasWarning || context.isHigherRiskGroup { group = .referral }
         if !measured.isEmpty { group = max(group, .referral) }
         if hasSevere || measured.contains(.narrowPulsePressure)
             || measured.contains(.lowBloodPressure) {

@@ -41,6 +41,7 @@ struct SymptomIllustration: View {
         case "nausea": nausea
         case "abdominal": abdominal
         case "vomiting": vomiting
+        case "oralIntolerance": oralIntolerance
         case "bleeding": bleeding
         case "fatigue": fatigue
         case "fluid": fluid
@@ -211,6 +212,41 @@ struct SymptomIllustration: View {
                     }
                 }
                 .fill(accent)
+            }
+        }
+    }
+
+    /// A cup turned away, struck through: the drink that cannot be taken.
+    /// Struck the same way as no urine, the other sign about fluids.
+    private var oralIntolerance: some View {
+        GeometryReader { geometry in
+            let rect = CGRect(origin: .zero, size: geometry.size)
+            let cup = Path { path in
+                path.move(to: rect.n(28, 30))
+                path.addLine(to: rect.n(72, 30))
+                path.addLine(to: rect.n(64, 80))
+                path.addQuadCurve(to: rect.n(36, 80), control: rect.n(50, 86))
+                path.closeSubpath()
+            }
+            ZStack {
+                cup.fill(accent.opacity(0.2))
+                cup.stroke(accent, style: StrokeStyle(lineWidth: rect.s(4.5), lineJoin: .round))
+                // The water line, low in the cup
+                Path { path in
+                    path.move(to: rect.n(33, 52))
+                    path.addLine(to: rect.n(67, 52))
+                }
+                .stroke(accent.opacity(0.7), style: StrokeStyle(lineWidth: rect.s(3.5), lineCap: .round))
+                Path { path in
+                    path.move(to: rect.n(20, 82))
+                    path.addLine(to: rect.n(80, 18))
+                }
+                .stroke(Palette.card, style: StrokeStyle(lineWidth: rect.s(11), lineCap: .round))
+                Path { path in
+                    path.move(to: rect.n(22, 80))
+                    path.addLine(to: rect.n(78, 20))
+                }
+                .stroke(accent, style: StrokeStyle(lineWidth: rect.s(5), lineCap: .round))
             }
         }
     }

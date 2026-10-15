@@ -1,7 +1,7 @@
 import Foundation
 
-/// One day of the reader's measurements: the readings they took and the lab
-/// reports they were given, together.
+/// One day of the reader's measurements: the readings they took, the lab
+/// reports they were given and the fluids they logged, together.
 ///
 /// Two separate stores, which is right — a blood pressure and a blood count
 /// are taken at different moments. But a person looking back at an illness, or
@@ -19,10 +19,13 @@ struct HealthLogDay: Identifiable, Equatable {
     /// Newest first, matching the stores.
     let vitals: [VitalsEntry]
     let labs: [LabReport]
+    /// Oldest first. Kept out of `itemsNewestFirst`: a day's fluids are read
+    /// as totals, not as a dozen cups interleaved with a blood count.
+    var fluids: [FluidEntry] = []
 
     var id: Date { date }
 
-    var isEmpty: Bool { vitals.isEmpty && labs.isEmpty }
+    var isEmpty: Bool { vitals.isEmpty && labs.isEmpty && fluids.isEmpty }
 
     /// Everything recorded that day, newest first, so a day reads as one list.
     var itemsNewestFirst: [Item] {
@@ -65,13 +68,14 @@ enum HealthLog {
 
 
 
-    /// Groups the two measurement stores by calendar day, newest day first.
+    /// Groups the measurement stores by calendar day, newest day first.
     ///
     /// Days with nothing in them are absent rather than empty: a gap in the
     /// record is a day the reader did not write anything down, and inventing a
     /// row for it would suggest they recorded "nothing wrong".
     static func days(vitals: [VitalsEntry],
                      labs: [LabReport] = [],
+                     fluids: [FluidEntry] = [],
                      calendar: Calendar = .current) -> [HealthLogDay] {
         var vitalsByDay: [Date: [VitalsEntry]] = [:]
         for entry in vitals {
@@ -83,13 +87,19 @@ enum HealthLog {
             labsByDay[calendar.startOfDay(for: report.date), default: []].append(report)
         }
 
-        return Set(vitalsByDay.keys).union(labsByDay.keys)
+        var fluidsByDay: [Date: [FluidEntry]] = [:]
+        for entry in fluids {
+            fluidsByDay[calendar.startOfDay(for: entry.date), default: []].append(entry)
+        }
+
+        return Set(vitalsByDay.keys).union(labsByDay.keys).union(fluidsByDay.keys)
             .sorted(by: >)
             .map { day in
                 HealthLogDay(
                     date: day,
                     vitals: (vitalsByDay[day] ?? []).sorted { $0.date > $1.date },
-                    labs: (labsByDay[day] ?? []).sorted { $0.date > $1.date })
+                    labs: (labsByDay[day] ?? []).sorted { $0.date > $1.date },
+                    fluids: (fluidsByDay[day] ?? []).sorted { $0.date < $1.date })
             }
     }
 }

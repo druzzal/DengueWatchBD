@@ -11,6 +11,7 @@ struct CaseLogView: View {
     @Environment(CaseLogStore.self) private var log
     @Environment(VitalsStore.self) private var vitals
     @Environment(LabStore.self) private var labs
+    @Environment(FluidStore.self) private var fluids
     @Environment(LogNameStore.self) private var logNames
     @Environment(LocalizationManager.self) private var loc
     @Environment(\.horizontalSizeClass) private var sizeClass
@@ -34,7 +35,8 @@ struct CaseLogView: View {
 
     private var days: [HealthLogDay] {
         let ordered = HealthLog.days(vitals: vitals.entries,
-                                     labs: labs.reports)
+                                     labs: labs.reports,
+                                     fluids: fluids.entries)
         return oldestFirst ? ordered.reversed() : ordered
     }
 
@@ -51,7 +53,11 @@ struct CaseLogView: View {
     var body: some View {
         NavigationStack {
             Group {
-                if days.isEmpty {
+                // Symptom checks are not listed here, but "Delete all" removes
+                // them, so the list stays reachable while any check exists.
+                // Showing the empty state for a reader with only checks left
+                // them no way at all to delete them.
+                if days.isEmpty && log.entries.isEmpty {
                     ContentUnavailableView {
                         Label(loc.t("log.empty.title"), systemImage: "list.clipboard")
                     } description: {
@@ -63,40 +69,48 @@ struct CaseLogView: View {
                             Section(loc.t("log.temperature")) { temperatureChart }
                         }
 
-                        Section {
-                            ForEach(days) { day in
-                                NavigationLink {
-                                    LogDayDetailView(day: day, title: title(for: day),
-                                                     number: numbers[day.date],
-                                                     name: logNames.name(for: day.date))
-                                } label: {
-                                    LogDaySummaryRow(day: day, title: title(for: day))
-                                }
-                                .swipeActions {
-                                    Button(loc.t("common.delete"), role: .destructive) {
-                                        pendingDeletion = day
-                                    }
-                                }
-                                // The other edge from delete, so a share is never
-                                // one slip away from losing the day.
-                                .swipeActions(edge: .leading) {
-                                    Button(loc.t("log.exportDay.short"), systemImage: "doc.richtext") {
-                                        export([day])
-                                    }
-                                    .tint(Palette.accent)
-                                }
-                                .contextMenu {
-                                    Button(loc.t("log.exportDay"), systemImage: "square.and.arrow.up") {
-                                        export([day])
-                                    }
-                                    Button(loc.t("log.rename"), systemImage: "pencil") {
-                                        draftName = logNames.name(for: day.date) ?? ""
-                                        renaming = day
-                                    }
-                                }
+                        if days.isEmpty {
+                            Section {
+                                Text(loc.t("log.checksOnly"))
+                                    .typo(.callout)
+                                    .foregroundStyle(.secondary)
                             }
-                        } header: {
-                            Text(loc.t("log.entries"))
+                        } else {
+                            Section {
+                                ForEach(days) { day in
+                                    NavigationLink {
+                                        LogDayDetailView(day: day, title: title(for: day),
+                                                         number: numbers[day.date],
+                                                         name: logNames.name(for: day.date))
+                                    } label: {
+                                        LogDaySummaryRow(day: day, title: title(for: day))
+                                    }
+                                    .swipeActions {
+                                        Button(loc.t("common.delete"), role: .destructive) {
+                                            pendingDeletion = day
+                                        }
+                                    }
+                                    // The other edge from delete, so a share is never
+                                    // one slip away from losing the day.
+                                    .swipeActions(edge: .leading) {
+                                        Button(loc.t("log.exportDay.short"), systemImage: "doc.richtext") {
+                                            export([day])
+                                        }
+                                        .tint(Palette.accent)
+                                    }
+                                    .contextMenu {
+                                        Button(loc.t("log.exportDay"), systemImage: "square.and.arrow.up") {
+                                            export([day])
+                                        }
+                                        Button(loc.t("log.rename"), systemImage: "pencil") {
+                                            draftName = logNames.name(for: day.date) ?? ""
+                                            renaming = day
+                                        }
+                                    }
+                                }
+                            } header: {
+                                Text(loc.t("log.entries"))
+                            }
                         }
 
                         Section {
@@ -138,6 +152,7 @@ struct CaseLogView: View {
                     log.clear()
                     vitals.clear()
                     labs.clear()
+                    fluids.clear()
                     logNames.clear()
                 }
                 Button(loc.t("common.cancel"), role: .cancel) {}
@@ -204,6 +219,7 @@ struct CaseLogView: View {
     private func deleteDay(_ day: HealthLogDay) {
         withAnimation {
             day.itemsNewestFirst.forEach(delete)
+            day.fluids.forEach { fluids.delete(id: $0.id) }
             // A name must not outlive the day it belonged to, or tomorrow's
             // records would inherit it.
             logNames.forget(day: day.date)
@@ -351,7 +367,7 @@ private struct LogDaySummaryRow: View {
                 }
             }
             Spacer(minLength: Space.tight)
-            Text(loc.num(day.itemsNewestFirst.count))
+            Text(loc.num(day.itemsNewestFirst.count + day.fluids.count))
                 .typo(.micro)
                 .foregroundStyle(.secondary)
                 .monospacedDigit()
@@ -398,6 +414,10 @@ private struct LogDaySummaryRow: View {
         }
         if let platelets = day.labs.compactMap({ $0.platelets }).min() {
             parts.append("\(loc.t("lab.platelets")) \(loc.num(Int(platelets)))")
+        }
+        let drunk = FluidLog.day(day.date, entries: day.fluids).drunkMillilitres
+        if drunk > 0 {
+            parts.append("\(loc.num(drunk)) \(loc.t("fluid.unit.ml"))")
         }
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }

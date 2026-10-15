@@ -25,6 +25,9 @@ struct MyHealthView: View {
     @State private var showingVitals = false
     @State private var showingLab = false
     @State private var showingLog = false
+    @State private var showingCheckHistory = false
+    /// The latest check, once the reader has asked to delete it.
+    @State private var pendingCheckDeletion: CaseLogEntry?
 
     var body: some View {
         NavigationStack {
@@ -36,6 +39,7 @@ struct MyHealthView: View {
                     symptomCheckCard
                     feverTimelineCard
                     carePlanCard
+                    FluidCard()
                     vitalsCard
                     labCard
                 }
@@ -57,6 +61,8 @@ struct MyHealthView: View {
             }
             .sheet(isPresented: $showingLog) { CaseLogView() }
             .sheet(isPresented: $showingCheck) { SymptomCheckerView() }
+            .sheet(isPresented: $showingCheckHistory) { SymptomCheckHistoryView() }
+            .confirmCheckDeletion($pendingCheckDeletion, from: caseLog, loc: loc)
             // Home can ask for a check directly, rather than leaving the reader
             // on this tab to find the button. Keyed on the request so it fires
             // whether the tab was already open or is being built for it.
@@ -81,7 +87,8 @@ struct MyHealthView: View {
     /// It shows the last outcome rather than only a button, because "what did
     /// it say last time" is the question someone opens this tab with.
     private var symptomCheckCard: some View {
-        CardSection(loc.t("check.title"), subtitle: loc.t("health.check.subtitle")) {
+        CardSection(loc.t("check.title"), subtitle: loc.t("health.check.subtitle"),
+                    accessory: caseLog.entries.isEmpty ? nil : AnyView(checkMenu)) {
             VStack(alignment: .leading, spacing: Space.row) {
                 if let latest = caseLog.entries.first {
                     HStack(alignment: .top, spacing: Space.row) {
@@ -114,6 +121,26 @@ struct MyHealthView: View {
         }
     }
 
+    /// Past checks, and deleting the latest one. In a menu rather than on
+    /// the card: these are occasional, and a delete button beside "Check
+    /// again" would sit one slip away from the action people come here for.
+    private var checkMenu: some View {
+        Menu {
+            Button(loc.t("check.history.title"), systemImage: "clock.arrow.circlepath") {
+                showingCheckHistory = true
+            }
+            Button(loc.t("check.delete"), systemImage: "trash", role: .destructive) {
+                pendingCheckDeletion = caseLog.entries.first
+            }
+        } label: {
+            Image(systemName: "ellipsis.circle")
+                .font(.title3)
+                .foregroundStyle(Palette.accent)
+                .frame(minWidth: Hit.minimum, minHeight: Hit.minimum)
+        }
+        .accessibilityLabel(loc.t("check.actions"))
+    }
+
     // MARK: - Care plan
 
     /// WHO's management group for what the reader recorded, with the readings
@@ -130,7 +157,9 @@ struct MyHealthView: View {
                             checkedAt: latest.date,
                             isCurrent: WHOCarePlan.describesToday(
                                 checkedDaysAgo: daysSince(latest.date)),
-                            notableLabs: notableLabNames) {
+                            notableLabs: notableLabNames,
+                            haematocritRising: CarePlanContext.haematocritIsRising(
+                                labs.series(for: .haematocrit))) {
                 showingCheck = true
             }
         }

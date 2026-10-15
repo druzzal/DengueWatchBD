@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The WHO management group the reader's own record falls in, what WHO advises
+/// Where WHO's guidance puts the reader's own record, what WHO advises
 /// for it, and — always — what produced it.
 ///
 /// The reasons are not decoration. A plan that says "go to hospital" without
@@ -18,6 +18,9 @@ struct WHOCarePlanCard: View {
     /// Lab measures well outside their range, named for the doctor rather
     /// than folded into the group.
     let notableLabs: String?
+    /// The haematocrit has risen on each of the last two reports. Named for
+    /// the doctor, like `notableLabs`, and never folded into the group.
+    var haematocritRising = false
     var onRecheck: () -> Void
 
     private var risk: RiskLevel { plan.group.risk }
@@ -38,10 +41,17 @@ struct WHOCarePlanCard: View {
                 if !plan.reasons.isEmpty && plan.reasons != [.noneOfThese] {
                     reasons
                 }
+                if haematocritRising {
+                    InlineNote(symbol: "chart.line.uptrend.xyaxis",
+                               detail: loc.t("care.plan.haematocritRising"),
+                               tint: Palette.riskInk(.high))
+                }
                 if let notableLabs {
                     InlineNote(symbol: "drop.triangle",
                                detail: loc.t("care.plan.readings", notableLabs),
                                tint: Palette.riskInk(.high))
+                }
+                if notableLabs != nil || haematocritRising {
                     // Only where a lab value is on the card: this is the one
                     // place a reader could reasonably assume their blood count
                     // moved the group. It did not.
@@ -61,16 +71,16 @@ struct WHOCarePlanCard: View {
         }
     }
 
-    /// The group, stated with WHO's own letter so a clinician here recognises
-    /// it on sight.
+    /// The level, drawn and named. The A / B / C letters went with WHO's 2009
+    /// groups: the 2025 guideline has no letters, and printing one would send
+    /// a clinician looking for a classification that no longer exists.
     private var header: some View {
         HStack(alignment: .top, spacing: Space.row) {
             ZStack {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(Palette.riskSoft(risk))
-                Text(plan.group.letter)
-                    .typo(.title)
-                    .fontWeight(.bold)
+                Image(systemName: plan.group.symbolName)
+                    .font(.system(size: 22, weight: .semibold))
                     .foregroundStyle(Palette.riskInk(risk))
             }
             .frame(width: 52, height: 52)

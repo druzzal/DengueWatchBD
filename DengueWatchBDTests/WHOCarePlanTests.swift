@@ -1,7 +1,7 @@
 import XCTest
 @testable import DengueWatchBD
 
-/// The WHO management groups. These rules decide whether someone is told to
+/// Where WHO's 2025 guidance puts the reader. These rules decide whether someone is told to
 /// stay home or go to an emergency department, so the tests are about the
 /// direction of every influence as much as the outcome.
 final class WHOCarePlanTests: XCTestCase {
@@ -29,8 +29,10 @@ final class WHOCarePlanTests: XCTestCase {
     }
 
     func testAWarningSignMeansHospitalAssessment() {
-        // WHO's warning signs are the whole reason Group B exists.
-        for sign in ["abdominal", "vomiting", "bleeding", "fatigue", "fluid", "noUrine"] {
+        // WHO 2025 lists the warning signs, and being unable to drink, among
+        // the reasons clinicians admit.
+        for sign in ["abdominal", "vomiting", "oralIntolerance", "bleeding", "fatigue",
+                     "fluid", "noUrine"] {
             XCTAssertEqual(plan(["fever", sign]).group, .referral, sign)
         }
     }
@@ -41,11 +43,37 @@ final class WHOCarePlanTests: XCTestCase {
         }
     }
 
-    func testAHigherRiskConditionAloneMeansAssessment() {
-        // WHO puts co-existing conditions in Group B even without warning signs.
+    func testPregnancyAloneMeansHospitalAssessment() {
+        // WHO 2025 lists pregnancy on its own among the criteria to admit.
         var context = TriageEngine.Context()
         context.isPregnant = true
-        XCTAssertEqual(plan(["fever"], context: context).group, .referral)
+        let result = plan(["fever"], context: context)
+        XCTAssertEqual(result.group, .referral)
+        XCTAssertTrue(result.reasons.contains(.pregnancy))
+    }
+
+    func testAgeAndLongTermConditionsStillMeanAssessment() {
+        // WHO leaves these to the clinician ("may elect to admit"); the app
+        // keeps sending them to be seen rather than deciding for the clinician.
+        var age = TriageEngine.Context()
+        age.isUnderFiveOrOverSixty = true
+        var chronic = TriageEngine.Context()
+        chronic.hasChronicCondition = true
+        for context in [age, chronic] {
+            let result = plan(["fever"], context: context)
+            XCTAssertEqual(result.group, .referral)
+            XCTAssertTrue(result.reasons.contains(.higherRiskGroup))
+        }
+    }
+
+    /// WHO 2025 names a second infection as raising the risk of severe
+    /// disease, not as a reason to admit. It is said, and it moves nothing.
+    func testPreviousDengueIsAReasonButNotAMove() {
+        var context = TriageEngine.Context()
+        context.hadDengueBefore = true
+        let result = plan(["fever"], context: context)
+        XCTAssertEqual(result.group, .home)
+        XCTAssertEqual(result.reasons, [.previousDengue])
     }
 
     // MARK: - Readings
@@ -175,11 +203,7 @@ final class WHOCarePlanTests: XCTestCase {
                 XCTAssertNotNil(Strings.bangla[key], key)
             }
         }
-        let reasons: [WHOCarePlan.Reason] = [.severeSign, .warningSign, .coMorbidity,
-                                             .criticalPhase, .narrowPulsePressure,
-                                             .lowBloodPressure, .fastPulse, .lowOxygen,
-                                             .noneOfThese]
-        for reason in reasons {
+        for reason in WHOCarePlan.Reason.allCases {
             XCTAssertNotNil(Strings.english[reason.labelKey], reason.labelKey)
             XCTAssertNotNil(Strings.bangla[reason.labelKey], reason.labelKey)
         }
@@ -188,7 +212,7 @@ final class WHOCarePlanTests: XCTestCase {
     /// The advice must not contradict the app's standing line on painkillers,
     /// and must not quietly become dosing instructions.
     func testTheAdviceNamesTheDrugsToAvoidAndGivesNoDoses() {
-        let home = (1...4).map { Strings.english["who.group.home.advice\($0)"] ?? "" }
+        let home = WHOCarePlan.Group.home.adviceKeys.map { Strings.english[$0] ?? "" }
         let joined = home.joined(separator: " ").lowercased()
         XCTAssertTrue(joined.contains("aspirin"), joined)
         XCTAssertTrue(joined.contains("ibuprofen"), joined)
@@ -197,10 +221,33 @@ final class WHOCarePlanTests: XCTestCase {
         }
     }
 
-    /// The card must keep saying what it is not.
+    /// The card must keep saying what it is not, and which guidance it is.
     func testTheSourceLineDisclaimsDiagnosis() {
         let source = (Strings.english["who.plan.source"] ?? "").lowercased()
         XCTAssertTrue(source.contains("who"), source)
+        XCTAssertTrue(source.contains("2025"), "cites the current guideline: \(source)")
         XCTAssertTrue(source.contains("does not decide whether you have dengue"), source)
+    }
+
+    /// The 2009 letters must not survive the move to the 2025 guideline: a
+    /// clinician reading "Group B" would look for a classification WHO no
+    /// longer uses.
+    func testNoGroupIsTitledWithA2009Letter() {
+        for group in WHOCarePlan.Group.allCases {
+            for table in [Strings.english, Strings.bangla] {
+                let title = table[group.titleKey] ?? ""
+                XCTAssertFalse(title.contains("Group") || title.contains("গ্রুপ"), title)
+            }
+        }
+    }
+
+    /// WHO 2025 advises against steroids at home, and its home advice now
+    /// leads with measured oral fluids.
+    func testTheHomeAdviceCarriesThe2025Recommendations() {
+        let home = WHOCarePlan.Group.home.adviceKeys
+            .map { Strings.english[$0] ?? "" }.joined(separator: " ").lowercased()
+        XCTAssertTrue(home.contains("steroid"), home)
+        XCTAssertTrue(home.contains("measure"), home)
+        XCTAssertTrue(home.contains("4 to 6 times a day"), home)
     }
 }

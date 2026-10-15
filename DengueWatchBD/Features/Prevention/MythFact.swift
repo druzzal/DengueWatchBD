@@ -27,5 +27,10 @@ struct MythFact: Identifiable, Hashable {
         MythFact(id: "platelets"),
         // The one that turns a survivable illness into a bleed.
         MythFact(id: "painkillers"),
+        // Families push for platelets at a number; WHO 2025 advises against
+        // transfusing a low count without bleeding.
+        MythFact(id: "transfusion"),
+        // WHO 2025 advises against steroids in dengue, mild or severe.
+        MythFact(id: "steroids"),
     ]
 }

@@ -83,6 +83,10 @@ enum TriageEngine {
 
         Symptom(id: "abdominal", group: .warning),
         Symptom(id: "vomiting", group: .warning),
+        // WHO 2025 lists oral intolerance as a reason to admit in its own
+        // right. It used to ride along in the vomiting row's small print, where
+        // someone who simply cannot drink — without vomiting — would not find it.
+        Symptom(id: "oralIntolerance", group: .warning),
         Symptom(id: "bleeding", group: .warning),
         Symptom(id: "fatigue", group: .warning),
         Symptom(id: "fluid", group: .warning),
@@ -101,8 +105,10 @@ enum TriageEngine {
         symptoms.first { $0.id == id }
     }
 
-    /// Higher-risk groups per WHO dengue guidance — they shift borderline
-    /// results up a level.
+    /// Higher-risk groups per WHO dengue guidance.
+    ///
+    /// Source: WHO, *Guidelines for clinical management of arboviral diseases:
+    /// dengue, chikungunya, Zika and yellow fever* (2025), section 2.6.
     struct Context {
         var feverDaysAgo: Int?
         var isPregnant = false
@@ -110,8 +116,16 @@ enum TriageEngine {
         var hasChronicCondition = false
         var hadDengueBefore = false
 
-        var hasCoMorbidity: Bool {
-            isPregnant || isUnderFiveOrOverSixty || hasChronicCondition || hadDengueBefore
+        /// The groups WHO 2025 names when it lists who is admitted: pregnancy
+        /// outright, and the extremes of age and underlying conditions as
+        /// patients clinicians "may elect to admit".
+        ///
+        /// Previous dengue is deliberately not here. WHO names a second
+        /// infection as raising the risk of severe disease, not as a reason to
+        /// admit, so it is shown as a reason to watch closely and changes no
+        /// advice on its own.
+        var isHigherRiskGroup: Bool {
+            isPregnant || isUnderFiveOrOverSixty || hasChronicCondition
         }
     }
 
@@ -122,15 +136,25 @@ enum TriageEngine {
         let warnings = chosen.filter { $0.group == .warning }.count
         if warnings >= 1 { return .seeDoctorToday }
 
-        let core = chosen.filter { $0.group == .core }.count
-        let hasFever = selected.contains("fever")
+        // Anyone in a group WHO would consider admitting is seen the same day,
+        // whatever the symptoms. This keeps the result in step with the care
+        // plan, which already sends these groups for hospital assessment — the
+        // two used to disagree for a pregnant reader with a fever alone.
+        if context.isHigherRiskGroup && !chosen.isEmpty { return .seeDoctorToday }
 
-        if hasFever && core >= 2 {
-            return context.hasCoMorbidity ? .seeDoctorToday : .testAdvised
-        }
-        if hasFever { return .testAdvised }
-        if core >= 2 { return .testAdvised }
+        let core = chosen.filter { $0.group == .core }.count
+        if selected.contains("fever") || core >= 2 { return .testAdvised }
         return .selfCare
+    }
+
+    /// True when a same-day result came from the reader's risk group rather
+    /// than from a warning sign they ticked, so the result can say which.
+    /// "You reported a warning sign" to someone who reported none reads as the
+    /// app not listening.
+    static func isRaisedByRiskGroup(selected: Set<String>, context: Context) -> Bool {
+        let chosen = symptoms.filter { selected.contains($0.id) }
+        return evaluate(selected: selected, context: context) == .seeDoctorToday
+            && !chosen.contains { $0.group == .warning }
     }
 
     /// Which phase of illness the person is in. The critical phase is when

@@ -46,4 +46,28 @@ struct CarePlanContext: Equatable {
             notableLabs: Array(Set(labsOut)).sorted { $0.rawValue < $1.rawValue }
         )
     }
+
+    /// Whether the haematocrit has gone up on each of the last two reports.
+    ///
+    /// WHO 2025 lists a "progressive increase in haematocrit on at least two
+    /// consecutive measurements" among the reasons clinicians admit someone
+    /// with dengue. Read here as two rises in a row — three reports, each
+    /// higher than the one before — because one rise is a single comparison,
+    /// not a progression.
+    ///
+    /// It is raised beside the plan and never moves the group, for the same
+    /// reason no lab value does: this is a pattern for a doctor to act on, and
+    /// the app only points at it. A rise smaller than the assay's own scatter
+    /// does not count, or two readings a fraction apart would flag every week.
+    /// The newest report has to be recent: a rise that ended a week ago says
+    /// nothing about today.
+    static func haematocritIsRising(_ series: [(date: Date, value: Double)],
+                                    now: Date = Date()) -> Bool {
+        let ordered = series.sorted { $0.date < $1.date }
+        guard ordered.count >= 3, let newest = ordered.last,
+              now.timeIntervalSince(newest.date) <= recencyWindow else { return false }
+        let lastThree = ordered.suffix(3).map(\.value)
+        let step = LabMeasure.haematocrit.minimumMeaningfulChange
+        return lastThree[1] - lastThree[0] >= step && lastThree[2] - lastThree[1] >= step
+    }
 }
