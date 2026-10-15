@@ -35,6 +35,46 @@ SIMCTL_CHILD_DW_START_TAB=map xcrun simctl launch booted bd.uzzal.denguewatch
 `DW_START_TAB` is one of home/map/health/care/prevent, and is compiled out of
 release builds.
 
+### Installing on an iPhone
+
+Build the Release configuration for a connected, paired phone, then install and
+launch it with `devicectl`:
+
+```sh
+xcodebuild -project DengueWatchBD.xcodeproj -scheme DengueWatchBD \
+  -configuration Release -destination "id=<device UDID>" \
+  -derivedDataPath build -allowProvisioningUpdates build
+xcrun devicectl device install app --device <device UDID> \
+  build/Build/Products/Release-iphoneos/DengueWatchBD.app
+xcrun devicectl device process launch --device <device UDID> bd.uzzal.denguewatch
+```
+
+`xcrun devicectl list devices` gives the UDID. Installing over an existing copy
+keeps the reader's data.
+
+Signing is automatic, with team `KC45FLCGH2`. A build signed with a free Apple ID
+team carries a provisioning profile that expires after seven days, after which
+the app will not open until it is rebuilt and reinstalled; a paid Apple
+Developer Program membership gives profiles that last a year. Check a build's
+expiry with:
+
+```sh
+security cms -D -i DengueWatchBD.app/embedded.mobileprovision | plutil -extract ExpirationDate raw -
+```
+
+A direct build like this keeps its debug symbols (the binary is about 13 MB);
+an App Store archive strips them.
+
+### Privacy manifest
+
+`DengueWatchBD/PrivacyInfo.xcprivacy` declares no tracking and no collected
+data, and one required-reason API: UserDefaults (`CA92.1`), for the app's own
+settings. Feed refreshes are decided by the server's ETag and Last-Modified
+headers and a sync date in UserDefaults, not by file timestamps, so the file
+timestamp category is not declared. Any new required-reason API — file
+timestamps, system boot time, disk space — needs adding here before
+submission.
+
 ## Features
 
 | Tab | What it does |
@@ -150,7 +190,11 @@ raise no licensing questions. Severity is carried by shape as well as tint.
 
 `DengueWatchBD/Resources/dengue-feed.json` is the offline seed: a copy of the
 published feed, so the app shows real figures on first launch with no network at
-all. `FeedSync` replaces it with a download as soon as one succeeds.
+all. `FeedSync` replaces it with a download as soon as one succeeds. The seed is
+currently the DGHS report of 15 October 2026. Refresh it before a release by
+copying the published
+[`latest.json`](https://druzzal.github.io/dengue-bd-dashboard/data/latest.json)
+over it, as long as its `schema_version` still matches.
 
 The feed carries, for the current season:
 
@@ -252,6 +296,16 @@ range is marked as worth showing to a clinician, never explained, and no
 combination of readings produces a diagnosis. The log groups everything by day,
 and one day can be renamed, deleted or exported on its own. "Delete all" clears
 all four stores.
+
+A single symptom check can be deleted from the symptom check card in My health,
+and any earlier one from its list of past checks. The care plan and fever
+timeline then follow the check before it.
+
+The PDF opens with an at-a-glance summary and trend charts, then the record day
+by day. When fluids were logged it adds a fluid summary — days logged, average
+drunk on a whole day, and the days urine reached WHO's aim — and two daily bar
+charts, intake and urine. Today is left out of the averages and drawn paler,
+because it is not over yet.
 
 ## Medical scope
 

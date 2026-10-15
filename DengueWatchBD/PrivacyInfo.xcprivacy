@@ -10,34 +10,24 @@
 
     <!-- Nothing leaves the device. There is no account, no analytics SDK and
          no server that receives user data: the app only fetches a public
-         surveillance dataset. Location, the symptom log and settings are all
-         read and written on device, so none of it is "collected" in the sense
-         this key means. -->
+         surveillance dataset. Location, symptom checks, vital signs, lab
+         reports, the fluid log and settings are all read and written on
+         device, so none of it is "collected" in the sense this key means. A
+         PDF of the health log leaves only when the reader shares it. -->
     <key>NSPrivacyCollectedDataTypes</key>
     <array/>
 
     <key>NSPrivacyAccessedAPITypes</key>
     <array>
         <dict>
-            <!-- UserDefaults stores the chosen language, home district, alert
-                 preferences and the last sync time — all of it this app's own
-                 data on this device. -->
+            <!-- UserDefaults stores the chosen language, home area, alert
+                 preferences, the prevention checklist and the last sync time
+                 — all of it this app's own data on this device. -->
             <key>NSPrivacyAccessedAPIType</key>
             <string>NSPrivacyAccessedAPICategoryUserDefaults</string>
             <key>NSPrivacyAccessedAPITypeReasons</key>
             <array>
                 <string>CA92.1</string>
-            </array>
-        </dict>
-        <dict>
-            <!-- The downloaded dataset and the symptom log are written to the
-                 app container; timestamps are used to decide whether a refresh
-                 is due. -->
-            <key>NSPrivacyAccessedAPIType</key>
-            <string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
-            <key>NSPrivacyAccessedAPITypeReasons</key>
-            <array>
-                <string>C617.1</string>
             </array>
         </dict>
     </array>
