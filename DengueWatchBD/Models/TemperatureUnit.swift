@@ -59,6 +59,14 @@ enum TemperatureUnit: String, CaseIterable, Identifiable, Sendable {
         return toCelsius(typed)
     }
 
+    /// What was typed in this unit, rewritten in `other` — for carrying a
+    /// half-entered reading across when the reader flips the unit. Nil when
+    /// the text is not a temperature in this unit.
+    func retyped(_ text: String, in other: TemperatureUnit, style: NumberStyle) -> String? {
+        guard let celsius = celsiusValue(from: text) else { return nil }
+        return style.decimal(other.fromCelsius(celsius), places: 1)
+    }
+
     /// One decimal place: thermometers report tenths, and more would imply a
     /// precision the reading does not have.
     func display(celsius: Double) -> String {

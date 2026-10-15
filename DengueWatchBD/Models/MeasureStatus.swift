@@ -75,3 +75,47 @@ extension LabMeasure {
         MeasureStatus.of(value, usual: typicalRange, far: markedlyAbnormalRange)
     }
 }
+
+/// Which side of the usual range a reading fell on, in words.
+///
+/// `MeasureStatus` says how far out a reading is, which is what the colour
+/// carries; it cannot say which way. "Outside the usual range" reads the same
+/// for a platelet count of 40 and a temperature of 39.5, and a log handed to a
+/// doctor should say "Low" for one and "High" for the other.
+enum MeasureSide: String, CaseIterable, Equatable {
+    case low
+    case normal
+    case high
+
+    /// The same three words the lab table already uses.
+    var labelKey: String {
+        switch self {
+        case .low: "lab.flag.low"
+        case .normal: "lab.flag.ok"
+        case .high: "lab.flag.high"
+        }
+    }
+
+    static func of(_ value: Double, usual: ClosedRange<Double>) -> MeasureSide {
+        if value < usual.lowerBound { return .low }
+        if value > usual.upperBound { return .high }
+        return .normal
+    }
+
+    /// A blood pressure is one reading written as a pair, so it gets one
+    /// word: whichever half strayed further, systolic on a tie.
+    static func bloodPressure(systolic: Double, diastolic: Double)
+        -> (side: MeasureSide, status: MeasureStatus) {
+        let top = (VitalKind.systolic.side(systolic), VitalKind.systolic.status(systolic))
+        let bottom = (VitalKind.diastolic.side(diastolic), VitalKind.diastolic.status(diastolic))
+        return bottom.1.risk > top.1.risk ? bottom : top
+    }
+}
+
+extension VitalKind {
+    func side(_ value: Double) -> MeasureSide { .of(value, usual: usualRange) }
+}
+
+extension LabMeasure {
+    func side(_ value: Double) -> MeasureSide { .of(value, usual: typicalRange) }
+}

@@ -17,22 +17,20 @@ struct CaseLogView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var showingClearConfirmation = false
-    /// Days chosen for deletion while editing. Keyed by the day itself: the
-    /// list is rebuilt from three stores on every change, so holding the
-    /// values would go stale the moment one record in a day is removed.
-    @State private var selection: Set<Date> = []
-    @State private var isEditing = false
     /// Oldest first when true. The log is always ordered by date; this only
     /// decides which end the reader starts from.
     @AppStorage("log.oldestFirst") private var oldestFirst = false
     /// The record being renamed, and the text as it is typed.
     @State private var renaming: HealthLogDay?
     @State private var draftName = ""
-    /// Days a reader has asked to delete, held until they confirm. Deleting a
-    /// day removes every reading and lab report taken that day, and there is
+    /// The day a reader has asked to delete, held until they confirm. Deleting
+    /// a day removes every reading and lab report taken that day, and there is
     /// no undo — "delete everything" asked first and a swipe did not, which
     /// put the smaller, easier gesture on the less reversible path.
-    @State private var pendingDeletion: [HealthLogDay] = []
+    @State private var pendingDeletion: HealthLogDay?
+    /// True while the PDF is being laid out, so the button shows it is
+    /// working rather than looking like the tap was missed.
+    @State private var isExporting = false
 
     private var days: [HealthLogDay] {
         let ordered = HealthLog.days(vitals: vitals.entries,
@@ -60,7 +58,7 @@ struct CaseLogView: View {
                         Text(loc.t("log.empty.detail"))
                     }
                 } else {
-                    List(selection: $selection) {
+                    List {
                         if temperatureSeries.count >= 2 {
                             Section(loc.t("log.temperature")) { temperatureChart }
                         }
@@ -68,16 +66,29 @@ struct CaseLogView: View {
                         Section {
                             ForEach(days) { day in
                                 NavigationLink {
-                                    LogDayDetailView(day: day, title: title(for: day))
+                                    LogDayDetailView(day: day, title: title(for: day),
+                                                     number: numbers[day.date],
+                                                     name: logNames.name(for: day.date))
                                 } label: {
                                     LogDaySummaryRow(day: day, title: title(for: day))
                                 }
                                 .swipeActions {
                                     Button(loc.t("common.delete"), role: .destructive) {
-                                        pendingDeletion = [day]
+                                        pendingDeletion = day
                                     }
                                 }
+                                // The other edge from delete, so a share is never
+                                // one slip away from losing the day.
+                                .swipeActions(edge: .leading) {
+                                    Button(loc.t("log.exportDay.short"), systemImage: "doc.richtext") {
+                                        export([day])
+                                    }
+                                    .tint(Palette.accent)
+                                }
                                 .contextMenu {
+                                    Button(loc.t("log.exportDay"), systemImage: "square.and.arrow.up") {
+                                        export([day])
+                                    }
                                     Button(loc.t("log.rename"), systemImage: "pencil") {
                                         draftName = logNames.name(for: day.date) ?? ""
                                         renaming = day
@@ -98,22 +109,15 @@ struct CaseLogView: View {
                     }
                 }
             }
-            .environment(\.editMode, .constant(isEditing ? .active : .inactive))
             .readableColumn()
             .navigationTitle(loc.t("log.title"))
             .navigationBarTitleDisplayMode(sizeClass == .regular ? .inline : .large)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) { LanguageToggle() }
                 ToolbarItem(placement: .topBarTrailing) { exportButton }
-                ToolbarItem(placement: .topBarTrailing) { editButton }
                 ToolbarItem(placement: .topBarLeading) { sortMenu }
-                if isEditing {
-                    ToolbarItem(placement: .bottomBar) { deleteSelectedButton }
-                }
-                if !isEditing {
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button(loc.t("common.done")) { dismiss() }
-                    }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(loc.t("common.done")) { dismiss() }
                 }
             }
             .alert(loc.t("log.rename"), isPresented: renamingBinding) {
@@ -138,14 +142,13 @@ struct CaseLogView: View {
                 }
                 Button(loc.t("common.cancel"), role: .cancel) {}
             }
-            .confirmationDialog(deletionTitle, isPresented: pendingDeletionBinding,
+            .confirmationDialog(loc.t("log.delete.day"), isPresented: pendingDeletionBinding,
                                 titleVisibility: .visible) {
                 Button(loc.t("common.delete"), role: .destructive) {
-                    pendingDeletion.forEach(deleteDay)
-                    pendingDeletion = []
-                    selection.removeAll()
+                    if let day = pendingDeletion { deleteDay(day) }
+                    pendingDeletion = nil
                 }
-                Button(loc.t("common.cancel"), role: .cancel) { pendingDeletion = [] }
+                Button(loc.t("common.cancel"), role: .cancel) { pendingDeletion = nil }
             } message: {
                 Text(loc.t("log.delete.detail"))
             }
@@ -154,16 +157,8 @@ struct CaseLogView: View {
     }
 
     private var pendingDeletionBinding: Binding<Bool> {
-        Binding(get: { !pendingDeletion.isEmpty },
-                set: { if !$0 { pendingDeletion = [] } })
-    }
-
-    /// Names what is about to go, because by the time the sheet is up the
-    /// reader can no longer see which rows they swiped or ticked.
-    private var deletionTitle: String {
-        pendingDeletion.count == 1
-            ? loc.t("log.delete.day")
-            : loc.t("log.delete.days", loc.num(pendingDeletion.count))
+        Binding(get: { pendingDeletion != nil },
+                set: { if !$0 { pendingDeletion = nil } })
     }
 
     /// The PDF is built when the reader actually shares, not when the screen
@@ -206,37 +201,6 @@ struct CaseLogView: View {
         return loc.t("log.defaultName", loc.num(number))
     }
 
-    /// Our own control rather than `EditButton`, whose title follows the
-    /// device language and would read "Edit" on a screen the reader has set
-    /// to Bangla.
-    @ViewBuilder
-    private var editButton: some View {
-        if !days.isEmpty {
-            Button(loc.t(isEditing ? "common.done" : "common.edit")) {
-                withAnimation(Motion.interactive) {
-                    isEditing.toggle()
-                    if !isEditing { selection.removeAll() }
-                }
-            }
-        }
-    }
-
-    /// Deletes what is ticked. Disabled rather than hidden when nothing is,
-    /// so the row does not appear and vanish as the reader selects.
-    private var deleteSelectedButton: some View {
-        Button(role: .destructive) {
-            deleteSelectedDays()
-        } label: {
-            Text(selection.isEmpty
-                 ? loc.t("common.delete")
-                 : loc.t("log.delete.selected", loc.num(selection.count)))
-        }
-        .disabled(selection.isEmpty)
-    }
-
-
-
-
     private func deleteDay(_ day: HealthLogDay) {
         withAnimation {
             day.itemsNewestFirst.forEach(delete)
@@ -244,25 +208,38 @@ struct CaseLogView: View {
             // records would inherit it.
             logNames.forget(day: day.date)
         }
-        selection.remove(day.id)
-    }
-
-    private func deleteSelectedDays() {
-        pendingDeletion = days.filter { selection.contains($0.id) }
     }
 
     @ViewBuilder
     private var exportButton: some View {
         if !days.isEmpty {
-            ShareLink(item: exportDocument,
-                      preview: SharePreview(loc.t("log.pdf.title"))) {
-                Label(loc.t("log.export"), systemImage: "square.and.arrow.up")
+            Button { export(days) } label: {
+                if isExporting {
+                    ProgressView()
+                } else {
+                    Label(loc.t("log.export"), systemImage: "square.and.arrow.up")
+                }
             }
+            .disabled(isExporting)
+            .accessibilityLabel(loc.t("log.export"))
         }
     }
 
-    private var exportDocument: HealthLogDocumentFile {
-        HealthLogDocumentFile(days: days, loc: loc, unit: preferences.temperatureUnit)
+    /// The whole log, or one day of it. Days keep their number from the
+    /// whole log either way.
+    private func export(_ chosen: [HealthLogDay]) {
+        guard !isExporting, !chosen.isEmpty else { return }
+        isExporting = true
+        Haptic.selection()
+        let names = Dictionary(uniqueKeysWithValues: chosen.compactMap { day in
+            logNames.name(for: day.date).map { (day.date, $0) }
+        })
+        let numbers = self.numbers
+        Task { @MainActor in
+            await HealthLogPDF.share(days: chosen, loc: loc, unit: preferences.temperatureUnit,
+                                     names: names, numbers: numbers)
+            isExporting = false
+        }
     }
 
     private func delete(_ item: HealthLogDay.Item) {

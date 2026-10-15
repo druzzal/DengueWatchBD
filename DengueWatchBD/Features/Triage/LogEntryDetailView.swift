@@ -75,18 +75,20 @@ private struct FlowReadings: View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 108), spacing: 8)],
                   alignment: .leading, spacing: 6) {
             if let systolic = entry.systolic, let diastolic = entry.diastolic {
-                reading(label: loc.t("vital.bloodPressure"),
-                        value: "\(loc.num(Int(systolic)))/\(loc.num(Int(diastolic)))",
-                        status: worse(VitalKind.systolic.status(systolic),
-                                      VitalKind.diastolic.status(diastolic)))
+                let pair = MeasureSide.bloodPressure(systolic: systolic, diastolic: diastolic)
+                ReadingCell(label: loc.t("vital.bloodPressure"),
+                            value: "\(loc.num(Int(systolic)))/\(loc.num(Int(diastolic)))",
+                            status: pair.status,
+                            side: pair.side)
             }
             ForEach(VitalKind.allCases.filter(shouldShow)) { kind in
                 if let value = entry.value(for: kind) {
-                    reading(label: loc.t(kind.labelKey),
-                            value: kind == .temperature
-                                ? preferences.temperatureUnit.display(celsius: value, style: loc.style)
-                                : "\(loc.decimal(value, places: kind.decimals)) \(loc.t(kind.unitKey))",
-                            status: kind.status(value))
+                    ReadingCell(label: loc.t(kind.labelKey),
+                                value: kind == .temperature
+                                    ? preferences.temperatureUnit.display(celsius: value, style: loc.style)
+                                    : "\(loc.decimal(value, places: kind.decimals)) \(loc.t(kind.unitKey))",
+                                status: kind.status(value),
+                                side: kind.side(value))
                 }
             }
         }
@@ -102,33 +104,24 @@ private struct FlowReadings: View {
         }
     }
 
-    private func worse(_ a: MeasureStatus, _ b: MeasureStatus) -> MeasureStatus {
-        a.risk >= b.risk ? a : b
-    }
-
-    private func reading(label: String, value: String, status: MeasureStatus) -> some View {
-        ReadingCell(label: label, value: value, status: status)
-    }
 }
 
-/// One reading: the number, what it is, and — when it sits outside the usual
-/// range — a mark saying so.
+/// One reading: the number, what it is, and whether it was low, normal or
+/// high.
 ///
-/// The mark is not decoration. The rest of the app already grades readings in
-/// words, so that a tile still reads in greyscale and to a colour-blind reader;
-/// this screen is laid out as a grid of small cells with no room for a third
-/// line of text, so it carries the same grading as a symbol instead. Either way
-/// colour is never the only signal, which matters most for a platelet count —
-/// the one number in dengue that people scan for.
+/// The word is on screen, not only the mark beside the number: the mark said
+/// a reading was out of range without saying which way, and a log is read for
+/// exactly that — a platelet count that fell, a fever that rose. Colour is
+/// still never the only signal, and a normal reading stays in neutral ink.
 ///
-/// The wording goes to VoiceOver rather than on screen: combining the children
-/// would read the number and its name and stop, leaving a low count sounding
-/// exactly like a normal one.
+/// Spoken as one label: combining the children would read the number and its
+/// name and stop, leaving a low count sounding exactly like a normal one.
 private struct ReadingCell: View {
     @Environment(LocalizationManager.self) private var loc
     let label: String
     let value: String
     let status: MeasureStatus
+    let side: MeasureSide
 
     var body: some View {
         VStack(alignment: .leading, spacing: 1) {
@@ -148,9 +141,14 @@ private struct ReadingCell: View {
             Text(label)
                 .typo(.micro).foregroundStyle(.secondary)
                 .lineLimit(2)
+            Text(loc.t(side.labelKey))
+                .typo(.micro).fontWeight(.semibold)
+                .foregroundStyle(status == .normal ? Color.secondary : Palette.riskInk(status.risk))
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(label), \(value), \(loc.t("status.\(status.rawValue)"))")
+        .accessibilityLabel(status == .normal
+            ? "\(label), \(value), \(loc.t(side.labelKey))"
+            : "\(label), \(value), \(loc.t(side.labelKey)), \(loc.t("status.\(status.rawValue)"))")
     }
 }
 
@@ -185,7 +183,8 @@ private struct LabDetail: View {
                         ReadingCell(
                             label: loc.t(measure.labelKey),
                             value: "\(loc.decimal(value, places: measure.decimals)) \(loc.t(measure.unitKey))",
-                            status: measure.status(value))
+                            status: measure.status(value),
+                            side: measure.side(value))
                     }
                 }
             }

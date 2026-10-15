@@ -365,10 +365,7 @@ struct MyHealthView: View {
     /// Which side of the printed range the value falls, in a word. Saying a
     /// platelet count is low is reading the range, not reading the patient.
     private func flag(_ value: Double, _ measure: LabMeasure) -> String {
-        let range = measure.typicalRange
-        if value < range.lowerBound { return loc.t("lab.flag.low") }
-        if value > range.upperBound { return loc.t("lab.flag.high") }
-        return loc.t("lab.flag.ok")
+        loc.t(measure.side(value).labelKey)
     }
 
     private func format(_ value: Double, _ measure: LabMeasure) -> String {

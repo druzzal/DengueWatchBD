@@ -7,8 +7,15 @@ import SwiftUI
 /// screen a reader holds up to a doctor, so nothing is abbreviated.
 struct LogDayDetailView: View {
     @Environment(LocalizationManager.self) private var loc
+    @Environment(Preferences.self) private var preferences
     let day: HealthLogDay
     let title: String
+    /// "Day N" in the whole log, and the name the reader gave the day, so the
+    /// day's own PDF says what the list says.
+    var number: Int?
+    var name: String?
+
+    @State private var isExporting = false
 
     /// Oldest first here, deliberately: a day is read forwards.
     private var items: [HealthLogDay.Item] {
@@ -34,5 +41,31 @@ struct LogDayDetailView: View {
         .background(Palette.plane)
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(action: export) {
+                    if isExporting {
+                        ProgressView()
+                    } else {
+                        Label(loc.t("log.exportDay"), systemImage: "square.and.arrow.up")
+                    }
+                }
+                .disabled(isExporting)
+                .accessibilityLabel(loc.t("log.exportDay"))
+            }
+        }
+    }
+
+    /// This day alone, as its own PDF.
+    private func export() {
+        guard !isExporting else { return }
+        isExporting = true
+        Haptic.selection()
+        Task { @MainActor in
+            await HealthLogPDF.share(days: [day], loc: loc, unit: preferences.temperatureUnit,
+                                     names: name.map { [day.date: $0] } ?? [:],
+                                     numbers: number.map { [day.date: $0] } ?? [:])
+            isExporting = false
+        }
     }
 }

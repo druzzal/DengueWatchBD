@@ -40,6 +40,12 @@ struct VitalsEntryView: View {
                         }
                     }
                     .pickerStyle(.segmented)
+                    // A reading already typed is carried across rather than
+                    // reinterpreted: 38.5 typed in °C became "38.5°F" — no
+                    // living temperature — and had to be typed again.
+                    .onChange(of: preferences.temperatureUnit) { old, new in
+                        convertTypedTemperature(from: old, to: new)
+                    }
                 } header: {
                     Text(loc.t("vital.temperature"))
                 }
@@ -113,6 +119,14 @@ struct VitalsEntryView: View {
                     .accessibilityHidden(true)
             }
             InvalidReadingNote(reading: reading)
+            if kind == .temperature, let celsius = reading.storedValue {
+                // The same reading in the other scale, so a Fahrenheit
+                // thermometer and a Celsius prescription can be read together.
+                Text("= " + otherUnit.display(celsius: celsius, style: loc.style))
+                    .typo(.micro)
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+            }
         }
         // Said as one thing, so the problem is read out with the field it
         // belongs to rather than as a stray line after it.
@@ -121,6 +135,20 @@ struct VitalsEntryView: View {
 
     private func reading(_ kind: VitalKind) -> MeasureInput.Reading {
         MeasureInput.read(text[kind] ?? "", as: kind, unit: preferences.temperatureUnit)
+    }
+
+    private var otherUnit: TemperatureUnit {
+        preferences.temperatureUnit == .celsius ? .fahrenheit : .celsius
+    }
+
+    /// Rewrite the typed temperature in the new unit. Left alone when it does
+    /// not read as a temperature in the old one — most often a Fahrenheit
+    /// number typed while the switch said °C, which the switch is fixing.
+    private func convertTypedTemperature(from old: TemperatureUnit, to new: TemperatureUnit) {
+        guard old != new,
+              let typed = text[.temperature],
+              let converted = old.retyped(typed, in: new, style: loc.style) else { return }
+        text[.temperature] = converted
     }
 
     private func unitLabel(_ kind: VitalKind) -> String {

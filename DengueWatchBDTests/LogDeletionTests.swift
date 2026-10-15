@@ -71,7 +71,9 @@ final class LogDeletionTests: XCTestCase {
     }
 
     func testTheDeleteControlsAreLocalised() {
-        for key in ["common.edit", "common.delete", "log.delete.selected", "log.delete.day"] {
+        // A day is deleted by swiping it and confirming; the whole log by
+        // "Delete all". There is no multi-select edit mode any more.
+        for key in ["common.delete", "log.delete.day", "common.deleteAll", "log.confirmDelete"] {
             XCTAssertNotNil(Strings.english[key], key)
             XCTAssertNotNil(Strings.bangla[key], key)
         }

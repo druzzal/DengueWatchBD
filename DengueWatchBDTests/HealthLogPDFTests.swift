@@ -17,8 +17,11 @@ final class HealthLogPDFTests: XCTestCase {
         return HealthLog.days(vitals: vitals, labs: [])
     }
 
+    /// A single day — header, summary and one record — is one sheet, with no
+    /// blank page trailing after it. Two days no longer fit on one since the
+    /// report carries a summary, trend charts and every usual range.
     func testAShortLogProducesOnePage() throws {
-        let url = try XCTUnwrap(HealthLogPDF.write(days: days(2),
+        let url = try XCTUnwrap(HealthLogPDF.write(days: days(1),
                                                    loc: LocalizationManager(),
                                                    unit: .celsius))
         let document = try XCTUnwrap(PDFDocument(url: url))
@@ -57,5 +60,33 @@ final class HealthLogPDFTests: XCTestCase {
                            "page \(index + 1) is blank")
         }
         try? FileManager.default.removeItem(at: url)
+    }
+
+    /// One day exported on its own keeps the number it has in the whole log,
+    /// and is named for that day rather than for the day it was shared.
+    func testOneDayExportsAsItsOwnReport() throws {
+        let defaults = UserDefaults(suiteName: #function)!
+        defaults.set("en", forKey: "appLanguage")
+        defer { defaults.removePersistentDomain(forName: #function) }
+
+        let all = days(5)
+        let third = all[2]
+        let url = try XCTUnwrap(HealthLogPDF.write(days: [third],
+                                                   loc: LocalizationManager(defaults: defaults),
+                                                   unit: .celsius,
+                                                   names: [third.date: "Fever broke"],
+                                                   numbers: HealthLog.numbers(for: all)))
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        let stamp = third.date.formatted(.iso8601.year().month().day()
+            .dateSeparator(.dash).locale(Locale(identifier: "en_US_POSIX")))
+        XCTAssertEqual(url.lastPathComponent, "DengueWatch-health-log-day-3-\(stamp).pdf")
+
+        let document = try XCTUnwrap(PDFDocument(url: url))
+        XCTAssertEqual(document.pageCount, 1)
+        let text = try XCTUnwrap(document.string)
+        XCTAssertTrue(text.contains("Day 3"), "the day keeps its place in the illness: \(text)")
+        XCTAssertFalse(text.contains("Day 1"), text)
+        XCTAssertTrue(text.contains("Fever broke"), text)
     }
 }
