@@ -34,7 +34,8 @@ final class NotificationManager {
         guard await authorizationStatus() == .authorized else { return }
 
         let today = Calendar.current.startOfDay(for: Date()).timeIntervalSince1970
-        guard today > UserDefaults.standard.double(forKey: lastRiskAlertKey) else { return }
+        guard Self.isDueToday(lastAlertDay: UserDefaults.standard.double(forKey: lastRiskAlertKey),
+                              today: today) else { return }
         UserDefaults.standard.set(today, forKey: lastRiskAlertKey)
 
         let content = UNMutableNotificationContent()
@@ -73,7 +74,8 @@ final class NotificationManager {
 
         let key = "\(lastGeofenceAlertKey).\(area.code)"
         let today = Calendar.current.startOfDay(for: Date()).timeIntervalSince1970
-        guard today > UserDefaults.standard.double(forKey: key) else { return }
+        guard Self.isDueToday(lastAlertDay: UserDefaults.standard.double(forKey: key),
+                              today: today) else { return }
         UserDefaults.standard.set(today, forKey: key)
 
         let localization = LocalizationManager()
@@ -99,24 +101,54 @@ final class NotificationManager {
 
     // MARK: - Weekly digest
 
-    func scheduleWeeklyDigest(enabled: Bool, localization: LocalizationManager) async {
+    /// Schedules the Sunday digest with the latest figures in it.
+    ///
+    /// A calendar notification's text is fixed when it is scheduled, so this
+    /// runs again whenever new figures land (see `RootView` and
+    /// `BackgroundRefresh`) — otherwise the digest said only the app's name,
+    /// every week, while Android's carried the week's cases and rate.
+    func scheduleWeeklyDigest(enabled: Bool, localization: LocalizationManager,
+                              store: DengueStore? = nil) async {
         center.removePendingNotificationRequests(withIdentifiers: [digestIdentifier])
         guard enabled, await authorizationStatus() == .authorized else { return }
 
         let content = UNMutableNotificationContent()
         content.title = localization.t("alerts.weekly")
-        content.body = localization.t("dash.title")
+        content.body = Self.digestBody(store: store, localization: localization)
         content.sound = .default
-
-        var components = DateComponents()
-        components.weekday = 1        // Sunday, the start of the working week in Bangladesh
-        components.hour = 9
 
         try? await center.add(UNNotificationRequest(
             identifier: digestIdentifier,
             content: content,
-            trigger: UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
+            trigger: UNCalendarNotificationTrigger(dateMatching: Self.digestSchedule, repeats: true)
         ))
+    }
+
+    // MARK: - Decisions, apart from the notification centre
+
+    /// Sunday at nine, the start of the working week in Bangladesh.
+    static var digestSchedule: DateComponents {
+        var components = DateComponents()
+        components.weekday = 1
+        components.hour = 9
+        return components
+    }
+
+    /// The week's national figures, the same line Android posts. The app's
+    /// name only when there are no figures to give.
+    static func digestBody(store: DengueStore?, localization: LocalizationManager) -> String {
+        guard let store, !store.areas.isEmpty else { return localization.t("dash.title") }
+        return localization.t("dash.home.detail",
+                              localization.num(store.last7Cases),
+                              localization.decimal(store.nationalIncidencePer100k))
+    }
+
+    /// The once-a-day gate both alerts share: due unless one already went out
+    /// on or after the start of today. A stored day later than today — a clock
+    /// moved backwards — still counts as sent, so a wrong clock can delay an
+    /// alert by a day but never repeat one.
+    static func isDueToday(lastAlertDay: TimeInterval, today: TimeInterval) -> Bool {
+        lastAlertDay < today
     }
 
 }

@@ -103,6 +103,10 @@ enum BackgroundRefresh {
                 await store.apply(document: document, source: .network)
                 rearm(store: store, preferences: preferences)
                 await raiseHomeAreaAlert(store: store, preferences: preferences)
+                if preferences.weeklyDigestEnabled {
+                    await NotificationManager.shared.scheduleWeeklyDigest(
+                        enabled: true, localization: LocalizationManager(), store: store)
+                }
                 return true
             }
         } catch {

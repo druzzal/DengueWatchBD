@@ -78,7 +78,8 @@ struct AlertSettingsView: View {
                                 return
                             }
                             await NotificationManager.shared.scheduleWeeklyDigest(enabled: isOn,
-                                                                                  localization: loc)
+                                                                                  localization: loc,
+                                                                                  store: store)
                         }
                     }
             } header: {

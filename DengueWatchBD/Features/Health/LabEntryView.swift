@@ -94,9 +94,20 @@ struct LabEntryView: View {
 
                 Section {
                     ForEach(DengueTest.allCases) { test in
-                        Picker(loc.t(test.labelKey), selection: resultBinding(for: test)) {
+                        Picker(selection: resultBinding(for: test)) {
                             ForEach(TestResult.allCases) { result in
                                 Text(loc.t(result.labelKey)).tag(result)
+                            }
+                        } label: {
+                            // The test's name, and when it is usually
+                            // informative — the timing the footer refers to,
+                            // which used to be translated and never shown.
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(loc.t(test.labelKey))
+                                Text(loc.t(test.usefulDaysKey))
+                                    .typo(.micro)
+                                    .foregroundStyle(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
                             }
                         }
                     }

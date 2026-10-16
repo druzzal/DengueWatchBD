@@ -66,6 +66,13 @@ here, add or update its case, and copy the file byte for byte to the Android
 repository (`app/src/test/resources/clinical-rules.json`), whose tests fail
 if the two copies differ.
 
+`DengueWatchBDTests/shared-strings.json` does the same for the copy: every
+string key both apps carry, with its English and Bangla wording, plus the
+keys each app has on its own by design. `SharedStringsTests` fails when this
+app's tables disagree with it — a feature added here and not on Android, or
+a phrase reworded on one side only — until the other app catches up or the
+difference is recorded in the file on purpose.
+
 ### Installing on an iPhone
 
 Build the Release configuration for a connected, paired phone, then install and

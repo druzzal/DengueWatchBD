@@ -63,7 +63,8 @@ struct RootView: View {
             guard preferences.weeklyDigestEnabled else { return }
             Task {
                 await NotificationManager.shared.scheduleWeeklyDigest(enabled: true,
-                                                                      localization: localization)
+                                                                      localization: localization,
+                                                                      store: store)
             }
         }
         .onChange(of: scenePhase) { _, phase in
@@ -124,6 +125,12 @@ struct RootView: View {
     }
 
     private func evaluateAlerts() async {
+        // New figures may have landed; the digest carries them.
+        if preferences.weeklyDigestEnabled {
+            await NotificationManager.shared.scheduleWeeklyDigest(enabled: true,
+                                                                  localization: localization,
+                                                                  store: store)
+        }
         guard preferences.alertsEnabled,
               let code = preferences.homeAreaCode,
               let area = store.area(code: code) else { return }
