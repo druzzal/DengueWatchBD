@@ -98,7 +98,14 @@ enum MeasureInput {
         guard !trimmed.isEmpty else { return .empty }
 
         let normalised = westernDigits(trimmed).replacingOccurrences(of: ",", with: "")
-        guard let typed = Double(normalised), typed.isFinite else { return .notANumber }
+        // Shape first, then parse. `Double(_:)` is more permissive than a
+        // person is: "1e2" reads as 100 and "0x50" as 80, both inside a
+        // pulse's range, and neither is something anybody types into a
+        // reading. Digits, at most one point and an optional sign — the same
+        // rule the Android build applies, checked by the shared conformance
+        // cases.
+        guard normalised.wholeMatch(of: /[+-]?(\d+(\.\d*)?|\.\d+)/) != nil,
+              let typed = Double(normalised), typed.isFinite else { return .notANumber }
         guard range.contains(typed) else { return .outOfRange(range) }
         return .value(converting(typed))
     }

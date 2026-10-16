@@ -1,0 +1,189 @@
+{
+  "about": "Shared clinical conformance cases for DengueWatch BD. The iOS and Android test suites both run every case in this file, so a rule that drifts on either platform fails that platform's tests. Edit it in one repository and copy it byte for byte to the other: DengueWatchBD/DengueWatchBDTests/clinical-rules.json (iOS) and app/src/test/resources/clinical-rules.json (Android). Times are in Asia/Dhaka.",
+  "version": 1,
+  "now": "2026-10-17T12:00:00+06:00",
+
+  "triage": [
+    { "selected": [], "context": {}, "outcome": "selfCare", "raisedByRiskGroup": false },
+    { "selected": ["headache"], "context": {}, "outcome": "selfCare", "raisedByRiskGroup": false },
+    { "selected": ["fever"], "context": {}, "outcome": "testAdvised", "raisedByRiskGroup": false },
+    { "selected": ["headache", "aches"], "context": {}, "outcome": "testAdvised", "raisedByRiskGroup": false },
+    { "selected": ["fever", "abdominal"], "context": {}, "outcome": "seeDoctorToday", "raisedByRiskGroup": false },
+    { "selected": ["noUrine"], "context": {}, "outcome": "seeDoctorToday", "raisedByRiskGroup": false },
+    { "selected": ["fever"], "context": { "isPregnant": true }, "outcome": "seeDoctorToday", "raisedByRiskGroup": true },
+    { "selected": [], "context": { "isPregnant": true }, "outcome": "selfCare", "raisedByRiskGroup": false },
+    { "selected": ["headache"], "context": { "hasChronicCondition": true }, "outcome": "seeDoctorToday", "raisedByRiskGroup": true },
+    { "selected": ["rash"], "context": { "isUnderFiveOrOverSixty": true }, "outcome": "seeDoctorToday", "raisedByRiskGroup": true },
+    { "selected": ["fever"], "context": { "hadDengueBefore": true }, "outcome": "testAdvised", "raisedByRiskGroup": false },
+    { "selected": ["oralIntolerance"], "context": { "isUnderFiveOrOverSixty": true }, "outcome": "seeDoctorToday", "raisedByRiskGroup": false },
+    { "selected": ["fever", "confusion"], "context": {}, "outcome": "emergency", "raisedByRiskGroup": false },
+    { "selected": ["fever", "heavyBleed", "abdominal"], "context": { "isPregnant": true }, "outcome": "emergency", "raisedByRiskGroup": false },
+    { "selected": ["notASymptom"], "context": {}, "outcome": "selfCare", "raisedByRiskGroup": false }
+  ],
+
+  "feverPhase": [
+    { "feverDaysAgo": -1, "phase": "recovery" },
+    { "feverDaysAgo": 0, "phase": "febrile" },
+    { "feverDaysAgo": 2, "phase": "febrile" },
+    { "feverDaysAgo": 3, "phase": "critical" },
+    { "feverDaysAgo": 6, "phase": "critical" },
+    { "feverDaysAgo": 7, "phase": "recovery" },
+    { "feverDaysAgo": 20, "phase": "recovery" }
+  ],
+
+  "carePlan": [
+    { "symptoms": ["fever"], "vitals": null, "context": {}, "feverDaysAgo": 1,
+      "group": "home", "reasons": ["noneOfThese"], "phase": "febrile", "feverDay": 2 },
+    { "symptoms": ["fever", "abdominal"], "vitals": null, "context": {}, "feverDaysAgo": 4,
+      "group": "referral", "reasons": ["warningSign", "criticalPhase"], "phase": "critical", "feverDay": 5 },
+    { "symptoms": ["fever"], "vitals": { "systolic": 100, "diastolic": 85 }, "context": {}, "feverDaysAgo": null,
+      "group": "emergency", "reasons": ["narrowPulsePressure"], "phase": null, "feverDay": null },
+    { "symptoms": ["fever"], "vitals": { "systolic": 85, "diastolic": 60 }, "context": {}, "feverDaysAgo": null,
+      "group": "emergency", "reasons": ["lowBloodPressure"], "phase": null, "feverDay": null },
+    { "symptoms": ["fever"], "vitals": { "pulse": 130, "oxygenSaturation": 92 }, "context": {}, "feverDaysAgo": null,
+      "group": "referral", "reasons": ["fastPulse", "lowOxygen"], "phase": null, "feverDay": null },
+    { "symptoms": ["headache"], "vitals": null, "context": { "isPregnant": true, "hadDengueBefore": true }, "feverDaysAgo": 5,
+      "group": "referral", "reasons": ["pregnancy", "previousDengue", "criticalPhase"], "phase": "critical", "feverDay": 6 },
+    { "symptoms": ["fever"], "vitals": null, "context": { "hadDengueBefore": true }, "feverDaysAgo": 0,
+      "group": "home", "reasons": ["previousDengue"], "phase": "febrile", "feverDay": 1 },
+    { "symptoms": ["faint", "vomiting"], "vitals": { "systolic": 120, "diastolic": 80, "pulse": 90, "oxygenSaturation": 98 },
+      "context": { "isUnderFiveOrOverSixty": true, "hasChronicCondition": true }, "feverDaysAgo": 7,
+      "group": "emergency", "reasons": ["severeSign", "warningSign", "higherRiskGroup"], "phase": "recovery", "feverDay": 8 },
+    { "symptoms": [], "vitals": { "systolic": 90, "diastolic": 69, "pulse": 120, "oxygenSaturation": 94 }, "context": {}, "feverDaysAgo": null,
+      "group": "home", "reasons": ["noneOfThese"], "phase": null, "feverDay": null },
+    { "symptoms": [], "vitals": { "systolic": 90, "diastolic": 70 }, "context": {}, "feverDaysAgo": null,
+      "group": "emergency", "reasons": ["narrowPulsePressure"], "phase": null, "feverDay": null }
+  ],
+
+  "vitalStatus": [
+    { "kind": "temperature", "value": 37.0, "status": "normal", "side": "normal" },
+    { "kind": "temperature", "value": 37.8, "status": "normal", "side": "normal" },
+    { "kind": "temperature", "value": 37.9, "status": "outside", "side": "high" },
+    { "kind": "temperature", "value": 39.5, "status": "farOutside", "side": "high" },
+    { "kind": "temperature", "value": 36.0, "status": "outside", "side": "low" },
+    { "kind": "temperature", "value": 35.4, "status": "farOutside", "side": "low" },
+    { "kind": "pulse", "value": 59, "status": "outside", "side": "low" },
+    { "kind": "pulse", "value": 100, "status": "normal", "side": "normal" },
+    { "kind": "pulse", "value": 121, "status": "farOutside", "side": "high" },
+    { "kind": "systolic", "value": 89, "status": "outside", "side": "low" },
+    { "kind": "systolic", "value": 84, "status": "farOutside", "side": "low" },
+    { "kind": "systolic", "value": 161, "status": "farOutside", "side": "high" },
+    { "kind": "diastolic", "value": 86, "status": "outside", "side": "high" },
+    { "kind": "oxygenSaturation", "value": 94, "status": "outside", "side": "low" },
+    { "kind": "oxygenSaturation", "value": 91, "status": "farOutside", "side": "low" },
+    { "kind": "oxygenSaturation", "value": 100, "status": "normal", "side": "normal" }
+  ],
+
+  "labStatus": [
+    { "measure": "platelets", "value": 96, "status": "farOutside", "side": "low" },
+    { "measure": "platelets", "value": 120, "status": "outside", "side": "low" },
+    { "measure": "platelets", "value": 150, "status": "normal", "side": "normal" },
+    { "measure": "platelets", "value": 601, "status": "farOutside", "side": "high" },
+    { "measure": "haematocrit", "value": 55, "status": "outside", "side": "high" },
+    { "measure": "haematocrit", "value": 61, "status": "farOutside", "side": "high" },
+    { "measure": "whiteCells", "value": 3.5, "status": "outside", "side": "low" },
+    { "measure": "whiteCells", "value": 1.5, "status": "farOutside", "side": "low" },
+    { "measure": "haemoglobin", "value": 11.9, "status": "outside", "side": "low" },
+    { "measure": "haemoglobin", "value": 8.9, "status": "farOutside", "side": "low" }
+  ],
+
+  "bloodPressure": [
+    { "systolic": 120, "diastolic": 80, "side": "normal", "status": "normal" },
+    { "systolic": 85, "diastolic": 60, "side": "low", "status": "outside" },
+    { "systolic": 125, "diastolic": 101, "side": "high", "status": "farOutside" },
+    { "systolic": 95, "diastolic": 50, "side": "low", "status": "farOutside" },
+    { "systolic": 150, "diastolic": 90, "side": "high", "status": "outside" },
+    { "systolic": 85, "diastolic": 90, "side": "low", "status": "outside" }
+  ],
+
+  "measureInput": [
+    { "text": "", "kind": "temperature", "unit": "celsius", "result": "empty" },
+    { "text": "   ", "kind": "pulse", "result": "empty" },
+    { "text": "38.5", "kind": "temperature", "unit": "celsius", "result": "value", "value": 38.5 },
+    { "text": "101.3", "kind": "temperature", "unit": "fahrenheit", "result": "value", "value": 38.5 },
+    { "text": "101", "kind": "temperature", "unit": "celsius", "result": "outOfRange", "lower": 30, "upper": 45 },
+    { "text": "39.5", "kind": "temperature", "unit": "fahrenheit", "result": "outOfRange", "lower": 86, "upper": 113 },
+    { "text": "৩৮.৫", "kind": "temperature", "unit": "celsius", "result": "value", "value": 38.5 },
+    { "text": "38,5", "kind": "temperature", "unit": "celsius", "result": "outOfRange", "lower": 30, "upper": 45 },
+    { "text": "39.5.5", "kind": "temperature", "unit": "celsius", "result": "notANumber" },
+    { "text": "98.6f", "kind": "temperature", "unit": "fahrenheit", "result": "notANumber" },
+    { "text": "abc", "kind": "pulse", "result": "notANumber" },
+    { "text": "1e2", "kind": "pulse", "result": "notANumber" },
+    { "text": "0x50", "kind": "pulse", "result": "notANumber" },
+    { "text": "nan", "kind": "pulse", "result": "notANumber" },
+    { "text": "inf", "kind": "pulse", "result": "notANumber" },
+    { "text": "+80", "kind": "pulse", "result": "value", "value": 80 },
+    { "text": " 95 ", "kind": "oxygenSaturation", "result": "value", "value": 95 },
+    { "text": "1,234", "measure": "platelets", "result": "value", "value": 1234 },
+    { "text": "96", "measure": "platelets", "result": "value", "value": 96 },
+    { "text": "2000", "measure": "platelets", "result": "outOfRange", "lower": 1, "upper": 1500 }
+  ],
+
+  "labParser": [
+    { "text": "Platelet Count      96,000 /cumm", "platelets": 96 },
+    { "text": "Platelets  96 x10^3/µL", "platelets": 96 },
+    { "text": "Platelet: 1.5 lakh", "platelets": 150 },
+    { "text": "Total WBC Count   3,600 /cumm", "whiteCells": 3.6 },
+    { "text": "Platelet Count     95     x10^3/uL", "platelets": 95 },
+    { "text": "Platelets 95 x10^9/L", "platelets": 95 },
+    { "text": "PLT 95 x10*3/uL", "platelets": 95 },
+    { "text": "Platelet count 95 K/uL", "platelets": 95 },
+    { "text": "Platelet count 250000 /uL", "platelets": 250 },
+    { "text": "WBC 3600 /ul", "whiteCells": 3.6 },
+    { "text": "WBC Total Count    3.2    x10^3/uL", "whiteCells": 3.2 },
+    { "text": "NS1: Non-Reactive", "ns1": "negative" },
+    { "text": "NS1: Non Reactive", "ns1": "negative" },
+    { "text": "Dengue NS1 Antigen  Reactive", "ns1": "positive" },
+    { "text": "Dengue lgM  Positive", "igm": "positive" },
+    { "text": "IgG Negative", "igg": "negative" },
+    { "text": "Platelet Count       96,000 /cumm   (150,000 - 450,000)\nTotal WBC Count       3,600 /cumm\nHb                    14.1 g/dl\nHaematocrit (PCV)     47.5 %   (40.0 - 50.0)\n\nDengue NS1 Antigen    Positive\nDengue IgM            Negative",
+      "platelets": 96, "whiteCells": 3.6, "haemoglobin": 14.1, "haematocrit": 47.5, "ns1": "positive", "igm": "negative" }
+  ],
+
+  "trend": [
+    { "values": [], "minimumChange": 0.3, "trend": "notEnoughData" },
+    { "values": [38.0], "minimumChange": 0.3, "trend": "notEnoughData" },
+    { "values": [38.0, 38.2], "minimumChange": 0.3, "trend": "steady" },
+    { "values": [38.0, 39.5, 38.4], "minimumChange": 0.3, "trend": "rising" },
+    { "values": [150, 120, 96], "minimumChange": 20, "trend": "falling" },
+    { "values": [96, 110], "minimumChange": 20, "trend": "steady" }
+  ],
+
+  "haematocritRising": [
+    { "series": [ { "hoursAgo": 50, "value": 40 }, { "hoursAgo": 26, "value": 42 }, { "hoursAgo": 2, "value": 44 } ], "rising": true },
+    { "series": [ { "hoursAgo": 2, "value": 44 }, { "hoursAgo": 50, "value": 40 }, { "hoursAgo": 26, "value": 42 } ], "rising": true },
+    { "series": [ { "hoursAgo": 50, "value": 40 }, { "hoursAgo": 26, "value": 41 }, { "hoursAgo": 2, "value": 44 } ], "rising": false },
+    { "series": [ { "hoursAgo": 26, "value": 40 }, { "hoursAgo": 2, "value": 44 } ], "rising": false },
+    { "series": [ { "hoursAgo": 150, "value": 40 }, { "hoursAgo": 120, "value": 42 }, { "hoursAgo": 80, "value": 44 } ], "rising": false },
+    { "series": [ { "hoursAgo": 200, "value": 50 }, { "hoursAgo": 50, "value": 40 }, { "hoursAgo": 26, "value": 42 }, { "hoursAgo": 2, "value": 44 } ], "rising": true }
+  ],
+
+  "notableReadings": [
+    { "vitals": [ { "kind": "temperature", "value": 39.6, "hoursAgo": 1 }, { "kind": "oxygenSaturation", "value": 91, "hoursAgo": 2 }, { "kind": "pulse", "value": 90, "hoursAgo": 1 } ],
+      "labs": [ { "measure": "platelets", "value": 80, "hoursAgo": 10 }, { "measure": "haematocrit", "value": 62, "hoursAgo": 100 } ],
+      "notableVitals": ["temperature", "oxygenSaturation"], "notableLabs": ["platelets"] },
+    { "vitals": [],
+      "labs": [ { "measure": "haemoglobin", "value": 8, "hoursAgo": 5 }, { "measure": "platelets", "value": 50, "hoursAgo": 5 }, { "measure": "platelets", "value": 40, "hoursAgo": 3 } ],
+      "notableVitals": [], "notableLabs": ["platelets", "haemoglobin"] }
+  ],
+
+  "wakingHours": [
+    { "start": "2026-10-16T22:00:00+06:00", "end": "2026-10-17T08:00:00+06:00", "hours": 2 },
+    { "start": "2026-10-17T10:00:00+06:00", "end": "2026-10-17T16:00:00+06:00", "hours": 6 },
+    { "start": "2026-10-16T23:30:00+06:00", "end": "2026-10-17T06:30:00+06:00", "hours": 0 },
+    { "start": "2026-10-16T20:00:00+06:00", "end": "2026-10-17T02:00:00+06:00", "hours": 3 },
+    { "start": "2026-10-17T06:00:00+06:00", "end": "2026-10-17T08:00:00+06:00", "hours": 1 },
+    { "start": "2026-10-15T12:00:00+06:00", "end": "2026-10-17T12:00:00+06:00", "hours": 32 },
+    { "start": "2026-10-17T12:00:00+06:00", "end": "2026-10-17T10:00:00+06:00", "hours": 0 }
+  ],
+
+  "urineGap": [
+    { "urine": ["2026-10-17T10:00:00+06:00"], "now": "2026-10-17T16:30:00+06:00", "long": true },
+    { "urine": ["2026-10-17T10:00:00+06:00"], "now": "2026-10-17T15:00:00+06:00", "long": false },
+    { "urine": ["2026-10-16T22:00:00+06:00"], "now": "2026-10-17T07:30:00+06:00", "long": false },
+    { "urine": ["2026-10-16T18:00:00+06:00"], "now": "2026-10-17T09:00:00+06:00", "long": true },
+    { "urine": ["2026-10-15T08:00:00+06:00"], "now": "2026-10-17T10:00:00+06:00", "long": false },
+    { "urine": [], "drinks": ["2026-10-17T08:00:00+06:00"], "now": "2026-10-17T18:00:00+06:00", "long": false },
+    { "urine": ["2026-10-17T06:00:00+06:00", "2026-10-17T13:00:00+06:00"], "now": "2026-10-17T18:00:00+06:00", "long": false }
+  ]
+}

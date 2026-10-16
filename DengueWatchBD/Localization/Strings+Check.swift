@@ -327,7 +327,7 @@ extension Strings {
         "lab.flag.low": "কম",
         "lab.flag.high": "বেশি",
         "lab.flag.ok": "স্বাভাবিক",
-        "lab.counts": "রক্তের হিসাব",
+        "lab.counts": "রক্তের পরীক্ষা",
         "lab.serology": "ডেঙ্গু পরীক্ষা",
         // The abbreviation stays as the lab slip prints it, like mmHg and bpm.
         // Spelled out in Bengali letters it had to be decoded back into the
@@ -342,7 +342,7 @@ extension Strings {
         "lab.timing.ns1": "সাধারণত জ্বরের প্রথম পাঁচ দিনে কার্যকর।",
         "lab.timing.igm": "সাধারণত জ্বরের পঞ্চম দিনের পর থেকে ধরা পড়ে।",
         "lab.timing.igg": "পরে বাড়ে, এবং আগের সংক্রমণও বোঝাতে পারে।",
-        "lab.timingNote": "এগুলো বলে কোন পরীক্ষা কখন কার্যকর। আপনার ফল কী বোঝায় তা চিকিৎসকের প্রশ্ন।",
+        "lab.timingNote": "এগুলো বলে কোন পরীক্ষা কখন কার্যকর। আপনার ফল কী বোঝায় তা চিকিৎসকের কাছেই জানতে হবে।",
         "lab.reportDate": "রিপোর্টের তারিখ",
         "vital.takenAt": "পরিমাপের সময়",
 

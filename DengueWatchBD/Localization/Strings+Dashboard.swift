@@ -115,7 +115,7 @@ extension Strings {
         "dash.stat.last24": "গত ২৪ ঘণ্টা",
         "dash.stat.last24Deaths": "%@ জন মৃত্যু",
         "dash.title": "ডেঙ্গুওয়াচ",
-        "dash.error.title": "নজরদারির তথ্য পাওয়া যাচ্ছে না",
+        "dash.error.title": "ডেঙ্গুর তথ্য পাওয়া যাচ্ছে না",
         "dash.about.a11y": "এই তথ্য সম্পর্কে",
 
         "dash.stat.cases": "এ মৌসুমে আক্রান্ত",

@@ -31,10 +31,26 @@ enum LabReportParser {
         .haemoglobin: ["haemoglobin", "hemoglobin", "hgb", "hb"],
     ]
 
+    /// Includes what a recogniser is likely to *mis*read.
+    ///
+    /// A capital I and a lowercase l are the same shape in many report fonts,
+    /// so "IgM" comes back as "lgM" often enough to matter. Accepting both
+    /// costs nothing — no other word on a lab report is "lgm" — and the
+    /// alternative is silently missing the serology on a readable report.
     private static let testSynonyms: [DengueTest: [String]] = [
         .ns1: ["ns1", "ns-1", "dengue ns1", "ns1 antigen"],
-        .igm: ["igm", "ig m", "dengue igm"],
-        .igg: ["igg", "ig g", "dengue igg"],
+        .igm: ["igm", "ig m", "dengue igm", "lgm", "1gm"],
+        .igg: ["igg", "ig g", "dengue igg", "lgg", "1gg"],
+    ]
+
+    /// How a report says its count is already in thousands per microlitre,
+    /// lowercased, including what the recogniser makes of the superscript and
+    /// the micro sign: ×10³/µL comes back as x10^3/ul, x103/ul, 10*3/ul and
+    /// the like. ×10⁹/L is the same quantity in SI units.
+    private static let thousandsMarkers = [
+        "x10^3", "x10³", "×10^3", "×10³", "x 10^3", "× 10^3", "10^3/", "10³/", "10*3", "x103/", "e3/",
+        "x10^9", "x10⁹", "×10^9", "×10⁹", "10^9/l", "10⁹/l", "10*9", "x109/l",
+        "k/ul", "k/µl", "k/μl", "thou/",
     ]
 
     /// Builds a draft report from recognised text.
@@ -46,7 +62,7 @@ enum LabReportParser {
         var report = LabReport()
 
         for rawLine in text.components(separatedBy: .newlines) {
-            let line = rawLine.lowercased()
+            let line = rawLine.lowercased().trimmingCharacters(in: .whitespaces)
             guard !line.isEmpty else { continue }
 
             for (measure, words) in synonyms where report.value(for: measure) == nil {
@@ -57,11 +73,14 @@ enum LabReportParser {
 
             for (test, words) in testSynonyms where report.result(for: test) == .notDone {
                 guard words.contains(where: { line.contains($0) }) else { continue }
-                if line.contains("positive") || line.contains("reactive") && !line.contains("non") {
-                    report.setResult(.positive, for: test)
-                } else if line.contains("negative") || line.contains("non reactive")
-                            || line.contains("non-reactive") {
+                // "non-reactive" contains "reactive", so the negatives are
+                // tested first; otherwise a negative report reads as positive,
+                // which is the worst way this could be wrong.
+                if line.contains("negative") || line.contains("non reactive")
+                    || line.contains("non-reactive") {
                     report.setResult(.negative, for: test)
+                } else if line.contains("positive") || line.contains("reactive") {
+                    report.setResult(.positive, for: test)
                 }
             }
         }
@@ -92,9 +111,15 @@ enum LabReportParser {
     private static func scale(of line: String, for measure: LabMeasure) -> Scale {
         guard measure == .platelets || measure == .whiteCells else { return .thousands }
         if line.contains("lakh") || line.contains("lac") { return .lakh }
+        // A stated multiplier wins over the unit after it. "95 x10^3/uL" — how
+        // most CBC slips print it, and how the recogniser reads "×10³/µL" —
+        // ends in "/ul", which on its own means a count written in full; read
+        // that way, 95 became 0.095, was refused as impossible, and the
+        // platelet count was silently left blank. ×10⁹/L is the same scale.
+        if thousandsMarkers.contains(where: { line.contains($0) }) { return .thousands }
         // "/cumm", "/cmm", "per cumm" and bare six-figure counts are absolute.
         if line.contains("cumm") || line.contains("cmm") || line.contains("/ul")
-            || line.contains("µl") == false && line.contains("000") {
+            || (!line.contains("µl") && line.contains("000")) {
             return .absolute
         }
         return .thousands

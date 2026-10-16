@@ -55,6 +55,17 @@ disclaimer and without animations; `DW_UITEST_SEED=checks,vitals` adds sample
 records. They match English labels, so a reworded button means updating the
 test that taps it.
 
+#### Shared clinical cases
+
+`DengueWatchBDTests/clinical-rules.json` holds the cases the iOS and Android
+apps must agree on: triage outcomes, the WHO care-plan group and its reasons,
+reading ranges, what a typed number is read as, what a scanned report line is
+read as, trends, and the fluid log's waking hours. `ClinicalConformanceTests`
+runs every case; the Android app runs the same file. Change a clinical rule
+here, add or update its case, and copy the file byte for byte to the Android
+repository (`app/src/test/resources/clinical-rules.json`), whose tests fail
+if the two copies differ.
+
 ### Installing on an iPhone
 
 Build the Release configuration for a connected, paired phone, then install and

@@ -41,9 +41,12 @@ struct CarePlanContext: Equatable {
             .filter { $0.date >= cutoff && $0.measure.status($0.value) == .farOutside }
             .map(\.measure)
 
+        // In the measures' own order — platelets first, the one that matters
+        // in dengue — not alphabetically, which put haematocrit ahead of it.
+        // The same order Android uses, so both say the same sentence.
         return CarePlanContext(
-            notableVitals: Array(Set(vitalsOut)).sorted { $0.rawValue < $1.rawValue },
-            notableLabs: Array(Set(labsOut)).sorted { $0.rawValue < $1.rawValue }
+            notableVitals: VitalKind.allCases.filter(vitalsOut.contains),
+            notableLabs: LabMeasure.allCases.filter(labsOut.contains)
         )
     }
 
