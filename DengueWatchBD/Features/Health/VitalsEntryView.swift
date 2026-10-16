@@ -15,7 +15,33 @@ struct VitalsEntryView: View {
     @State private var takenAt = Date()
     @State private var note = ""
 
+    /// Everything typed so far, for `keepsDraft`.
+    private struct Draft: Codable, Equatable {
+        var text: [String: String]
+        var takenAt: Date
+        var note: String
+    }
+
+    private var draft: Binding<Draft> {
+        Binding(
+            get: {
+                Draft(text: Dictionary(uniqueKeysWithValues: text.map { ($0.key.rawValue, $0.value) }),
+                      takenAt: takenAt, note: note)
+            },
+            set: { draft in
+                text = Dictionary(uniqueKeysWithValues: draft.text.compactMap { key, value in
+                    VitalKind(rawValue: key).map { ($0, value) }
+                })
+                takenAt = draft.takenAt
+                note = draft.note
+            })
+    }
+
     var body: some View {
+        form.keepsDraft("draft.vitals", draft)
+    }
+
+    private var form: some View {
         NavigationStack {
             Form {
                 // Readings are often written down after the fact — a fever

@@ -10,7 +10,9 @@ struct FluidCard: View {
     @Environment(FluidStore.self) private var fluids
     @Environment(LocalizationManager.self) private var loc
 
-    @State private var showingEntry = false
+    // Scene storage, so a half-made entry comes back open after iOS ends the
+    // app in the background. See `FormDraft`.
+    @SceneStorage("health.fluidOpen") private var showingEntry = false
     @State private var showingEntries = false
 
     var body: some View {
@@ -196,7 +198,23 @@ struct FluidEntryView: View {
     @State private var millilitres = 200
     @State private var takenAt = Date()
 
+    /// The entry so far, for `keepsDraft`.
+    private struct Draft: Codable, Equatable {
+        var kind: FluidEntry.Kind
+        var millilitres: Int
+        var takenAt: Date
+    }
+
+    private var draft: Binding<Draft> {
+        Binding(get: { Draft(kind: kind, millilitres: millilitres, takenAt: takenAt) },
+                set: { kind = $0.kind; millilitres = $0.millilitres; takenAt = $0.takenAt })
+    }
+
     var body: some View {
+        form.keepsDraft("draft.fluid", draft)
+    }
+
+    private var form: some View {
         NavigationStack {
             Form {
                 Section {

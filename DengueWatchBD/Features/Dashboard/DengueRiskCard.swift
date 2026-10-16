@@ -180,7 +180,7 @@ struct DengueRiskCard: View {
 
         let updated = Group {
             if let lastUpdated {
-                Text(loc.t("risk.card.updated", loc.relative(lastUpdated)))
+                Text(loc.t("risk.card.updated", loc.reportAge(lastUpdated)))
                     .typo(.micro)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -226,7 +226,7 @@ struct DengueRiskCard: View {
         parts.append(loc.t(trendKey))
         parts.append(loc.t(risk.guidanceKey))
         if let lastUpdated {
-            parts.append(loc.t("risk.card.updated", loc.relative(lastUpdated)))
+            parts.append(loc.t("risk.card.updated", loc.reportAge(lastUpdated)))
         }
         return parts.joined(separator: ", ")
     }

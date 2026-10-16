@@ -167,11 +167,11 @@ struct NumberStyle: Sendable, Equatable {
         return formatter.string(from: items) ?? items.joined(separator: ", ")
     }
 
-    func relative(_ date: Date) -> String {
+    func relative(_ date: Date, to now: Date = Date()) -> String {
         let formatter = RelativeDateTimeFormatter()
         formatter.locale = locale
         formatter.unitsStyle = .full
-        return digits(formatter.localizedString(for: date, relativeTo: Date()))
+        return digits(formatter.localizedString(for: date, relativeTo: now))
     }
 }
 
@@ -247,6 +247,23 @@ final class LocalizationManager {
     func time(_ date: Date) -> String { style.time(date) }
     func reportedDate(_ date: Date) -> String { style.reportedDate(date) }
     func relative(_ date: Date) -> String { style.relative(date) }
+
+    /// How old a DGHS report is, in calendar days: "today", "yesterday",
+    /// "3 days ago".
+    ///
+    /// The feed dates a report by day, with no time attached, so a relative
+    /// time in hours claimed a precision the figures do not have — and read
+    /// differently from Android, which counted the same date from a different
+    /// midnight. Both now say it in days.
+    func reportAge(_ reportDay: Date, now: Date = Date(), calendar: Calendar = .current) -> String {
+        let days = max(0, calendar.dateComponents([.day], from: calendar.startOfDay(for: reportDay),
+                                                  to: calendar.startOfDay(for: now)).day ?? 0)
+        switch days {
+        case 0: return t("common.today").lowercased(with: style.locale)
+        case 1: return t("common.yesterday").lowercased(with: style.locale)
+        default: return style.relative(now.addingTimeInterval(-Double(days) * 86_400), to: now)
+        }
+    }
 
     /// Day and clock time, with "Today"/"Yesterday" resolved from the tables.
     func dayAndTime(_ date: Date) -> String {

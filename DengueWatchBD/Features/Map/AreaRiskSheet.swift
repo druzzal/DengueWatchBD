@@ -41,7 +41,7 @@ struct AreaRiskSheet: View {
                                 SourceBadge(kind: .official, detail: "DGHS")
                                 Spacer(minLength: 0)
                                 if let lastUpdated {
-                                    Text(loc.t("risk.card.updated", loc.relative(lastUpdated)))
+                                    Text(loc.t("risk.card.updated", loc.reportAge(lastUpdated)))
                                         .typo(.micro)
                                         .foregroundStyle(.secondary)
                                 }

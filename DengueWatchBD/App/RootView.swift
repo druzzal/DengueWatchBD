@@ -1,6 +1,9 @@
 import SwiftUI
 
 struct RootView: View {
+    /// The tab the reader was on, brought back after iOS ends the app in the
+    /// background, with whatever form was open there. See `FormDraft`.
+    @SceneStorage("root.tab") private var storedTab = AppRouter.Tab.home.rawValue
     @State private var store = DengueStore()
     @State private var caseLog = CaseLogStore()
     @State private var vitals = VitalsStore()
@@ -51,6 +54,7 @@ struct RootView: View {
         .environment(sync)
         .environment(router)
         .task {
+            if let tab = AppRouter.Tab(rawValue: storedTab) { router.selectedTab = tab }
             await store.load()
             sync.start(store: store)
             await sync.sync(force: false)
@@ -99,7 +103,7 @@ struct RootView: View {
     /// another tab, and a debug hook can open one directly.
     private var tabSelection: Binding<AppRouter.Tab> {
         Binding(get: { router.selectedTab },
-                set: { router.selectedTab = $0 })
+                set: { router.selectedTab = $0; storedTab = $0.rawValue })
     }
 
     /// Wires region entry to a notification, and re-arms the geofences against

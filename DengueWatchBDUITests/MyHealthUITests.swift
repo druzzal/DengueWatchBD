@@ -117,6 +117,62 @@ final class MyHealthUITests: XCTestCase {
                       "the finished PDF is handed to the share sheet")
     }
 
+    // MARK: - Lab report
+
+    func testEachSerologyTestSaysWhenItIsInformative() {
+        let app = launch()
+        button("Add a report", in: app).tap()
+        // The footer refers to these lines; they used to be translated and
+        // never shown.
+        // The form loads its rows as they scroll in, so each is looked for
+        // on its way down rather than all at once.
+        for line in ["Usually informative in the first five days of fever.",
+                     "Usually detectable from about day five of fever.",
+                     "Rises later, and may reflect a past infection."] {
+            let element = text(line, in: app)
+            var swipes = 0
+            while !element.waitForExistence(timeout: 2) && swipes < 4 {
+                app.swipeUp()
+                swipes += 1
+            }
+            XCTAssertTrue(element.exists, "not shown: \(line)")
+        }
+
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = "Lab report form with test timing"
+        shot.lifetime = .keepAlways
+        add(shot)
+    }
+
+    // MARK: - Ended in the background
+
+    func testAHalfTypedReadingSurvivesTheAppBeingEnded() {
+        var app = launch()
+        button("Record readings", in: app).tap()
+        let field = app.textFields.firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        field.tap()
+        field.typeText("38.6")
+
+        // Into the background, where iOS saves the scene, then ended the way
+        // the system ends an app — not swiped away, which discards it.
+        XCUIDevice.shared.press(.home)
+        sleep(2)
+        app.terminate()
+
+        app = launch()
+        let restored = app.textFields.firstMatch
+        XCTAssertTrue(restored.waitForExistence(timeout: 8), "the form did not come back open")
+        XCTAssertEqual(restored.value as? String, "38.6")
+
+        // Saved or cancelled, the draft is gone: the next form starts empty.
+        button("Cancel", in: app).tap()
+        button("Record readings", in: app).tap()
+        let fresh = app.textFields.firstMatch
+        XCTAssertTrue(fresh.waitForExistence(timeout: 5))
+        XCTAssertNotEqual(fresh.value as? String, "38.6")
+    }
+
     // MARK: - Helpers
 
     private func launch(seed: String = "") -> XCUIApplication {

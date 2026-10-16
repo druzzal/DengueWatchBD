@@ -23,8 +23,11 @@ struct MyHealthView: View {
     @Environment(\.horizontalSizeClass) private var sizeClass
 
     @State private var showingCheck = false
-    @State private var showingVitals = false
-    @State private var showingLab = false
+    // Scene storage rather than state: if iOS ends the app in the background
+    // while one of these forms is open, it comes back open, holding what was
+    // typed (see `FormDraft`) — as the Android build does.
+    @SceneStorage("health.vitalsOpen") private var showingVitals = false
+    @SceneStorage("health.labOpen") private var showingLab = false
     @State private var showingLog = false
     @State private var showingCheckHistory = false
     /// The latest check, once the reader has asked to delete it.

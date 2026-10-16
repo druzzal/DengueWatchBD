@@ -15,6 +15,36 @@ struct LabEntryView: View {
     @State private var text: [LabMeasure: String] = [:]
     @State private var results: [DengueTest: TestResult] = [:]
     @State private var note = ""
+
+    /// Everything entered so far, for `keepsDraft` — including what a scan
+    /// read off the page, which is the work most worth not losing.
+    private struct Draft: Codable, Equatable {
+        var reportDate: Date
+        var text: [String: String]
+        var results: [String: String]
+        var note: String
+    }
+
+    private var draft: Binding<Draft> {
+        Binding(
+            get: {
+                Draft(reportDate: reportDate,
+                      text: Dictionary(uniqueKeysWithValues: text.map { ($0.key.rawValue, $0.value) }),
+                      results: Dictionary(uniqueKeysWithValues: results.map { ($0.key.rawValue, $0.value.rawValue) }),
+                      note: note)
+            },
+            set: { draft in
+                reportDate = draft.reportDate
+                text = Dictionary(uniqueKeysWithValues: draft.text.compactMap { key, value in
+                    LabMeasure(rawValue: key).map { ($0, value) }
+                })
+                results = Dictionary(uniqueKeysWithValues: draft.results.compactMap { key, value in
+                    guard let test = DengueTest(rawValue: key), let result = TestResult(rawValue: value) else { return nil }
+                    return (test, result)
+                })
+                note = draft.note
+            })
+    }
     @State private var showingScanner = false
     @State private var scanFoundNothing = false
     @State private var showingSourceChoice = false
@@ -25,6 +55,10 @@ struct LabEntryView: View {
     @State private var fileUnreadable = false
 
     var body: some View {
+        form.keepsDraft("draft.lab", draft)
+    }
+
+    private var form: some View {
         NavigationStack {
             Form {
                 Section {
@@ -94,21 +128,21 @@ struct LabEntryView: View {
 
                 Section {
                     ForEach(DengueTest.allCases) { test in
-                        Picker(selection: resultBinding(for: test)) {
-                            ForEach(TestResult.allCases) { result in
-                                Text(loc.t(result.labelKey)).tag(result)
+                        // The test, and under it when it is usually
+                        // informative — the timing the footer refers to, which
+                        // used to be translated and never shown. Beneath the
+                        // picker rather than in its label: a two-line label
+                        // pushes the chosen value onto a line of its own.
+                        VStack(alignment: .leading, spacing: 3) {
+                            Picker(loc.t(test.labelKey), selection: resultBinding(for: test)) {
+                                ForEach(TestResult.allCases) { result in
+                                    Text(loc.t(result.labelKey)).tag(result)
+                                }
                             }
-                        } label: {
-                            // The test's name, and when it is usually
-                            // informative — the timing the footer refers to,
-                            // which used to be translated and never shown.
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(loc.t(test.labelKey))
-                                Text(loc.t(test.usefulDaysKey))
-                                    .typo(.micro)
-                                    .foregroundStyle(.secondary)
-                                    .fixedSize(horizontal: false, vertical: true)
-                            }
+                            Text(loc.t(test.usefulDaysKey))
+                                .typo(.micro)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
                     }
                 } header: {
