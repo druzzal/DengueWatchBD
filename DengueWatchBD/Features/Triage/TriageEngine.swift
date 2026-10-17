@@ -112,9 +112,22 @@ enum TriageEngine {
     struct Context {
         var feverDaysAgo: Int?
         var isPregnant = false
+        /// Asked separately from over 60 because a small child's blood
+        /// pressure and pulse are not an adult's, and the care plan reads
+        /// them differently.
+        var isUnderFive = false
+        var isOverSixty = false
+        /// "Under 5 or over 60", as checks made before the two were asked
+        /// separately recorded it. Still a higher-risk group, but which end of
+        /// life it meant is unknown, so the readings are judged as an adult's.
         var isUnderFiveOrOverSixty = false
         var hasChronicCondition = false
         var hadDengueBefore = false
+
+        /// At either extreme of age, however it was recorded.
+        var isAgeRiskGroup: Bool {
+            isUnderFive || isOverSixty || isUnderFiveOrOverSixty
+        }
 
         /// The groups WHO 2025 names when it lists who is admitted: pregnancy
         /// outright, and the extremes of age and underlying conditions as
@@ -125,7 +138,7 @@ enum TriageEngine {
         /// admit, so it is shown as a reason to watch closely and changes no
         /// advice on its own.
         var isHigherRiskGroup: Bool {
-            isPregnant || isUnderFiveOrOverSixty || hasChronicCondition
+            isPregnant || isAgeRiskGroup || hasChronicCondition
         }
     }
 

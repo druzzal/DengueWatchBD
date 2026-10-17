@@ -180,7 +180,11 @@ struct SymptomCheckerView: View {
     private var riskStep: some View {
         VStack(alignment: .leading, spacing: Space.tight) {
             Toggle(loc.t("check.risk.pregnant"), isOn: $context.isPregnant)
-            Toggle(loc.t("check.risk.age"), isOn: $context.isUnderFiveOrOverSixty)
+            // One or the other, never both: ticking one clears the other.
+            Toggle(loc.t("check.risk.underFive"), isOn: $context.isUnderFive)
+                .onChange(of: context.isUnderFive) { _, on in if on { context.isOverSixty = false } }
+            Toggle(loc.t("check.risk.overSixty"), isOn: $context.isOverSixty)
+                .onChange(of: context.isOverSixty) { _, on in if on { context.isUnderFive = false } }
             Toggle(loc.t("check.risk.chronic"), isOn: $context.hasChronicCondition)
             Toggle(loc.t("check.risk.previous"), isOn: $context.hadDengueBefore)
             Text(loc.t("check.risk.footer"))
@@ -259,7 +263,8 @@ struct SymptomCheckerView: View {
                              areaCode: preferences.homeAreaCode,
                              feverDaysAgo: hasFeverDate ? daysSinceFever : nil,
                              isPregnant: context.isPregnant,
-                             isUnderFiveOrOverSixty: context.isUnderFiveOrOverSixty,
+                             isUnderFive: context.isUnderFive,
+                             isOverSixty: context.isOverSixty,
                              hasChronicCondition: context.hasChronicCondition,
                              hadDengueBefore: context.hadDengueBefore))
     }

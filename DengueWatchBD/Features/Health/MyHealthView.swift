@@ -185,10 +185,10 @@ struct MyHealthView: View {
 
     /// Readings only count towards the plan while they still describe now.
     /// A blood pressure from last week says nothing about this afternoon.
+    /// Each measure is its own latest reading, so a later entry that left a
+    /// measure out does not hide the earlier one.
     private var recentVitals: VitalsEntry? {
-        guard let latest = vitals.latest else { return nil }
-        let age = Date().timeIntervalSince(latest.date)
-        return age <= CarePlanContext.recencyWindow ? latest : nil
+        WHOCarePlan.recentReadings(vitals.entries)
     }
 
     /// Days of fever as of today, not as of the day the check was run — the

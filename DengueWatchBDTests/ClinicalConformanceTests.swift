@@ -43,6 +43,8 @@ final class ClinicalConformanceTests: XCTestCase {
     private func context(_ value: Any?) -> TriageEngine.Context {
         let flags = value as? [String: Bool] ?? [:]
         return TriageEngine.Context(isPregnant: flags["isPregnant"] ?? false,
+                                    isUnderFive: flags["isUnderFive"] ?? false,
+                                    isOverSixty: flags["isOverSixty"] ?? false,
                                     isUnderFiveOrOverSixty: flags["isUnderFiveOrOverSixty"] ?? false,
                                     hasChronicCondition: flags["hasChronicCondition"] ?? false,
                                     hadDengueBefore: flags["hadDengueBefore"] ?? false)
@@ -202,6 +204,29 @@ final class ClinicalConformanceTests: XCTestCase {
             let context = CarePlanContext.from(vitals: vitals, labs: labs, now: now)
             XCTAssertEqual(context.notableVitals.map(\.rawValue), item["notableVitals"] as? [String])
             XCTAssertEqual(context.notableLabs.map(\.rawValue), item["notableLabs"] as? [String])
+        }
+    }
+
+    func testRecentReadings() throws {
+        for item in try list("recentReadings") {
+            let entries = (item["entries"] as? [[String: Any]] ?? []).map { reading in
+                VitalsEntry(date: hoursAgo(reading),
+                            temperature: double(reading["temperature"]),
+                            pulse: double(reading["pulse"]),
+                            systolic: double(reading["systolic"]),
+                            diastolic: double(reading["diastolic"]),
+                            oxygenSaturation: double(reading["oxygenSaturation"]))
+            }
+            let label = "\(item["entries"] ?? "")"
+            let actual = WHOCarePlan.recentReadings(entries, now: now)
+            guard let expected = item["readings"] as? [String: Any] else {
+                XCTAssertNil(actual, label)
+                continue
+            }
+            let readings = try XCTUnwrap(actual, label)
+            for kind in VitalKind.allCases {
+                XCTAssertEqual(readings.value(for: kind), double(expected[kind.rawValue]), "\(kind) in \(label)")
+            }
         }
     }
 

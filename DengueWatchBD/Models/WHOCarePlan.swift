@@ -156,6 +156,45 @@ extension WHOCarePlan {
         static let lowSystolic: Double = 90
         static let fastPulse: Double = 120
         static let lowOxygen: Double = 94
+
+        /// Hypotension in a child under five: below 70 is low at every age
+        /// from infancy to five (the paediatric limit is 70 + 2 × age in
+        /// years), where 90 would call many healthy toddlers shocked.
+        ///
+        /// There is no child pulse threshold. A normal pulse under five runs
+        /// from about 100 to 160 and more with fever, so no one number serves,
+        /// and the age group already sends a child to be seen today. Pulse
+        /// pressure and oxygen keep their adult thresholds, which WHO applies
+        /// at every age.
+        static let lowSystolicUnderFive: Double = 70
+    }
+
+    /// The newest reading of each measure taken within the recency window,
+    /// gathered into one set.
+    ///
+    /// Not simply the newest entry. An entry holds whichever readings were
+    /// typed in at the time, so a temperature logged alone half an hour after
+    /// a low blood pressure would otherwise hide the blood pressure, and move
+    /// the reader into a calmer group on the strength of a number nobody
+    /// measured. Each measure is its own most recent reading instead, so a
+    /// newer blood pressure still replaces an older one.
+    ///
+    /// The two blood-pressure numbers are taken together from one entry, the
+    /// newest with an upper number, because a pulse pressure worked out from
+    /// two different readings describes no moment at all.
+    static func recentReadings(_ entries: [VitalsEntry], now: Date = Date()) -> VitalsEntry? {
+        let recent = entries
+            .filter { now.timeIntervalSince($0.date) <= CarePlanContext.recencyWindow }
+            .sorted { $0.date > $1.date }
+        guard let newest = recent.first else { return nil }
+
+        let bloodPressure = recent.first { $0.systolic != nil }
+        return VitalsEntry(date: newest.date,
+                           temperature: recent.lazy.compactMap(\.temperature).first,
+                           pulse: recent.lazy.compactMap(\.pulse).first,
+                           systolic: bloodPressure?.systolic,
+                           diastolic: bloodPressure?.diastolic,
+                           oxygenSaturation: recent.lazy.compactMap(\.oxygenSaturation).first)
     }
 
     /// - Parameters:
@@ -180,11 +219,11 @@ extension WHOCarePlan {
 
         // Measured signs. Order matters: pulse pressure first, because it is
         // the one that changes before the others do.
-        let measured = measuredConcerns(vitals)
+        let measured = measuredConcerns(vitals, isUnderFive: context.isUnderFive)
         reasons.append(contentsOf: measured)
 
         if context.isPregnant { reasons.append(.pregnancy) }
-        if context.isUnderFiveOrOverSixty || context.hasChronicCondition {
+        if context.isAgeRiskGroup || context.hasChronicCondition {
             reasons.append(.higherRiskGroup)
         }
         if context.hadDengueBefore { reasons.append(.previousDengue) }
@@ -216,7 +255,12 @@ extension WHOCarePlan {
     /// Nil readings are not concerns: a blood pressure never taken is not a
     /// normal blood pressure, and a missing number must never quietly move
     /// someone into a calmer group.
-    private static func measuredConcerns(_ vitals: VitalsEntry?) -> [Reason] {
+    ///
+    /// A child under five is held to the child's blood-pressure limit and no
+    /// pulse limit; see `Threshold.lowSystolicUnderFive`. A check from before
+    /// the age question was split keeps the adult limits, since it cannot say
+    /// whether it meant a child.
+    private static func measuredConcerns(_ vitals: VitalsEntry?, isUnderFive: Bool) -> [Reason] {
         guard let vitals else { return [] }
         var found: [Reason] = []
 
@@ -224,10 +268,11 @@ extension WHOCarePlan {
            systolic - diastolic <= Threshold.narrowPulsePressure {
             found.append(.narrowPulsePressure)
         }
-        if let systolic = vitals.systolic, systolic < Threshold.lowSystolic {
+        let lowSystolic = isUnderFive ? Threshold.lowSystolicUnderFive : Threshold.lowSystolic
+        if let systolic = vitals.systolic, systolic < lowSystolic {
             found.append(.lowBloodPressure)
         }
-        if let pulse = vitals.pulse, pulse > Threshold.fastPulse {
+        if !isUnderFive, let pulse = vitals.pulse, pulse > Threshold.fastPulse {
             found.append(.fastPulse)
         }
         if let oxygen = vitals.oxygenSaturation, oxygen < Threshold.lowOxygen {

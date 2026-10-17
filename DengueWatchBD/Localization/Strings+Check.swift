@@ -177,7 +177,8 @@ extension Strings {
         "check.phase.recovery": "Day %@ of fever — recovery phase for most people, but watch for fluid overload and lingering fatigue.",
 
         "check.risk.pregnant": "Pregnant",
-        "check.risk.age": "Under 5 or over 60 years old",
+        "check.risk.underFive": "Under 5 years old",
+        "check.risk.overSixty": "Over 60 years old",
         "check.risk.chronic": "Diabetes, heart, kidney or liver condition",
         "check.risk.previous": "I have had dengue before",
         "check.risk.footer": "A second dengue infection with a different serotype carries a higher risk of severe disease, which is why previous dengue counts here.",
@@ -450,7 +451,8 @@ extension Strings {
         "check.phase.recovery": "জ্বরের %@ দিন — বেশিরভাগ মানুষের সুস্থ হওয়ার পর্যায়, তবে শরীরে পানি জমা ও দীর্ঘস্থায়ী দুর্বলতার দিকে খেয়াল রাখুন।",
 
         "check.risk.pregnant": "গর্ভবতী",
-        "check.risk.age": "৫ বছরের কম বা ৬০ বছরের বেশি বয়স",
+        "check.risk.underFive": "৫ বছরের কম বয়স",
+        "check.risk.overSixty": "৬০ বছরের বেশি বয়স",
         "check.risk.chronic": "ডায়াবেটিস, হৃদরোগ, কিডনি বা লিভারের সমস্যা",
         "check.risk.previous": "আগে ডেঙ্গু হয়েছিল",
         "check.risk.footer": "ভিন্ন ধরনের ভাইরাসে দ্বিতীয়বার ডেঙ্গু হলে মারাত্মক হওয়ার ঝুঁকি বেশি থাকে, তাই আগের ডেঙ্গুর তথ্য এখানে গুরুত্বপূর্ণ।",

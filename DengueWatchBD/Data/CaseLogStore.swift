@@ -23,6 +23,13 @@ struct CaseLogEntry: Identifiable, Codable, Hashable {
     /// They decide the WHO management group, so the plan cannot be rebuilt
     /// without them.
     var isPregnant = false
+    /// Optional, unlike the flags around them, so that checks saved before
+    /// the age question was split in two still decode: the synthesised
+    /// decoder requires every non-optional key. Nil reads as not ticked.
+    var isUnderFive: Bool?
+    var isOverSixty: Bool?
+    /// The single "under 5 or over 60" answer older checks recorded. New
+    /// checks write the two flags above and leave this false.
     var isUnderFiveOrOverSixty = false
     var hasChronicCondition = false
     var hadDengueBefore = false
@@ -30,6 +37,8 @@ struct CaseLogEntry: Identifiable, Codable, Hashable {
     var triageContext: TriageEngine.Context {
         TriageEngine.Context(feverDaysAgo: feverDaysAgo,
                              isPregnant: isPregnant,
+                             isUnderFive: isUnderFive ?? false,
+                             isOverSixty: isOverSixty ?? false,
                              isUnderFiveOrOverSixty: isUnderFiveOrOverSixty,
                              hasChronicCondition: hasChronicCondition,
                              hadDengueBefore: hadDengueBefore)

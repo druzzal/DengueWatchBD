@@ -71,4 +71,31 @@ final class HealthStoreTests: XCTestCase {
         XCTAssertEqual(latest.feverDaysAgo, 4)
         XCTAssertTrue(latest.isPregnant)
     }
+
+    func testTheTwoAgeAnswersSurviveAReload() throws {
+        let name = temporaryStoreFilename("checks")
+        CaseLogStore(filename: name).add(CaseLogEntry(symptomIDs: ["fever"], isUnderFive: true))
+        let context = try XCTUnwrap(CaseLogStore(filename: name).entries.first).triageContext
+        XCTAssertTrue(context.isUnderFive)
+        XCTAssertFalse(context.isOverSixty)
+        XCTAssertTrue(context.isHigherRiskGroup)
+    }
+
+    /// A check saved before the age question was split carries only the
+    /// combined flag. It has to load — a log that fails to decode loads as
+    /// empty, and the next save would write that emptiness over it — and it
+    /// stays in the higher-risk group, judged by the adult limits.
+    func testACheckSavedWithTheCombinedAgeAnswerStillLoads() throws {
+        let name = temporaryStoreFilename("checks")
+        let saved = """
+        [{"id":"7D3B8A2E-1F4C-4B6A-9E2D-5C8F0A1B2C3D","date":782300000,"symptomIDs":["fever"],
+          "outcomeRawValue":2,"note":"","feverDaysAgo":2,"isPregnant":false,
+          "isUnderFiveOrOverSixty":true,"hasChronicCondition":false,"hadDengueBefore":false}]
+        """
+        try Data(saved.utf8).write(to: url(name))
+        let entry = try XCTUnwrap(CaseLogStore(filename: name).entries.first)
+        XCTAssertTrue(entry.triageContext.isHigherRiskGroup)
+        XCTAssertFalse(entry.triageContext.isUnderFive)
+        XCTAssertEqual(entry.outcome, .seeDoctorToday)
+    }
 }

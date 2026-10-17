@@ -379,6 +379,17 @@ with a 999 call button. Warning signs, being unable to drink, pregnancy, and
 age or a long-term condition route to "see a doctor today". The NSAID warning
 appears in every advice path that involves fever.
 
+Vital signs can only raise the care plan's group. It reads the latest reading
+of each measure from the last three days, not just the latest entry, so a
+temperature logged on its own does not hide a low blood pressure taken an hour
+before; the two blood-pressure numbers always come from the same reading. Under
+five and over sixty are asked separately. A child under five is judged low at
+a systolic under 70 rather than 90, and has no fast-pulse threshold, because a
+normal pulse at that age runs well past 120 and the age group already means
+being seen today. Pulse pressure (20 mmHg or less) and oxygen (under 94%) apply
+at every age. Checks saved before the age question was split keep the adult
+limits.
+
 WHO's outpatient recommendation of measured oral fluids is the fluid log in My
 health: drinks in millilitres and the number of times urine was passed, against
 WHO's aim of four to six times a day. It sets no volume target, because WHO sets
